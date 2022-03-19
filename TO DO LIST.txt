@@ -1,0 +1,10 @@
+- Repasar todos los archivos de teoría y de obras que tienes de SC, reunir toda la teoría + también de los 
+apuntes escritos en Madrid (ver también SC files ordenados en carpeta para Pepe, en escritorio).
+- El documento "All you need in SC" --> repasar cada vez que hagas un documento de teoría separado para distribuir
+su contenido de forma ordenada.
+- Ir eliminando los archivos de la carpeta de códigos de teoría + revisar otros archivos en otras carpetas.
+- Guardar esto en discos duros + USAR GitHub para tener una copia en la nube, ESENCIAL.
+
+- Complete the document of doubts to work on when visiting Alejandro. 
+- Review also other documents from pieces, from other courses (in Siba 2021 y 2022 y en veranos), and other practice
+documents and doubt documents. 
