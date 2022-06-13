@@ -154,6 +154,71 @@ d.value(500, 1000) //It is calculated here, for instance, a modulation between 5
 }.play
 )
 
+//Create a function that receives the overtone number within the series (n) and which gives back the pitch of that overtone in Hz and Midi.
+(
+{
+	arg n, fundFrecMidi = 24; //Fundamental frequency by default = C1 (24 midi): using Midi as it is easier to choose a specific frequency.
+	var hz, midi;
+
+	hz = n * fundFrecMidi.midicps; //Converting the fundamental freq into Hz so the Hz of the overtone is = n * fund freq.
+	midi = hz.cpsmidi.round(1); //Now using the result of Hz, so the value is coming from the natural temperament, although when converting into midi, there are decimals, which will be rounded in order to obtain an integer for the midi value.
+
+	[hz, midi]
+
+}.value(8) //Here, as an example, calculating the C4 (8th overtone of the C1 series).
+)
+
+//This function checks out whether a word (a string of letters) is a palindrome or not):
+(
+f = {
+		arg word;
+		var original, reverse;
+
+		original = word;
+
+		reverse = word.reverse;
+
+		original == reverse; //Better than the ===, although those also work because you are comparing the same string and not two different strings with the same content.
+	}
+)
+
+f.value("lol")
+f.value("tacocat")
+f.value("dog")
+
+//I think this is called symmetric (see "Set" theory for a method equal to this function): compares two arrays and gives back an array featuring all elements only present in one of the arrays: for example, comparing [1, 2, 3, 4] and [2, 3, 4, 5], the result should be [1, 5]
+//Approach: comparing each element of the first array: asking the second array how many instances are in there of each element of the first array (if no instances, it passes to the final array) + same viceversa + concatenate both results at the end:
+
+(
+a = {
+	arg array1, array2;
+	var result1, result2, finalArray, addition, utmostArray;
+
+	//Comparing the array and obtaining the unique values of each:
+
+	result1 = array1.select({ //The method select receives a collection and features a function and two arguments (item and index), and answers a collection consisting of all items in the receiver for which its function answers "true".
+		arg item;
+		array2.occurrencesOf(item) == 0 //OccurrencesOf(item) refers to the number of repetitions of the given item within a collection.
+	});
+
+	result2 = array2.select({
+		arg item;
+		array1.occurrencesOf(item) == 0
+	});
+
+	finalArray = result1 ++ result2;
+	finalArray.postln;
+
+	//Filtering repetitions:
+
+	finalArray = finalArray.as(Set); //See theory about Set.
+	finalArray = finalArray.as(Array)
+}
+)
+
+a.value([1, 2, 3, 3, 6, 7, 7], [5, 2, 1, 4, 6, 8, 1]) //--> The solution should be [3, 7, 5, 4, 8]. It works!
+//You could try to create a similar function in which the number of compared arrays is flexible.
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //METHODS
 //The transformation and process of objects created by Classes are defined by the methods. They can be (as shown is the document 1), instance of class methods (class methods create objects / instance methods apply transformations and processes to objects already created by classes).
@@ -331,6 +396,11 @@ y.scramble //Changes the order of the elements randomly.
 y = y.scramble.keep(5) //Trick to choose 5 random numbers from a series withour repeating them.
 y.sort //Puts the values in upward order (if they are numbers).
 y.sort.reverse //Puts the values in opposite order (downwards).
+
+//For very long arrays, in order to see all the elements (for example, if needed to see the last one), we can use:
+Array.series(200, 0, 1) //It shows etc... because it is too long, but we can't know the last value.
+Array.series(200, 0, 1).asCompileString //This will show all the elements.
+Array.series(200, 0, 1).last //This will show just the last element (thus, this line is no longer an array, but just ONE value).
 
 e = Array.series(4, 60, 10) //New series.
 e = e.mirror //This includes the original + the retrograded (mirror) series.
@@ -521,11 +591,11 @@ List[1, 2, 3, 4].sum; //Addition. Two examples:
 - .asInteger (or .asInt): turns a float into an integer (rounding it down).
 - .flat: unifies nested arrays into a single array containing all the elements.
 - .asStream: sent to objects that are not streams to turn them into streams (patters, envelopes, etc.). Should be used in combination with .next.
-- .clump: opposite of .flat. Its argument indicates the number of elements that are going to be clumped into nested arrays within a bigger array.
-- .stutter: its argument indicates the number of repetitions of each element of a given collection.
+- .clump(n): opposite of .flat. Its argument indicates the number of elements (n) that are going to be clumped into nested arrays within a bigger array.
+- .stutter(n): its argument indicates the number of repetitions (n) of each element of a given collection.
 - .normalizeSum: converts an array of numbers into ratios from 0 to 1 (so the total addition would be equal to 1). Used with .wchoose or Pwrand, etc.
 - .odd, .even, 0.5.coin (for instance), .isNil, .notNil, .and, .or, etc.: methods for boolean expressions.
-- .postln, .plot, .poll, .histo, .trace: they represent values in different ways: POSTLN prints values that are not signals (applied to a signal or any other "alive" thing in the server, it will just indicate that there is a pattern or a synth) / PLOT shows a graph / POLL prints values from signals (that are running in the server) / HISTO shows a graph of probabilities / TRACE prints the values given by a pattern (they are "alive", but not like a UGen (which uses .poll instead).
+- .postln, .plot, .poll, .histo, .trace: they represent values in different ways: POSTLN prints values that are not signals (applied to a signal or any other "alive" thing in the server, it will just indicate that there is a pattern or a synth) / PLOT shows a graph (it needs to be applied to a function, not to a signal without the {} / POLL prints values from signals (that are running in the server) / HISTO shows a graph of probabilities / TRACE prints the values given by a pattern (they are "alive", but not like a UGen (which uses .poll instead).
 - .mod(12): module 12 of all values of a given collection.
 - .div(2): divides by 2 (for instance), rounding the result down (always returns integers).
 - .min y .max: .min returns only the values below the number given as its argument / .max returns only the values above.
@@ -533,12 +603,49 @@ List[1, 2, 3, 4].sum; //Addition. Two examples:
 - .range: calculates the mul / add needed for a modulation (without the studied calculations, although it is better to understand how it is calculated). For example: LFDNoise3.ar(0.1).range(400, 1200)
 - .fork: it is a wraper, a Routine + .play (none of those have to be stated because they are contained within .fork, but it is still necessary to use .wait or .yield).
 - .linlin is for mapping (y.linlin(-1, 1, 40, 80) = converts the range -1 to 1 of "y" into 40 to 80, with a linear interpolation.
+- .linexp is for mapping from linear to exponential (y.linexp(0, 127, 30, 8000), for example, would convert the linearity of the MIDI values from 0 to 127, mapping them into exponential values of frequency between 30 and 8000 Hz), just for instance.
 - .drop(-1): eliminates an element of a collection. If the collection is reassigned to its variable, it will diminished: */
 
 ~structure = [ "a", "b", "c", "d", "e" ]
 ~structure = ~structure.drop(-1) //Deletes the elements from the last to the first.
 ~structure = ~structure.drop(1) //Deletes the elements from the first to the last.
 ~structure = ~structure.drop(2) //Deletes the elements two by two from the first the last.
+
+//ARRAYS SHORTCUTS:
+(0..20) //Array with numbers from 0 to 20.
+(60, 60.25..65) //Array with numbers from 60 to 65 with a step of 0.25 between each number.
+(10, 10.1..20).cs //.cs avoid the .etc in the postwindow when the lists are too big, in case we need to visualize all the values (but be careful because SC saves memory from this with the .etc for a reason).
+(rrand(10, 15)..rrand(16, 20)) //Series between numbers from 10 to 20. The low and high limits of the series will be random, from the minimum range (2 possible values from 15 to 16) to the maximum range (11 possible values from 10 to 20).
+(rrand(10, 15)..rrand(16, 20)).plot  //Former example, visualized in a graph.
+//Some operations can be applied to these arrays as normally. For instance:
+pow((0..1000), 2).plot //Series from 0 to 1000 to the power of 2 (plotter = exponential curve, see the graph).
+sin((0, 0.1..20)).plot //Sin function (values from -1 to 1 (20 numbers with a step of 0.1 = 2 units from -1 to 1). Two layers of parenthesis are needed for the plot to work (because of the sin function).
+
+//SET (METHODS):
+//According to SC help: A Set is s collection of objects, no two of which are equal. Most of its methods are inherited from Collection. The contents of a Set are unordered. You must not depend on the order of items in a set. For an ordered set, see OrderedIdentitySet. Also, all elements in the set, or from outside when applying methods, are checked for equality (not for identity):
+
+Set[1, 3, 7, 4] //This is a set. Methods:
+
+Set[1, 2, 3].add(4).postln; //Add an Object to the Set. An object which is equal to an object already in the Set will not be added.
+Set[1, 2, 3].remove(3).postln; //Remove an Object from the Set.
+Set[1, 2, 3].includes(2).postln; //Returns true if the specified item is present in the Set.
+Set[1, 2, 3].findMatch(3).postln; //Returns the item, if it is present in the set. Otherwise returns nil.
+Set[1, 2, 3, 300].do({ arg item, i; item.postln }); //Evaluates function for each item in the Set. The function is passed two arguments, the item and an integer index.
+a = Set[1, 2, 3]; b = Set[2, 3, 4, 5];
+sect(a, b); //Return the set theoretical intersection of this and that. The function will search for objects occurring in both sets and return a new set containing those.
+a = Set[1, 2, 3]; b = Set[2, 3, 4, 5];
+union(a, b); //Return the set theoretical union of this and that. The function combines the two sets into one without duplicates.
+a = Set[1, 2, 3]; b = Set[2, 3, 4, 5];
+difference(a, b); //Return the set of all items which are elements of this, but not of that.
+a = Set[1, 2, 3]; b = Set[2, 3, 4, 5];
+symmetricDifference(a, b); //Return the set of all items which are not elements of both this and that.
+a = Set[1, 2, 3, 4]; //Returns true if all elements of this are also elements of that. Since Set is an unordered collection, order doesn't matter in this comparison.
+Set[1, 2].isSubsetOf(a); // true
+Set[1, 5].isSubsetOf(a); // false
+// you can use Set to efficiently remove duplicates from an array:
+a = [1, 2, 3, 4, 3, 5, 5, 2, 2, 1];
+a.as(Set); // convert to set
+a.as(Set).as(Array); // and convert back
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //THE FIRST UGEN: SinOsc:

@@ -177,6 +177,27 @@ s.scope
 }.play
 )
 
+//Notice the difference between these two codes: when WhiteNoise is within the Array that brings about the multichannel expansion, there will be 18 different noises. In the second example, the noise is outside the array (same noise shared for all filters), which is applied to the frequencies of the filter, bringing about the multichannel expansion of it (in both examples there are 18 different Ringz filters).
+
+(
+{
+	Mix.ar(
+		Array.fill(18, { Ringz.ar(WhiteNoise.ar(0.0001), exprand (100, 3000)) })
+	) !2
+}.play
+)
+
+(
+{
+	Mix.ar(
+		Ringz.ar(
+			WhiteNoise.ar(0.0001),
+			Array.fill(18, { exprand (100, 3000)})
+		)
+	) !2
+}.play
+)
+
 //Mix in two different channels (below, just using a !2, as seen before), creating an array of two Mix. The result will be 100 different sine waves through each side of the stereo (thus, 200 sine waves in total: the sound is much richer):
 
 (//Use of the array:
@@ -209,6 +230,7 @@ s.scope
 }.play
 )
 
+
 //Using 30 different sine waves modulated through a BrownNoise (Freq) and Dust (Amp) through each side of the stereo (due to the !2, which needs the Mix between curly brackets in order to affect it all):
 (
 {
@@ -219,7 +241,7 @@ s.scope
 				0,
 				Dust.ar(20, 200).lag(0.5))
 			* 0.5})
-	)}!2
+	)}!2 // --> This would be equivalent to applying the duplicator directly to the mul of a Uegn, but since in Mix we don't have the mul directly, this is the easiest way of duplicating the function.
 }.play
 )
 
@@ -232,7 +254,20 @@ s.scope
 				0,
 				Dust.ar(20, 200).lag(0.5))
 			* 0.5})
-	) !2
+	) !2 //Only mono-duplicated, because it is outside the parenthesis.
+}.play
+)
+
+(//Compare the same code duplicated differently through each side of the stereo (the duplicator creates two functions and not only duplicates one):
+{
+	{Mix(
+		Array.fill(30, {
+			SinOsc.ar(
+				BrownNoise.ar(40, 60).midicps,
+				0,
+				Dust.ar(20, 200).lag(0.5))
+			* 0.5})
+	)} !2 //Only mono-duplicated.
 }.play
 )
 
@@ -312,6 +347,42 @@ s.scope
 }.play
 )
 
+//Another example: an array is applied to the frequency of the filter: the rest of the arguments are shared (the noise and RQ), and the smaller arryas (amp) are shared cyclically:
+(
+{
+	Mix(
+		BPF.ar(
+			BrownNoise.ar,
+			Array.fill(5, { exprand (50, 1000)}),
+			0.01,
+			[0.2, 0.6]
+		)
+	) !2
+
+}.play
+)
+
+(
+{
+	var in, rq, freq, amps;
+
+	in = BrownNoise.ar;
+	rq = 0.01;
+	freq = Array.fill(5, { exprand (50, 1000)});
+	amps = [0.2, 0.6];
+
+	Mix(
+		[
+			BPF.ar(in, freq[0], rq, amps[0]),
+			BPF.ar(in, freq[1], rq, amps[1]),
+			BPF.ar(in, freq[2], rq, amps[0]),
+			BPF.ar(in, freq[3], rq, amps[1]),
+			BPF.ar(in, freq[4], rq, amps[0]),
+	]) !2
+
+}.play
+)
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //FILTER BANKS:
@@ -345,6 +416,24 @@ s.scope
 )}!2
 }.play
 )
+
+//Some reminder of pitagoric relationships:
+/*
+(Here, ascending intervals --> invert the ratio to get the descending version):
+Unison --> 1
+min 2nd --> 16/17
+maj 2nd --> 9/8
+min 3rd --> 6/5
+maj 3rd --> 5/4
+perfect 4th --> 4/3
+perfect 5th --> 3/2
+min 6th --> 8/5
+maj 6th --> 5/3
+min 7th --> 7/4
+maj 7th --> 17/9
+perfect 8th --> 2
+(Remember that a division is expensive for the processing of the program: it is better to express these rations in floats whenever possible).
+*/
 
 //Method .midiratio (and .ratiomidi), turns an interval calculated in number of semitones into an interval ratio, but in this case, the temperament is equal (sometimes, the little tunning deviations from the Pitagoric temperament could be interesting, and in other cases, the equal temperament could be more convenient):
 
@@ -561,6 +650,48 @@ Array.geom (72, 35, 1.midiratio).last
 			amps)
 	)!2
 }.play
+)
+
+//Some more detuning in here:
+(
+{ var freq;
+
+	freq = Array.geom(5, 200, 4/3)
+	       *
+	Array.fill(5, {[1, 0].choose.midiratio}); //The only options are 1 or 0, so the fourths are Perfect (no detuning) or augmented (+ one half step).
+
+	Mix.ar(BPF.ar(
+		    PinkNoise.ar,
+			freq,
+			0.01,
+			2)
+	) !2
+}.play
+)
+
+////////////////////////////////////////////////////////////////////////
+//A reminder about the conversion between midi and Hz:
+
+//.midicps inside the LFDNoise (converting to Hz before the random distribution is applied) --> Exponential distribution, higher frequencies more likely.
+(
+{
+	Mix(
+		SinOsc.ar(
+			Array.fill(5, { LFDNoise0.ar(1, 9.midicps, 69.midicps)}),
+			0,
+			1/20) //For mul = 0.25.
+) !2}.play
+)
+
+//.midicps outside the LFDNoise (converting to Hz after the random distribution is applied) --> Linear distribution, broader range, all frequencies equally likely.
+(
+{
+	Mix(
+		SinOsc.ar(
+			Array.fill(5, { LFDNoise0.ar(1, 9, 69).midicps}),
+			0,
+			1/20) //For mul = 0.25.
+) !2}.play
 )
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

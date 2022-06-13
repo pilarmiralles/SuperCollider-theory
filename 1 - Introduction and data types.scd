@@ -31,9 +31,9 @@ https://scsynth.org/t/some-notes-on-writing-supercollider-code-for-non-programme
 
 /* According to SC's guide, SuperCollider is an audio server, programming language, and IDE (Integrated Development Environment) for sound synthesis and algorithmic composition. This means that we have three different software:
 
-- The IDE (for Mac / Windows / Linux), which consists of the text editor, the upper menu bar, the help window (which can be detached and recalled with ctrl+D), the post window (showing all the information about our code and the result of compiling and running the code), the status bar (below, showing satatus of the interpreter and the server: click to show all the options + beware of the CPU percentage), and the LANGUAGE itself (object-oriented, based on Smalltalk language, belonging the the C family) --> the syntax of the language is the set of rules and symbols that must be followed and used for a language to be properly structured.
+- The IDE (for Mac / Windows / Linux, it is the circle icon of the program), which consists of the text editor, the upper menu bar, the help window (which can be detached and recalled with ctrl+D), the post window (showing all the information about our code and the result of compiling and running the code), the status bar (below, showing satatus of the interpreter and the server: click to show all the options + beware of the CPU percentage), and the LANGUAGE itself (object-oriented, based on Smalltalk language, belonging the the C family) --> the syntax of the language is the set of rules and symbols that must be followed and used for a language to be properly structured.
 
-- The interpreter: if the language is the letter, the interpreter is the mailer (both together are sclang, the client). It is the interpreter for the SuperCollider programming language, that is to say, it allows to the user to write code in the programming language and interactively execute the resulting commands (run the code), for example to control the audio server.
+- The interpreter (it is the cube icon of the program): if the language is the letter, the interpreter is the mailer (both together are sclang, the client). It is the interpreter for the SuperCollider programming language, that is to say, it allows to the user to write code in the programming language and interactively execute the resulting commands (run the code), for example to control the audio server.
 --> Running the code (compile + run): shift + enter.
 
 - The audio server:
@@ -179,6 +179,9 @@ rrand(0.1, 4) //Random with a range (if both numbers are int, all numbers will b
 69.cpsmidi //Hz to midi conversor
 //--> MIDI tip: the piano ranges in Midi numbers are 21 (A0) to 108 (C8). Decimals in Midi numbers indicate cents (microintervals, 1 cent = 0.01 semitones, 100 parts).
 
+//Bipolar and unipolar:
+.bipolar //To convert unipolar to bipolar signals (UNIPOLAR = Signal moving from 0 o 1 regarding the amplitude --> (So with the method, the amplitude is expanded up to -1 to 1).
+.unipolar //To convert bipolar to unipolar signals (BIPOLAR = Signal moving from -1 to 1 regarding the amplitude --> (With this method, the amplitude will be cut to half, from 0 to 1).
 
 //See all unary (applied to one number, like a square root) and binary (need two numbers, like a sum) operations in the library (SC help).
 
@@ -207,6 +210,20 @@ string = "hello";
 //CURLY BRACKETS or braces: they contain functions (see document 2):
 
 SinOsc.ar(440, 0, 0.2, 0).play;
+
+//////////////////////////////////////////////////////////////////////
+//TYPES OF DISTRIBUTIONS:
+//All distributions can be generated from rrand (uniform distribution) applying certain operations. Observe the graphics (with the key "M" the type of graphic can be changed). Also, here all distributions are tested out of 100000 values (the more values, the better definition of the distribution we obtain):
+
+({ rrand(0.0, 1.0) } ! 100000).histo.plot(minval:0) //Uniform distribution.
+({ exprand(0.001, 1.0) } ! 100000).histo.plot(minval:0) //Exponential distribution (it needs something above - or below - zero as the starting point): cannot be 0 --> Priority to low values.
+({ 1.0.linrand } ! 100000).histo.plot(minval:0) //Linear distribution --> Priority to low values, but not as much as in the exponential.
+
+//This line creates a distribution identical to .linrand, but using rrand: it chooses the minimum value of each pair of values:
+({ ({ rrand(0.0, 1.0) } ! 2).minItem } ! 100000).histo.plot(minval:0) //Try out .maxItem instead to change the direction of the distribution (priority to high values).
+
+//This one creates the Gaussian distribution when calculating the "mean" value every three values:
+({ ({ rrand(0.0, 1.0) } ! 3).mean } ! 100000).histo.plot(minval:0)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //ACOUSTICS
