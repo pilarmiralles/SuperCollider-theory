@@ -267,7 +267,7 @@ s.scope
 				0,
 				Dust.ar(20, 200).lag(0.5))
 			* 0.5})
-	)} !2 //Only mono-duplicated.
+	)} !2 //Duplicated differently in both sides.
 }.play
 )
 
