@@ -1,4 +1,4 @@
-//2 - VARIABLES, FUNCTIONS, ARRAYS, METHODS
+b//2 - VARIABLES, FUNCTIONS, ARRAYS, METHODS
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //VARIABLES:
@@ -586,6 +586,7 @@ List[1, 2, 3, 3, 4, 3, 4, 3].occurrencesOf(3); //occurrencesOf
 List[1, 2, 3, 4].sum; //Addition. Two examples:
 (0..8).sum { |i| 1 / (2 ** i) };
 
+
 /* Other methods:
 
 - .asInteger (or .asInt): turns a float into an integer (rounding it down).
@@ -596,6 +597,7 @@ List[1, 2, 3, 4].sum; //Addition. Two examples:
 - .normalizeSum: converts an array of numbers into ratios from 0 to 1 (so the total addition would be equal to 1). Used with .wchoose or Pwrand, etc.
 - .odd, .even, 0.5.coin (for instance), .isNil, .notNil, .and, .or, etc.: methods for boolean expressions.
 - .postln, .plot, .poll, .histo, .trace: they represent values in different ways: POSTLN prints values that are not signals (applied to a signal or any other "alive" thing in the server, it will just indicate that there is a pattern or a synth) / PLOT shows a graph (it needs to be applied to a function, not to a signal without the {} / POLL prints values from signals (that are running in the server) / HISTO shows a graph of probabilities / TRACE prints the values given by a pattern (they are "alive", but not like a UGen (which uses .poll instead).
+Note that .poll can be used alongside a label, so when printing many different values at a time, you can tell which one is from which UGen. Example: { LFNoise1.kr.poll(3, "a value"); LFNoise1.kr.poll(5, "another value"); }.play;
 - .mod(12): module 12 of all values of a given collection.
 - .div(2): divides by 2 (for instance), rounding the result down (always returns integers).
 - .min y .max: .min returns only the values below the number given as its argument / .max returns only the values above.
@@ -620,6 +622,28 @@ List[1, 2, 3, 4].sum; //Addition. Two examples:
 //Some operations can be applied to these arrays as normally. For instance:
 pow((0..1000), 2).plot //Series from 0 to 1000 to the power of 2 (plotter = exponential curve, see the graph).
 sin((0, 0.1..20)).plot //Sin function (values from -1 to 1 (20 numbers with a step of 0.1 = 2 units from -1 to 1). Two layers of parenthesis are needed for the plot to work (because of the sin function).
+
+//Indexes:
+a = [1, 2, 3, 4, 5] //Given this array, you can take part of its indexes only:
+a[3..] //From index 3 to last index (remember, it's the index, not the content of the index), including index 3.
+a[..3] //From first index to index 3, including index 3.
+//Example of function playing with this: Given an array of numbers, return the middle to the end (if two middle, take the second):
+
+(
+f = {
+	arg array = [1, 2, 3, 4, 5]; //By default, but give your array in "f" (below)
+	var size, middle;
+
+	size = array.size;
+
+	if (size.odd, {middle = (size / 2).roundUp - 1}, {middle = size / 2}); //The result of this is an INDEX.
+
+	array[middle.asInt..]
+
+}
+)
+
+f.value([1, 2, 3, 4, 5, 6])
 
 //SET (METHODS):
 //According to SC help: A Set is s collection of objects, no two of which are equal. Most of its methods are inherited from Collection. The contents of a Set are unordered. You must not depend on the order of items in a set. For an ordered set, see OrderedIdentitySet. Also, all elements in the set, or from outside when applying methods, are checked for equality (not for identity):

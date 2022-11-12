@@ -63,7 +63,7 @@ Delay.ar(in, maxdelaytime, delaytime, mul, add) //"in" (input signal, that will 
 //COMB FILTERS
 //Comb filters are normally used as resonators when, as earlier with the dealys, the frequency of the filter is so small that it will produce its own spectrum: CombN, CombL, CombC, same different interpolations as with the delays.
 
-CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as in a Delay, but including the argument "decaytime" (time until which the delay is going to be heard).
+CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as in a Delay, but including the argument "decaytime" (time until which the delay is still going to be heard).
 
 //Example: this one does not work as a resonator due to the low frequency of the filter.
 (
@@ -71,7 +71,7 @@ CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as i
 	var signal;
 
 	signal = Impulse.ar(1/2) !2; //There is an impulse every two seconds, monoduplicated.
-	CombC.ar(signal, 0.5, 0.5, 2); //There is an "echo" every half a second, during 2 seconds (decaytime). The "echoes" lose their stength progressively as the decay is applied.
+	CombC.ar(signal, 0.5, 0.5, 2); //There is an "echo" every half a second, during 2 seconds (decaytime). The "echoes" lose their stength progressively as the decay is applied. SO THIS COULD ACTUALLY BE USED AS A PING PONG DELAY!
 
 }.play
 )
@@ -98,7 +98,7 @@ CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as i
 
 	resonators = Mix(CombC.ar(signal, 1/freqs, 1/freqs, 0.4, 1/freqs.size)); //.size adaps the compensation of the amplitude according to the number of frequencies in the array of freqs, as this is the amount of comb filters that will be produced.
 
-	LeakDC.ar(resonators) !2 //LeakDC is a filter commonly used after applying comb filters. It is a high pass filter which avoids the DC offset, produced when the signal is too separated from the center (0) in the waveform graph (in reaper, for example, applying a HPF of 20 Hz is enough to fix this probelm.
+	LeakDC.ar(resonators) !2 //LeakDC is a filter commonly used after applying comb filters. It is a high pass filter which avoids the DC offset, produced when the signal is too separated from the center (0) in the waveform graph (in reaper, for example, applying a HPF of 20 Hz is enough to fix this problem).
 
 }.play
 )
@@ -112,7 +112,7 @@ SynthDef(
 	{| out, freq, dur, amp |
 		var signal, env;
 
-		signal = Pan2.ar(Saw.ar(freq), Rand(-1, 1));
+		signal = Pan2.ar(Saw.ar(freq), Rand(-1, 1)); //Remember to use the UGen version of random processes in order to keep the variation within the SynthDef (rrand becomes Rand).
 
 		env = EnvGen.ar(
 			Env.perc(0.005, dur, amp),
@@ -136,7 +136,7 @@ SynthDef(
 					1/2900, //The maxdelaytime here is the lowest number because of the inversion (1/2900 is bigger than 1/3100), hence this is the longest delaytime.
 					1/({ LFDNoise3.ar(0.1, 100, 3000) } !10), //New delaytime value each 10 seconds between 2900 and 3100 Hz of resonant freq.
 					-1 //Decaytime =  -1 --> only the odd overtones will resonate an octave below (try out the positive and negative value to see which timbre suits you better).
-				).clump(2) //The Mix of the comb filters here would kill the Pan2 used above for the sawtooth waves. Clump(2) will divide the union of the 10 comb filters into a single channel provoked by the Mix (a single array) into arrays of two elements within the bigger array. This will bring about a two-channel signal adding odd with odd and even with even, hence keeping the panning above as if the Mix was not there.
+				).clump(2) //TRICK: The Mix of the comb filters here would kill the Pan2 used above for the sawtooth waves. Clump(2) will divide the union of the 10 comb filters into a single channel provoked by the Mix (a single array) into arrays of two elements within the bigger array. This will bring about a two-channel signal adding odd with odd and even with even, hence keeping the panning above as if the Mix was not there.
 		));
 
 		Out.ar(0, signal)
@@ -158,7 +158,7 @@ Routine({
 			\dur, exprand(0.001, 0.125),
 			\amp, exprand(0.05, 0.3)
 		],
-		s, \addToHead); //Sent to the head of the default group (addToHead by default here).
+		s, \addToHead); //Sent to the head of the default group (addToHead by default here, no need to write it downs).
 
 		exprand(0.05, 1.0).wait
 	})
@@ -166,7 +166,7 @@ Routine({
 }).play
 )
 
-//Here is another example. Using the envelope within the SinOsc freq we can create melodies (the first value is repeated because the \step curve will skip it):
+//Here is another example. Using the envelope within the SinOsc freq we can create melodies (the first value is repeated because the \step curve will skip it). The Comb filter is NOT used as a resonator in here:
 (
 {
 	var signal, comb;
@@ -174,7 +174,7 @@ Routine({
 	signal = SinOsc.ar(
 		EnvGen.ar(
 			Env([60, 60, 64, 67, 62, 66, 69] + 12, 0.5, \step).circle
-		).midicps, //.midicps outside the parenthesis: if the curve was not a \step, the gliss between the pitches would be done between midi numbers, keeping the balance between high and low frequencies. s
+		).midicps, //.midicps outside the parenthesis: if the curve was not a \step, the gliss between the pitches would be done between midi numbers, keeping the balance between high and low frequencies.
 		0,
 		0.1);
 
