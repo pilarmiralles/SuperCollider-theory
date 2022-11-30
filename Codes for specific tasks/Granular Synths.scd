@@ -183,7 +183,7 @@ Routine(
 //Latch distortion for audio samples:
 
 //Better result if something without a constant rhythm is used (maybe for advertisements, speeches, etc.) --> MAINLY FOR VOICE!
-b = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/SPECIFIC CODES/!For granular examples.wav")
+b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/SPECIFIC CODES/!For granular examples.wav")
 
 (//Granular synthesis with Schroeder and Latch (digital distortion):
 SynthDef(
@@ -233,7 +233,7 @@ SynthDef(
 
 (
 Routine ({
-	var durBuffer, durGrain, position, speed = 1, superposition, latch = 12000;
+	var durBuffer, durGrain, position, speed = 1, latch = 12000;
 
 	durBuffer = b.duration;
 	position = 0;
@@ -245,8 +245,7 @@ Routine ({
 	inf.do({
 
 		durGrain = rrand(4.0, 7);
-		superposition = rrand(1, 3);
-		position = (rrand(0, durBuffer - durGrain)) / superposition;
+		position = (rrand(0, durBuffer - durGrain));
 
 		s.bind({
 			Synth(
@@ -311,7 +310,7 @@ SynthDef(
 
 (
 Routine ({
-	var buffer, durBuffer, durGrain, position, speed = 1, superposition;
+	var buffer, durBuffer, durGrain, position, speed = 1;
 
 	position = 0;
 
@@ -324,8 +323,7 @@ Routine ({
 		durBuffer = buffer.duration;
 
 		durGrain = rrand(3.5, 7);
-		superposition = rrand(2, 3);
-		position = (rrand(0, durBuffer - durGrain)) / superposition;
+		position = (rrand(0, durBuffer - durGrain));
 
 		if(buffer == c, {amp = 2.5}, {amp = 0.6});
 
@@ -465,7 +463,7 @@ SynthDef(
 
 (
 Routine ({
-	var durBuffer, durGrain, position, speed = 1, buffer; //No superposition.
+	var durBuffer, durGrain, position, speed = 1, buffer;
 
 	position = 0;
 
