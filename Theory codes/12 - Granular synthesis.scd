@@ -1,4 +1,4 @@
-//12 - GRANULAR SYNTHESIS
+b//12 - GRANULAR SYNTHESIS
 //////////////////////////////
 
 //The objective here is to create our own granulators instead of using the UGens already prepared for such a purpose. The advantage of this is to be able to control every single parameter, being conscious of the background process.
@@ -98,20 +98,20 @@ Routine ({
 //When the audio file within the buffer is already stereo, using Pan.ar is not necessary to obtain sound through both channels. On the other hand, if the panning needs to be applied to a stereo signal, we have to take only one of the signals of the array. Using signal = signal[0] after the Playbuf is enough to obtain a mono signal to be distributed.
 //Other variants include using several buffers and creating a variable which randomly chooses among them (remember that all arguments dependant on the buffer should be now dependant on that variable, for example, the bufnum).
 
-//Next example includes superposition and its objective is to playthe grains in chronological order:
+//Next example includes superposition and its objective is to play the grains in chronological order:
 (
 Routine ({
-	var durBuffer, durGrain, position, rate = 1, superposition; //Falta por averiguar qué sería el tiempo de espera, pero al menosya suena.
+	var durBuffer, durGrain, position, rate = 1, superposition;
 
 	durBuffer = b.duration;
 	position = 0;
-	rate = [1, 0.5, 0.25, 2, 0.25, 2.6, 3.2]; //Array of different rate values.
+	rate = [1, 0.5, 0.25, 2, 0.25, 2.6, 3.2, 3.5]; //Array of different rate values --> Without the rate, the routine would create a loop without moving through the sample because the position is actually a fixed number! (unless the durGrain is variable). Then here is it actually just reading each time from the beginning and reaching until the rate allows it to do so? (that would explain why there is a perfect sort of loop according to the array of rates).
 
 	inf.do({ | i |
 
 		i.postln;
 		durGrain = 1; //The duration could be randomized.
-		superposition = 3; //This avoids noticing the gap between grains: now the position and the wait time will be 3 times shorter than the duration of the grain, so there will be 3 grains where only 1 was expected.
+		superposition = 5; //This avoids noticing the gap between grains: now the position and the wait time will be 3 times shorter than the duration of the grain, so there will be 3 grains when only 1 was expected.
 		position = durGrain / superposition;
 
 		s.bind({
@@ -138,10 +138,10 @@ Routine ({
 //SOLUTIONS TO DIFFERENT ISSUES (GRANULAR SYNTHESIS):
 //Let's prepare a longer buffer to try out the different examples:
 
-b = Buffer.read(s, "F:/DOCUMENTOS/1 SIBELIUS 2021-22/SC y Compo Electro/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/12 - Audio example 1 for granular.wav")
+b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/12 - Audio example 1 for granular.wav")
 b.numChannels //Stereo signal.
 
-//This first one is an example of using a stereo signal with panning (taking just one of the sides of the stereo array). Then, there is superposition as well, but the position is random, unlike the former example:
+//This first one is an example of using a stereo signal with panning (taking just one of the sides of the stereo array). The position is random, unlike the former example:
 (
 SynthDef(
 	\stereoGrain,
@@ -161,15 +161,14 @@ SynthDef(
 
 (
 Routine ({
-	var durBuffer, durGrain, position, rate = 1, superposition;
+	var durBuffer, durGrain, position, rate = 1;
 
 	durBuffer = b.duration;
 
 	inf.do({
 
-		durGrain = rrand(1.0, 5);
-		superposition = 3;
-		position = rrand(0, durBuffer - durGrain) / superposition;
+		durGrain = rrand(3.0, 5);
+		position = rrand(0, durBuffer - durGrain); //As the position is completely random here, there is no reason for applying superposition. The overlapping is implied by the exess of grain duration in comparison with the wait time.
 
 		s.bind({
 		Synth(
@@ -189,8 +188,8 @@ Routine ({
 
 //Applying reverb and other processes on top of our original signal (after granulating it) --> For instance, reverb (other options are a filter, distortion, any modulation that would affect all grains at the same time, etc.): we have to connect the out of our original signal to a private channel, which will be taken by the second SeynthDef (which will apply the process). Here also using two different buffers randomly chosen:
 (
-b = Buffer.read(s, "F:/DOCUMENTOS/1 SIBELIUS 2021-22/SC y Compo Electro/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/12 - Audio example 1 for granular.wav");
-c = Buffer.read(s, "F:/DOCUMENTOS/1 SIBELIUS 2021-22/SC y Compo Electro/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/12 - Audio example 2 for granular.wav")
+b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/12 - Audio example 1 for granular.wav");
+c = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/12 - Audio example 2 for granular.wav")
 )
 
 ( //The result with this two audio files is sooo weird XD. I saved a recorded excerpt in the folder of examples.
@@ -220,7 +219,7 @@ SynthDef(
 
 (
 Routine ({
-	var durBuffer, durGrain, position, rate = 1, superposition, buffer;
+	var durBuffer, durGrain, position, rate = 1, buffer;
 
 
 	position = 0;
@@ -231,8 +230,7 @@ Routine ({
 		buffer = [ b, c ].choose;
 		durBuffer = buffer.duration;
 		durGrain = 1;
-		superposition = 4;
-		position = (rrand(0, durBuffer - durGrain)) / superposition;
+		position = (rrand(0, durBuffer - durGrain));
 
 		s.bind({
 			Synth(
@@ -258,7 +256,7 @@ Routine ({
 
 //A similar example, applying a filter instead (just the second buffer):
 
-c = Buffer.read(s, "F:/DOCUMENTOS/1 SIBELIUS 2021-22/SC y Compo Electro/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/12 - Audio example 2 for granular.wav")
+c = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/12 - Audio example 2 for granular.wav")
 
 (
 SynthDef(
@@ -282,7 +280,7 @@ SynthDef(
 	{ arg in, rq, filterAmp;
 	 var input, signal, freqs;
 
-		freqs = Array.geom(6, 25.midicps, 2) ++ Array.geom(5, 29.midicps, 2) ++ Array.geom(5, 32.midicps, 2);
+		freqs = Array.geom(6, 27.midicps, 2) ++ Array.geom(5, 31.midicps, 2) ++ Array.geom(5, 34.midicps, 2); //Kind of creates a major chord by applying these freqs.
 
 		input = In.ar(in, 2);
 		signal = {Mix(
@@ -300,18 +298,17 @@ SynthDef(
 
 (
 Routine ({
-	var durBuffer, durGrain, position, rate = 1, superposition, buffer;
+	var durBuffer, durGrain, position, rate = 1, buffer;
 
 	position = 0;
 
-	Synth(\filter, [ \in, 6, \rq, 0.01, \filterAmp, 2 ]); //Try different values of RQ: 0.08 or 0.5, a bit rougher. 0.1 cleaner (but the narrower, the more amp is needed).
+	Synth(\filter, [ \in, 6, \rq, 0.01, \filterAmp, 2 ]); //Try different values of RQ: 0.08 or 0.5, a bit rougher. 0.01 cleaner (but the narrower, the more amp is needed).
 
 	inf.do({
 
 		durBuffer = c.duration;
 		durGrain = 1;
-		superposition = 25;
-		position = (rrand(0, durBuffer - durGrain)) / superposition;
+		position = (rrand(0, durBuffer - durGrain));
 
 		s.bind({
 			Synth(
@@ -320,7 +317,7 @@ Routine ({
 					\position, position * 44100,
 					\rate, 1,
 					\dur, durGrain,
-					\amp, 0.5,
+					\amp, 0.3,
 					\out, 6
 			]);
 		});
@@ -331,20 +328,15 @@ Routine ({
 }).play
 )
 
-//
-
-
-//Model of granular routine which follows the chronological development of the audio files (here mixing three possible buffers, but not needed):
+//Model of granular routine which follows the chronological development of the audio files (here mixing two possible buffers, but not needed):
 (
-b = Buffer.read(s, "file1");
-c = Buffer.read(s, "file2");
-d = Buffer.read(s, "file3")
+b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/12 - Audio example 1 for granular.wav");
+c = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/12 - Audio example 2 for granular.wav")
 )
 
 ( //Info:
 [b.duration, b.numChannels].postln;
 [c.duration, c.numChannels].postln;
-[d.duration, d.numChannels].postln;
 []
 )
 
@@ -393,14 +385,14 @@ SynthDef(
 
 (
 Routine ({
-	var durBuffer, durGrain, position, speed = 1, buffer, whichBuffer; //No superposition.
+	var durBuffer, durGrain, position, speed = 1, buffer, whichBuffer;
 
 
 	position = 0;
 
 	Synth(\reverb, [ \in, 4, \time, 0.5, \masterVolume, 1.2 ], s, 'addToTail');
 
-	position = Pseg((0, 1..(134 - 9)), 1.5, 'lin', inf).asStream.trace; //This is an envelope for the position so it is just going straight instead of jumping randomly (I calculated the buf duration - of the shortest buffer - and substracted the maximum duration of the grain (which is random).
+	position = Pseg((0, 1..(146 - 9)), 1.5, 'lin', inf).asStream.trace; //This is an envelope for the position so it is just going straight instead of jumping randomly (I calculated the buf duration - of the shortest buffer - and substracted the maximum duration of the grain (which is random).
 
 	buffer = Pwrand([b, c], [6, 3].normalizeSum, inf).asStream; //For now, without the third buffer.
 
@@ -411,8 +403,6 @@ Routine ({
 		durBuffer = whichBuffer.duration;
 		durGrain = (3, 3.5..8.5).wchoose((1, 2..12).normalizeSum); //If you wanna use longer or shorter grains, modify the wait time of the routine so the gaps between the entries are still the same (unless you also want each sound to be closer to next one, or even to overlap).
 		//position = (rrand(0, durBuffer - durGrain));
-
-
 
 		s.bind({
 			Synth(
@@ -443,7 +433,7 @@ Routine ({
 //PITCH-SHIFTING AND TIME-STRETCHING (USING GRANULAR SYNTHESIS):
 //We will use this basic granulator:
 
-c = Buffer.read(s, "F:/DOCUMENTOS/1 SIBELIUS 2021-22/SC y Compo Electro/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/12 - Audio example 2 for granular.wav")
+c = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/12 - Audio example 2 for granular.wav")
 
 (
 SynthDef(
@@ -597,60 +587,8 @@ Routine({
 )
 
 ///////////////////////////////////////////////////////////////////////////
-//SUMMARY: BASIC MODELS OF GRANULATORS (to be extended and modified):
+//SUMMARY: BASIC MODEL OF GRANULATOR (to be modified and extended):
 
-//GRANULATOR WITH SUPERPOSITION (for stereo files):
-b = Buffer.read(s, )
-
-(
-SynthDef(
-	\grain,
-	{ arg bufnum, position, speed, dur, amp = 0.5;
-		var signal, env;
-
-		signal = PlayBuf.ar(2, bufnum, speed, 1, position);
-
-		env = EnvGen.ar(
-			Env.sine(dur, amp),
-			doneAction: 2
-		);
-
-		OffsetOut.ar(0, signal * env)
-}).add
-)
-
-(
-Routine ({
-	var durBuffer, durGrain, position, speed = 1, superposition;
-
-	durBuffer = b.duration;
-	position = 0;
-
-	inf.do({
-
-		durGrain = 3;
-		superposition = 4;
-		position = (rrand(0, durBuffer - durGrain)) / superposition;
-
-		s.bind({
-			Synth(
-				\grain,
-				[
-					\bufnum, b.bufnum,
-					\position, position * 44100,
-					\speed, rrand(0.5, 2),
-					\dur, durGrain,
-					\amp, 0.5
-			]);
-		});
-		rrand(0.05, 0.1).wait
-
-	});
-}).play
-)
-
-
-//GRANULATOR WITHOUT SUPERPOSITION (for stereo files):
 b = Buffer.read(s, )
 
 (
