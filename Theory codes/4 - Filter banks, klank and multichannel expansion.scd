@@ -2,9 +2,9 @@
 ////////////////////////////////////////////////
 
 //CHANNELS: channels are arrays --> there are 128 audio channels by default and 4096 control channels by default (for example, for Midi control and so forth). A stereo signal is an array of two elements (two channels), and so forth.
-//By default, there are two channels out and two channels in, occupaying the four first indexes within the array of channels (0, 1 for out L-R; 2, 3 for in L-R). From index 4 onwards, the channels are free up to 128 (those are the indexes that we'll use, for instance, to send other signals via private channel).
+//By default, there are two channels out and two channels in, occupaying the four first indexes within the array of channels (0, 1 for out L-R; 2, 3 for in L-R). From index 4 onwards, the channels are free up to 127 (those are the indexes that we'll use, for instance, to send other signals via private channel).
 
-s.meter //Shows the in /out channels and their level (volume), if evaluated without any signal in SC, it is possible that it shows what the microphone of the computer is chatching.
+s.meter //Shows the in /out channels and their level (volume), if evaluated without any signal in SC, it is possible that it shows what the microphone of the computer is capturing.
 
 s.scope //Shows the signal at the active channels (remember that .scope ALSO plays the audio).
 
@@ -31,7 +31,7 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 {
 	Mix(
 	SinOsc.ar(
-			Array.fill(100, { exprand (30, 8000)}), //We use exprand as a better option than rrand when working with frequencies due to the exponential distribution of them (otherwise, the high spectrum would be too present, not balanced, because it occupies a large amount of numbers, linearly).
+			Array.fill(100, { exprand (30, 8000)}), //We use exprand as a better option than rrand when working with frequencies due to the natural exponential distribution of them (otherwise, the high spectrum would be too present, not balanced, because it occupies a large amount of numbers, linearly).
 			0,
 			1/100 //This is already really loud, 1/200 would be a mul of 0.5 for the total.
 	))
@@ -80,6 +80,7 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 	var noise;
 
 	noise = LFDNoise3.ar(1, 1000, 1030);
+
 	[
 	RLPF.ar(Saw.ar(100, 0.05), noise, 0.005),
 	RLPF.ar(Saw.ar(250, 0.05), noise, 0.005)
@@ -131,7 +132,7 @@ Mix(
 )
 
 //USE OF PAN2.AR:
-//Pan2 is a panner for mono signals. Its arguments are in, pos and level: "in" has to be a mono signal / "pos" indicate the position from -1 (Left) to 0 (center) to 1 /right) / "level" is similar to mul, it is not necessary to change it normaly.
+//Pan2 is a panner for mono signals. Its arguments are in, pos and level: "in" has to be a mono signal / "pos" indicate the position from -1 (Left) to 0 (center) to 1 /right) / "level" is similar to mul, it is not necessary to change it normaly (if the signal in is already balanced).
 
 {Pan2.ar(PinkNoise.ar(0.1), SinOsc.ar(1, 0, 1))}.play //Here an example of the use of Pan2: The "in" is a Pink Noise and its position is modulated by a sine wave --> Try to change the frequency of the sine wave (the speed of the modulation).
 
@@ -317,7 +318,7 @@ s.scope
 		BPF.ar(
 			BrownNoise.ar, //The BrownNoise is common to all BPF.
 			f = Array.geom(5, 440, 3/2) * freqDeviation, //All frequencies in the array are multiplied by the freq deviation.
-			0.05/f, //The RQ value is adapted to each of the frequencies.
+			0.05/f, //The RQ value is adapted to each of the resultant frequencies.
 			[24, 30].dbamp //There are two amplitudes in dB.
 		)
 	)
@@ -386,16 +387,16 @@ s.scope
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //FILTER BANKS:
-//We can use the multichannel expansion to create banks of filters based on specific intervals. We use Arry.geom for this:
+//We can use the multichannel expansion to create banks of filters based on specific intervals. We use Array.geom for this:
 
-//In this case, the fundamental frequency (start) is 30 Hz. Then we should take care of the top frequency of the filter not to surpass the 15000 Hz more or less.  The grow argument of the Array.geom determines the interval using ratios of the overtone numbers in the case of Pitagoric or natural temperament (for example, here using 5ths, the number of overtones in the overtone series creating a fifth are 3 and 2: 3/2 in the grow will create fifths. Inverting the ratio, using 2/3 will create a series of fifths but downwards - take into consideration the start freq, which should be higher then and not reaching a freq lower than 30-50Hz). We use a BPF to filter a PinkNoise in this case. The RQ of the filter has to be narrow in order to hear the frequencies. The narrower the filter is, the more mul (amplitude) it needs. Last but not least, the Mix allows us to create 16 BPF (due to the freq array) mixed through a single channel (and here, mono-duplicated due to the !2 and no use of {}):
+//In this case, the fundamental frequency (start) is 30 Hz. Then we should take care of the top frequency of the filter not to surpass the 15000 Hz more or less.  The grow argument of the Array.geom determines the interval using ratios of the overtone numbers in the case of Pitagoric or natural temperament (for example, here using 5ths, the number of overtones in the overtone series creating a fifth are 3 and 2: 3/2 in the grow will create fifths. Inverting the ratio, using 2/3 will create a series of fifths but downwards - take into consideration the start freq, which should be higher then and not reaching a freq lower than 30-50Hz). We use a BPF to filter a PinkNoise in this case. The RQ of the filter has to be narrow in order to hear the frequencies. The narrower the filter is, the more mul (amplitude) it needs (even over 1). Last but not least, the Mix allows us to create 16 BPF (due to the freq array) mixed through a single channel (and here, mono-duplicated due to the !2 and no use of {}):
 
 (
 {
 	Mix(
 		BPF.ar(
 			PinkNoise.ar,
-			Array.geom(16, 30, 1.5),
+			Array.geom(16, 30, 1.5), //1.5 = 3/2 = ascending fifths.
 			0.001,
 			7)
 	)!2
@@ -417,11 +418,11 @@ s.scope
 }.play
 )
 
-//Some reminder of pitagoric relationships:
+//Some reminder of pitagoric relationships (the intervals are not exact, especially those that are not P5hts, 4ths or the 8ve):
 /*
 (Here, ascending intervals --> invert the ratio to get the descending version):
 Unison --> 1
-min 2nd --> 16/17
+min 2nd --> 17/16
 maj 2nd --> 9/8
 min 3rd --> 6/5
 maj 3rd --> 5/4
@@ -435,7 +436,7 @@ perfect 8th --> 2
 (Remember that a division is expensive for the processing of the program: it is better to express these rations in floats whenever possible).
 */
 
-//Method .midiratio (and .ratiomidi), turns an interval calculated in number of semitones into an interval ratio, but in this case, the temperament is equal (sometimes, the little tunning deviations from the Pitagoric temperament could be interesting, and in other cases, the equal temperament could be more convenient):
+//Method .midiratio (and .ratiomidi for opposite result), turns an interval calculated in number of semitones into an interval ratio, but in this case, the temperament is equal (sometimes, the little tunning deviations from the Pitagoric temperament could be interesting, and in other cases, the equal temperament could be more convenient, depends on your objectives):
 
 7.midiratio //Tempered fifths.
 
@@ -500,11 +501,11 @@ perfect 8th --> 2
 
 //Here, we create a filter bank using all intervals in order (m2nd, M2nd, m3rn, M3rd, P4th, etc. up to M7th), using the method .integrate (obtaining the distance in semitones of each further step in the scale, and converting it to interval ratios with .midiratio, and finally multiplying by the fundamental freq:
 
-( //Notice the use of Array.series intead of Array.geom (not working with Hz in the first moment, thus no need for an exponential series):s
+( //Notice the use of Array.series intead of Array.geom (not working with Hz in the first moment, thus no need for an exponential series):
 {
 	var freqs;
 
-	freqs = 35 * Array.series(12, 0, 1).integrate.midiratio; //Using -1 as the step, the series will be created downwards.
+	freqs = 35 * Array.series(12, 0, 1).integrate.midiratio; //Using -1 as the step, the series will be created downwards. The factor 35 is the fundamental frequency (multiplied by each interval ratio, it will give back each frequency of the series).
 
 	Mix(
 		BPF.ar(
@@ -614,7 +615,7 @@ perfect 8th --> 2
 )
 
 //Half tone chord from 35 Hz, up to six octaves:
-//We can check the last freq of the array using the method .last (do not put the method inside the filter code):
+//We can check the last freq of the array using the method .last (do not put the method inside the filter code, otherwise, wou'll get played just the last frequency of the array):
 Array.geom (72, 35, 1.midiratio).last
 
 (
@@ -672,7 +673,7 @@ Array.geom (72, 35, 1.midiratio).last
 ////////////////////////////////////////////////////////////////////////
 //A reminder about the conversion between midi and Hz:
 
-//.midicps inside the LFDNoise (converting to Hz before the random distribution is applied) --> Exponential distribution, higher frequencies more likely.
+//.midicps inside the LFDNoise (converting to Hz before the random distribution is applied) --> Uniform distribution of exponential values, higher frequencies more likely.
 (
 {
 	Mix(
@@ -683,7 +684,7 @@ Array.geom (72, 35, 1.midiratio).last
 ) !2}.play
 )
 
-//.midicps outside the LFDNoise (converting to Hz after the random distribution is applied) --> Linear distribution, broader range, all frequencies equally likely.
+//.midicps outside the LFDNoise (converting to Hz after the random distribution is applied) --> Uniform distribution of linear values, broader range, all frequencies equally likely.
 (
 {
 	Mix(
@@ -697,11 +698,11 @@ Array.geom (72, 35, 1.midiratio).last
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //KLANK UGEN: BANK OF RINGZ FILTERS:
 
-{Ringz.ar(Impulse.ar(0.5), 1000, 1, 0.1)}.play  //A single Ringz filtrating an Impulse with a frequency of 1000 Hz and 1 second of delay time (the frequency - speed - of the impulse is 1 each 2 second).
+{Ringz.ar(Impulse.ar(0.5), 1000, 1, 0.1)}.play  //A single Ringz filtering an Impulse with a frequency of 1000 Hz and 1 second of delay time (the frequency - speed - of the impulse is 1 each 2 second).
 
-//Klank is a bunch of Ringz filters mixed together. Its main argument is "specificationsArrayRef", which is a reference of an array of specifications. Those specifications are (in this order): frequencies, amplitudes and decay times. An array of values (or single value) is indicated for each one of the parameters, which will be the parameters of the Ringz filters inside Klank.
+//Klank is a bunch of Ringz filters mixed together. Its main argument is "specificationsArrayRef", which is a reference of an array of specifications. Those specifications are (in this order): frequencies, amplitudes and decay times. An array of values (or single value) is indicated for each one of the parameters, which will be the parameters of the Ringz filters inside Klank (and chosen randomly).
 
-`[ //The little accent at the beginning of the array is the "reference". We need this to avoid the multichannel expansion that would result from this.
+`[ //The little accent at the beginning of the array is the "reference". We need this to avoid the multichannel expansion that would result from the arrays (so it is just one array of values and not one arrays of arrays).
 	Array of freqs, //Should we want the same freq / amp / decay time for all Ringz, use just a single number in the argument instead of an array.
 	Array of amps,
 	Array of decay times
@@ -728,7 +729,7 @@ Array.geom (72, 35, 1.midiratio).last
 		`[
 					[178.4, 570.3, 7384, 605, 356.9, 1150.6, 14768, 1210],
 					1,
-					[0.002, 0.012, 0.018, 0.013, 0.002, 0.012, 0.018, 0.013] //Different decay time for each frequency. s
+					[0.002, 0.012, 0.018, 0.013, 0.002, 0.012, 0.018, 0.013] //Different decay time for each frequency.
 				],
 				{PinkNoise.ar(0.01)} !2
 	)}.play
@@ -758,7 +759,7 @@ Array.geom (72, 35, 1.midiratio).last
 	)}.play
 )
 
-//Using Array.fill to produce random freqs and decay times (instead of writing them by hand):
+//Using Array.fill to produce random freqs and decay times (instead of writing the specific list of values):
 (
 {
 	Klank.ar(
