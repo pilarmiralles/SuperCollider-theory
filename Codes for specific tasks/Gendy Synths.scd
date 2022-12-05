@@ -4,8 +4,6 @@
 //The theory I gathered when I started using Gendy3:
 
 //TESTING THE UGEN GENDY3:
-//Before that, just checking Gendy 3 (Sergio Luque is a lil bit reluctant to Gendy 1 and 2):
-//Comments by Sergio Luque from his last email: "No estoy seguro de si es prudente decirte lo siguiente, pero bueno… Si no logras entender del todo las UGens Gendy1 y Gendy2, no te preocupes. El archivo de ayuda deja muchas dudas – no sé si ha cambiado. Yo recuerdo que mi conclusión sobre esas UGens era que Nick Collins decidió – no sé por qué – no dejar que se controlaran algunos parámetros que debía haber dejado que se controlaran a través de argumentos. Yo nunca logré sacarles sonidos lo suficientemente buenos como para usar en una pieza, aunque alumnos míos han hecho sonidos a partir de esas UGens, filtradas o resonadas... También recuerdo que en un simposio sobre Xenakis, yo estaba sentado junto a Nick mientras él revisaba sus UGens y me comentó que había encontrado un error, pero eso fue alrededor del 2011 y esas UGens llevan en SC desde, al menos, 2005. De esas UGens, la que yo sí he podido utilizar en una pieza es Gendy3, que es una variación que hizo Nick de la técnica de Xenakis".
 
 //Arguments from the help file:
 /*
