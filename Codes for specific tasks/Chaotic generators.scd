@@ -1,5 +1,5 @@
-//Chaotic generators (from ChaosGen, implementations file):
-//////////////////////////////////////////////////////////////
+//Chaotic generators (from ChaosGen, implementations file): Not my grammar until line 168:
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
 Non-linear Dynamic Sound Generators
@@ -112,7 +112,7 @@ LorenzL : ChaosGen {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-//Experimentos con Feedback:
+//Experiments using Feedback:
 
 //FBSineC: Arguments: freq (Iteration frequency in Hertz), im (Index multiplier amount), fb	(Feedback amount), a (Phase multiplier amount), c Phase increment amount), xi	(Initial value of x), yi (Initial value of y). THESE EXAMPLES ARE FROM THE HELP FILE:
 
@@ -453,7 +453,7 @@ Tdef(
 }.play
 )
 
-//Synthdef con esto:
+//Synthdef out of it:
 
 (
 SynthDef(
