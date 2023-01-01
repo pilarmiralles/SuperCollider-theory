@@ -112,7 +112,7 @@ Pan2.ar(SinOsc.ar(Gendy3.ar(6.rand,6.rand,SinOsc.kr(0.1,0,0.49,0.51),SinOsc.kr(0
 )
 
 /////////////////////////////////////
-//NOW THE CODES:
+//MY OWN IMPLEMENTATIONS:
 
 //The original bagpipes code:
 (
@@ -120,7 +120,7 @@ Pan2.ar(SinOsc.ar(Gendy3.ar(6.rand,6.rand,SinOsc.kr(0.1,0,0.49,0.51),SinOsc.kr(0
 	Pan2.ar(
 		Mix(
 			Gendy3.ar(
-				ampdist: 5.2,
+				ampdist: 5,
 				durdist: 3.9, //Increasing this number makes the sound a bit rougher (4.5), it definitely changes the timbre (at 1.5 seemed to have a flanger or something like that) / between 3 and 4 seems to have a milder timbre.
 				adparam: 1.0, //This can be between 0.0001 and 1.0. Changing it to this value (0.001), the "tremolo" is almost gone.
 				ddparam: 1.0, //If it is below 1 (between the former range), it sounds really unstable. Better to leave this one.
@@ -128,7 +128,7 @@ Pan2.ar(SinOsc.ar(Gendy3.ar(6.rand,6.rand,SinOsc.kr(0.1,0,0.49,0.51),SinOsc.kr(0
 				ampscale: 0.03, //Freq. of the tremolo (0.01 slow - 0.1 fast), original = 0.091.
 				durscale: 0.005, //This coming closer to 1 makes the sound more damaged, and around 0.1 creates clear sound (there is not much defference below 0.1 anymore).
 				initCPs: 12, //This shouldn't be changed.
-				knum: LFDNoise3.ar(0.5, 5.5, 9.5),
+				knum: 12, //This should always coincide with the initCPs value (although, according to the help file "it allows modulation").
 				mul: Array.geom(10, 0.2, 0.85)) //Applied to each frequency.
 		) * 0.7,
 		LFDNoise3.ar(1/7, 0.4, 0.0) //Random pan.
@@ -143,7 +143,7 @@ Pan2.ar(SinOsc.ar(Gendy3.ar(6.rand,6.rand,SinOsc.kr(0.1,0,0.49,0.51),SinOsc.kr(0
 	Pan2.ar(
 		Mix(
 			Gendy3.ar(
-				ampdist: 5.2,
+				ampdist: 5,
 				durdist: 3.9,
 				adparam: 1.0,
 				ddparam: 1.0,
@@ -151,7 +151,7 @@ Pan2.ar(SinOsc.ar(Gendy3.ar(6.rand,6.rand,SinOsc.kr(0.1,0,0.49,0.51),SinOsc.kr(0
 				ampscale: 0.031, //Freq. of the tremolo (0.01 slow - 0.1 fast)
 				durscale: 0.005,
 				initCPs: 12,
-				knum: LFDNoise3.ar(0.5, 5.5, 9.5),
+				knum: 12,
 				mul: Array.geom(8, 0.2, 0.85)) //Applied to each frequency.
 		) * 0.5,
 		0.0)
@@ -178,7 +178,7 @@ SynthDef(
 					ampscale: trem,
 					durscale: 0.005,
 					initCPs: 12,
-					knum: LFDNoise3.ar(0.5, 4.5, 7.5),
+					knum: 12,
 					mul: Array.geom(8, 0.2, 0.85)) //Match the number of freqs with the size of this array!
 			) * mul,
 			0.0);
@@ -255,7 +255,7 @@ SynthDef(
 					ampscale: 0.021, //Pace of the "tremolo" (0.01 slow - 0.1 fast)
 					durscale: 0.005, //Closer to 1.0 = rougher.
 					initCPs: 12,
-					knum: LFDNoise3.ar(0.1, 4.5, 9.5),
+					knum: 12,
 					mul: Array.geom(10, mulGendy, 0.85))
 			) * 0.3
 		} !2;
@@ -410,7 +410,7 @@ SynthDef(
 		combInput = {
 			Mix(
 				Gendy3.ar(
-					ampdist: 5.4,
+					ampdist: 5,
 					durdist: 1.6,
 					adparam: 1.0,
 					ddparam: 1.0,
@@ -418,7 +418,7 @@ SynthDef(
 					ampscale: 0.021, //Pace of the "tremolo" -----> Ramdomize it as well?
 					durscale: 0.005,
 					initCPs: 12,
-					knum: LFDNoise3.ar(0.1, 4.5, 9.5),
+					knum: 12,
 					mul: Array.geom(3, mulGendy, 0.75))
 			) * 0.3
 		} !2;
