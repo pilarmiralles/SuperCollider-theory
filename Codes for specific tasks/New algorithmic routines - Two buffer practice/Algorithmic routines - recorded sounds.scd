@@ -4,8 +4,8 @@
 //SCHNITTKE + BACH (Improvements notated in code from line 80 + SECOND STAGE with added buffers after it - coming soon):
 
 (
-b = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/SPECIFIC CODES/New algorithmic routines - with recorded sounds/Schnittke - Choir Concert.wav");
-c = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/SPECIFIC CODES/New algorithmic routines - with recorded sounds/Bach - Gm sonata.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Schnittke - Choir Concert.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Bach - Gm sonata.wav")
 )
 //Two channels / Approx. 235 seconds of duration.
 
