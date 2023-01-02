@@ -2,23 +2,23 @@
 /////////////////////////////////////
 
 //Distortion, pitch modulation and delay between synths:
-b = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/SPECIFIC CODES/!For granular examples.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav")
 b.numChannels
 b.duration
 
 (
 SynthDef(
-	\grano,
-	{ arg out, bufnum, posicion, velocidad, dur, amp = 0.1, pan = 0, latch = 12000;
-		var senal, env;
+	\grain,
+	{ arg out, bufnum, position, rate, dur, amp = 0.1, pan = 0, latch = 12000;
+		var signal, env;
 
-		senal = Latch.ar(PlayBuf.ar(2, bufnum, velocidad, 1, posicion), Impulse.ar(latch));
-		senal = senal[0];
-		senal = Pan2.ar(senal, pan);
+		signal = Latch.ar(PlayBuf.ar(2, bufnum, rate, 1, position), Impulse.ar(latch));
+		signal = signal[0];
+		signal = Pan2.ar(signal, pan);
 
 		env = EnvGen.ar(Env.sine(dur, amp), doneAction: 2);
 
-		OffsetOut.ar(out, senal * env)
+		OffsetOut.ar(out, signal * env)
 }).add;
 SynthDef(
 	\reverb,
@@ -53,58 +53,58 @@ SynthDef(
 
 (
 Routine({
-	var durBuffer, durGrano, posicion = 0, velocidad, tiempoEspera, superposicion, stretch;
+	var durBuffer, durGrain, position = 0, rate, waitTime, superposition, stretch;
 
 	Synth(\reverb, [ \in, 4, \time, 2.2 ], s, \addToTail);
 
 	durBuffer = b.duration;
-	tiempoEspera = 0.02;
-	superposicion = 4;
-	durGrano = tiempoEspera * superposicion;
+	waitTime = 0.02;
+	superposition = 4;
+	durGrain = waitTime * superposition;
 	stretch = 0.5;
-	velocidad = 1.5;
+	rate = 1.5;
 
 	inf.do({
-		posicion = (posicion + (tiempoEspera/stretch)) % durBuffer;
+		position = (position + (waitTime/stretch)) % durBuffer;
 		s.bind({
-			Synth(\grano,
+			Synth(\grain,
 				[
 					\bufnum, b.bufnum,
-					\dur, durGrano,
-					\velocidad, velocidad,
+					\dur, durGrain,
+					\rate, rate,
 					\out, 4,
 					\pan, 0,
 					\latch, 16000,
-					\posicion, posicion * 44100
+					\position, position * 44100
 			],
 				s, 'addToHead'
 			);
-			Synth(\grano,
+			Synth(\grain,
 				[
 					\bufnum, b.bufnum,
-					\dur, durGrano,
-					\velocidad, velocidad * 5.midiratio,
+					\dur, durGrain,
+					\rate, rate * 5.midiratio,
 					\out, 4,
 					\pan, -0.8,
 					\latch, 10000,
-					\posicion, (posicion + 0.2) * 44100
+					\position, (position + 0.2) * 44100
 			],
 				s, 'addToHead'
 			);
-			Synth(\grano,
+			Synth(\grain,
 				[
 					\bufnum, b.bufnum,
-					\dur, durGrano,
-					\velocidad, velocidad * 10.midiratio,
+					\dur, durGrain,
+					\rate, rate * 10.midiratio,
 					\out, 4,
 					\pan, 0.8,
 					\latch, 6000,
-					\posicion, (posicion + 0.5) * 44100
+					\position, (position + 0.5) * 44100
 			],
 				s, 'addToHead'
 			);
 		});
-		(tiempoEspera * rrand(0.975, 1.025)).wait;
+		(waitTime * rrand(0.975, 1.025)).wait;
 	});
 }).play
 )
@@ -183,22 +183,22 @@ Routine(
 //Latch distortion for audio samples:
 
 //Better result if something without a constant rhythm is used (maybe for advertisements, speeches, etc.) --> MAINLY FOR VOICE!
-b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/SPECIFIC CODES/!For granular examples.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav")
 
-(//Granular synthesis with Schroeder and Latch (digital distortion):
+(
 SynthDef(
 	\grain,
-	{ arg out, bufnum, posicion, velocidad, dur, pan, amp = 0.1, latch = 12000;
-		var senal, env;
+	{ arg out, bufnum, position, rate, dur, pan, amp = 0.1, latch = 12000;
+		var signal, env;
 
-		senal = Latch.ar(PlayBuf.ar(2, bufnum, velocidad, 1, posicion), Impulse.ar(latch));
-		senal = senal[0];
-		senal = Pan2.ar(senal, pan);
+		signal = Latch.ar(PlayBuf.ar(2, bufnum, rate, 1, position), Impulse.ar(latch));
+		signal = signal[0];
+		signal = Pan2.ar(signal, pan);
 		env = EnvGen.ar(
 			Env.sine(dur, amp),
 			doneAction: 2
 		);
-		OffsetOut.ar(out, senal * env)
+		OffsetOut.ar(out, signal * env)
 }).add;
 SynthDef(
 	\reverb,
@@ -245,18 +245,18 @@ Routine ({
 	inf.do({
 
 		durGrain = rrand(4.0, 7);
-		position = (rrand(0, durBuffer - durGrain));
+		position = (rrand(100, durBuffer - durGrain)); //Trying to catch the sang part only to apply on the voice.
 
 		s.bind({
 			Synth(
 				\grain,
 				[
 					\bufnum, b.bufnum,
-					\posicion, position * 44100,
-					\velocidad, rrand(0.8, 1),
+					\position, position * 44100,
+					\rate, rrand(0.8, 1),
 					\dur, durGrain,
-					\amp, 0.8,
-					\pan, rrand(-1.0, 1.0),
+					\amp, 0.3,
+					\pan, rrand(-0.8, 0.8),
 					\out, 4,
 					\latch, latch.next
 
@@ -277,8 +277,8 @@ Routine ({
 
 //BASIC "GRANULATOR" (to alternate two buffers, or more):
 (
-b = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/12 - Audio example 1 for granular.wav");
-c = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/12 - Audio example 2 for granular.wav");
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples 2.wav");
 )
 
 (
@@ -325,7 +325,7 @@ Routine ({
 		durGrain = rrand(3.5, 7);
 		position = (rrand(0, durBuffer - durGrain));
 
-		if(buffer == c, {amp = 2.5}, {amp = 0.6});
+		if(buffer == c, {amp = 1.5}, {amp = 0.8});
 
 		s.bind({
 			Synth(
@@ -333,7 +333,7 @@ Routine ({
 				[
 					\bufnum, buffer.bufnum,
 					\position, position * 44100,
-					\speed, [ 1, 1.35, 1.5, 2 ].choose, //Rate * 4.midiratio (Meaning the number of half tones of the interval).
+					\speed, [ 1, 1.35, 1.5, 2 ].choose, //Rate (1) * 4.midiratio (Meaning the number of half tones of the interval), if specific interval needed.
 					\dur, durGrain,
 					\amp, amp,
 					\out, 4
@@ -352,19 +352,19 @@ Routine ({
 
 ///////////////////////////////////////////////////////////////
 
-//Very damaged (quite good):
-c = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/SPECIFIC CODES/!For granular examples.wav")
+//Very damaged (quite good, adjust clip according to the amp of the specific sample):
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav")
 c.numChannels
 
 (
 SynthDef(
-	\grano,
-	{ arg out = 4, bufnum, posicion, velocidad, dur, amp = 0.1;
-		var senal, env;
+	\grain,
+	{ arg out = 4, bufnum, position, rate, dur, amp = 0.1;
+		var signal, env;
 
-		senal = PlayBuf.ar(2, bufnum, velocidad, 1, posicion);
+		signal = PlayBuf.ar(2, bufnum, rate, 1, position);
 		env = EnvGen.ar(Env.sine(dur, amp), doneAction: 2);
-		OffsetOut.ar(out, senal * env)
+		OffsetOut.ar(out, signal * env)
 }).add;
 SynthDef(
 	\dsp,
@@ -381,34 +381,34 @@ SynthDef(
 
 (
 Routine({
-	var durBuffer, durGrano, posicion = 0, velocidad, tiempoEspera, tiempoEsperaDev, superposicion;
+	var durBuffer, durGrain, position = 0, rate, waitTime, waitTimeDev, superposition;
 
 	Synth(\dsp, [\in, 4, \clip, 0.05], s, 'addToTail');
 
 	durBuffer = c.duration;
-	superposicion = 4; //"Bad" sound (discontinuous) -> bad superposition (with 2 is perfect), but with 3 or 4 it's also very very interesting.
+	superposition = 4; //"Bad" sound (discontinuous, perforated) -> bad superposition (with 2 is perfect), but with 3 or 4 it's also very very interesting.
 
-	tiempoEsperaDev = Prand((0.01, 0.02..0.1), inf).asStream; //The problem was to include negative numbers.
+	waitTimeDev = Prand((0.01, 0.02..0.1), inf).asStream;
 
 	inf.do({
 
-		tiempoEspera = tiempoEsperaDev.next;
-		durGrano = tiempoEspera * superposicion;
-		posicion = (posicion + tiempoEspera) % durBuffer;
+		waitTime = waitTimeDev.next;
+		durGrain = waitTime * superposition;
+		position = (position + waitTime) % durBuffer;
 
 		s.bind({
-			Synth(\grano,
+			Synth(\grain,
 				[
 					\bufnum, c.bufnum,
-					\dur, durGrano,
-					\velocidad, 1,
-					\posicion, posicion * 44100,
+					\dur, durGrain,
+					\rate, 1,
+					\position, position * 44100,
 					\amp, 0.8
 			],
 				s, 'addToHead'
 			)
 		});
-		tiempoEspera.wait;
+		waitTime.wait;
 	});
 }).play
 )
@@ -416,7 +416,8 @@ Routine({
 //////////////////////////////////////////////////////////
 
 //Fading in and out randomly:
-c = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/SUPERCOLLIDER - My own codes 2022/SuperCollider - Pilar Miralles/SPECIFIC CODES/!For granular examples.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples 2.wav");
+c.duration
 
 (
 SynthDef(
@@ -469,7 +470,7 @@ Routine ({
 
 	Synth(\reverb, [ \in, 4, \time, 0.5 ], s, 'addToTail');
 
-	position = Pseg((0, 1..(192 - 9)), 1.5, 'lin', inf).asStream.trace; //This is an envelope for the position so it is just going straight instead of jumping randomly (I calculated the buf duration and substracted the maximum duration of the grain (which is random).
+	position = Pseg((0, 1..(261 - 9)), 1.5, 'lin', inf).asStream.trace; //This is an envelope for the position so it is just going straight instead of jumping randomly (I calculated the buf duration and substracted the maximum duration of the grain (which is random). Tracing position for testing only.
 
 	inf.do({
 
@@ -484,11 +485,11 @@ Routine ({
 				[
 					\bufnum, buffer,
 					\position, position.next * 44100,
-					\speed, (0.65, 0.7..1).wchoose((0.65, 0.7..1).normalizeSum),
+					\speed, (0.7, 0.8..1.4).wchoose((0.7, 0.8..1.4).normalizeSum),
 					\dur, durGrain,
-					\pan, rrand(-1.0, 1),
-					\amp, 0.5,
-					\out, 0 //I don't want to use the reverb right now.
+					\pan, rrand(-0.8, 0.8),
+					\amp, 0.8,
+					\out, 0 //No reverb now.
 
 			],
 				s, 'addToHead'
