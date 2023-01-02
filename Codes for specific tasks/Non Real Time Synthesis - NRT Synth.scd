@@ -114,7 +114,7 @@ x = Score([
 			sustainTime: exprand(3.5, 5.0), //Maybe better just rand? + BE CAREFUL WITH THE VOLUME AND DENSITY (since there is no density controlling the amps anymore).
 			]),
     ]);
-	time = time + exprand(5.0, 8.5) //THIS CREATES ROUGHLY 10 MINUTES OF MUSIC IN 4-5 seconds (+ maybe just rand as well?)
+	time = time + exprand(5.0, 8.5) //THIS CREATES ROUGHLY 10 MINUTES OF MUSIC IN 4-5 seconds (+ maybe just rand as well?) --> It does to desktop.
 };
 
  //[20.0, x.freeMsg] //Not needed.
