@@ -43,7 +43,7 @@ server.remove;
 )
 
 //Now it is a matter of adjusting the times (so it is actually "overlap"), and randomizing more parameters other than the times and the frequency, and finally enhancing the code (make it yours): for example, there are two different variables called "time" and that is confusing and dangerous + no doubts at all about what is in there + applying this code to other synths and routines (more complex ones), ALSO INCLUDING MORE INSTANCES n.do, that will be done whenever the first one is over:
-
+//Evaluate all the way from here:
 (
 var server = Server(\nrt,
     options: ServerOptions.new

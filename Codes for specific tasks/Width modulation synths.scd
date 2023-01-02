@@ -319,7 +319,7 @@ Routine({
 				\sustTime, sustTime,
 				\which, which.choose,
 				\density, density,
-				\masterVolume, 1.2,
+				\masterVolume, 0.8,
 				\freqInf1, freqInf1.choose,
 				\freqSup1, freqSup1.choose,
 				\mulNoise1, mulNoise1.choose,
@@ -342,7 +342,7 @@ Routine({
 
 /////////////////////////////////////////////////////////////////
 
-//Another routine: BUT GREAT PROBLEMS WITH CPU %!
+//Another routine: BUT GREAT PROBLEMS WITH CPU %! --> (again, maybe the Schroeder filter should be applied through another SynthDef "add to tail"):
 (
 SynthDef(
 	\overlapWidth,

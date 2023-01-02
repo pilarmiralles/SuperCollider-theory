@@ -28,11 +28,11 @@
 //Radio interferences:
 (
 {
-	var trigger, senal, env, finalSignal, masterVolume = 0.3;
+	var trigger, signal, env, finalSignal, masterVolume = 0.3;
 
 	trigger = Dust.ar(Array.fill(20, {rrand(3, 7)}));
 
-	senal = LFPulse.ar(
+	signal = LFPulse.ar(
 		Array.fill(20, {exprand(90, 300)}),
 		0,
 		LFDNoise0.ar(600, 0.3, 0.5),
@@ -41,7 +41,7 @@
 
 	env = EnvGen.ar(Env.perc(0.05, 0.05, 0.3), trigger);
 
-	finalSignal = {Mix(senal * env)} !2;
+	finalSignal = {Mix(signal * env)} !2;
 
 	finalSignal * masterVolume;
 

@@ -17,7 +17,7 @@
 //It works, but it is still very dissonant with respect to the original. It might need more work, but it works (maybe a different synthesis part, a different input, different values, etc.).
 //BEWARE THE CPU PERCENTAGE: especially dependent on the durEnv:
 
-b = Buffer.read(s, "F:/DOCUMENTOS/1 VERANO 2022/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/12 - Audio example 2 for granular.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav")
 
 ( //Pitch analysis SynthDef:
 SynthDef(
