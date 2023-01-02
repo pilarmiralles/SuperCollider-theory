@@ -1,7 +1,7 @@
 //GENDY SYNTHS
 /////////////////////////
 
-//The theory I gathered when I started using Gendy3:
+//The theory I gathered when I started using Gendy3 (own implementations from line 115, otherwise old grammar):
 
 //TESTING THE UGEN GENDY3:
 
@@ -136,8 +136,7 @@ Pan2.ar(SinOsc.ar(Gendy3.ar(6.rand,6.rand,SinOsc.kr(0.1,0,0.49,0.51),SinOsc.kr(0
 }.play
 )
 
-//Tender noise (gendy) -> based on E-B (and less detuned):
-
+//Tender noise (gendy):
 (
 {
 	Pan2.ar(
@@ -235,7 +234,7 @@ Routine(
 }).play
 )
 
-//Another option (newer?) - former one more "damaged":
+//Another option --> Broader beacuse former one was just mono-duplicated and this one is duplicated differently on each side:
 (
 SynthDef(
 	\overlapGendy,
@@ -275,10 +274,10 @@ SynthDef(
 }).add
 )
 
-( //You could increase the density + the number of possible notes (although it is okke like this) + vary the sus and trans times.
+( //You could increase the density + the number of possible notes (although it is okke like this) + vary the sus and trans times:
 Routine(
 	{
-		var density, transitionTime, sustainTime, freqGendyHigh, freqGendyLow; //It is stupid and does not allow me to randomize the fucking freq of the filter.
+		var density, transitionTime, sustainTime, freqGendyHigh, freqGendyLow;
 
 		density = 2;
 
@@ -287,9 +286,9 @@ Routine(
 
 		inf.do({ arg i;
 
-			if (i == 0, {freqGendyLow = 11}, {freqGendyLow = [11, 13, 14, 16, 18].wchoose([5, 3, 4, 2, 4].normalizeSum)}); //To get B the first always?
+			if (i == 0, {freqGendyLow = 11}, {freqGendyLow = [11, 13, 14, 16, 18].wchoose([5, 3, 4, 2, 4].normalizeSum)}); //To get B the first always.
 
-			//freqGendyLow = [11, 13, 14, 16, 18].wchoose([5, 3, 4, 2, 4].normalizeSum); //Linear bc it is midi still.
+			//freqGendyLow = [11, 13, 14, 16, 18].wchoose([5, 3, 4, 2, 4].normalizeSum);
 			freqGendyHigh = freqGendyLow + 7; //To get a perfect fifth.
 
 			Synth(\overlapGendy,
@@ -317,7 +316,7 @@ Routine(
 SynthDef(
 	\gendy3,
 	{
-		arg out = 4, freq = 24, gate = 1, amp = 0.1, crossTime, sustTime; //Default.
+		arg out = 4, freq = 24, gate = 1, amp = #[0, 0, 0, 0, 0], crossTime, sustTime; //Default (amp array with dummy values).
 		var signal, env, finalSignal, reverb;
 
 		signal = Pan2.ar(
@@ -363,7 +362,7 @@ SynthDef(
 Routine({
 	var sustTime, crossTime, freqs;
 
-	sustTime = Pn(Pstutter(3, Pshuf([1, 1, 2, 2, 4], 1)), inf).asStream; //Idk why I am repeating each element of the Pshuf 3 times, but well, it's kind of the same ratio of values.
+	sustTime = Pn(Pstutter(3, Pshuf([1, 1, 2, 2, 4], 1)), inf).asStream;
 	crossTime = 0.7;
 
 	freqs = [24, 26, 27, 29, 31, 32, 34, 36] - 5; //Minor scale.
@@ -381,7 +380,7 @@ Routine({
 				\crossTime, crossTime, //This is kind of the legato we had in the Pbind (unique crossFade time).
 				\sustTime, thisSustTime,
 				\out, 4,
-				\amp, [0.2, 0.2, 0.2, 0.6, 0.4] * 0.5,
+				\amp, [0.3, 0.2, 0.2, 0.6, 0.4] * 0.5, //Adjust number of values to the number of freqs and adapt the dummy amp array in the Synthdef as well.
 				//\amp, 0.3 * 0.8
 
 			],
@@ -405,7 +404,7 @@ SynthDef(
 
 		amps = ((density.log2 + 1) * -3.01).dbamp;
 
-		signal1 = Gendy3.ar(1, 2, 0.3, -0.7, 60, 0.03, 0.1, mul: 0.2 !2); //Now it is mono-duplicated.
+		signal1 = Gendy3.ar(1, 2, 0.3, -0.7, 60, 0.03, 0.1, mul: 0.2 !2);
 
 		combInput = {
 			Mix(
@@ -414,8 +413,8 @@ SynthDef(
 					durdist: 1.6,
 					adparam: 1.0,
 					ddparam: 1.0,
-					freq: Array.geom(3, freqGendyMidi.midicps, 2) * Array.fill(3, { rrand(0.9, 1.1) }), //Here the freq and detuning.
-					ampscale: 0.021, //Pace of the "tremolo" -----> Ramdomize it as well?
+					freq: Array.geom(3, freqGendyMidi.midicps, 2) * Array.fill(3, { rrand(0.9, 1.1) }),
+					ampscale: 0.021,
 					durscale: 0.005,
 					initCPs: 12,
 					knum: 12,
@@ -453,17 +452,14 @@ SynthDef(
 (
 Routine(
 	{
-		var density, transitionTime, sustainTime, freqGendy; //It is stupid and does not allow me to randomize the fucking freq of the filter (<-- younger Pilar).
+		var density, transitionTime, sustainTime, freqGendy;
 
 		density = 2;
 
 		sustainTime = rrand(7.0, 12);
 		transitionTime = rrand(5.0, 8);
 
-		//Freq = Pseq([ Prand((60, 70..150), {rrand(1, 3)}), Prand((400,420..840), {rrand(1, 3)}) ], inf).asStream; //The idea was to choose between 1 and 3 low cut-off freqs for the filter and then alternate with 1 to 3 high cut-off freqs.
-
-		freqGendy = Array.fill(50, {rrand(20, 26)}); //Linear bc it is midi still.
-
+		freqGendy = Array.fill(50, {rrand(20, 26)}); //Uniform distribution because it is still Midi values.
 
 		inf.do({
 
