@@ -259,7 +259,6 @@ string = "hello";
 }.play
 )
 
-//*IGNORE THIS*
 //Bonus code (so GitHub doesn't turn my file into markdown:
 
 (
