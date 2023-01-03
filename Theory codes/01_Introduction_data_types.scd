@@ -259,30 +259,23 @@ string = "hello";
 }.play
 )
 
+//IGNORE THIS:
 //Bonus code (so GitHub doesn't turn my file into markdown:
 
 (
-{ var signal;
+SynthDef(
+	\filters,
+	{
+		var noise, signal;
 
-	signal = FreeVerb.ar(
-		Klank.ar(
+		noise = WhiteNoise.ar(0.0001);
 
-		`[
-			Array.fill(8, { exprand(30, 2000)}),
-			0.4,
-			Array.fill(8, { exprand(0.002, 0.02)}) * 20],
+		signal = Array.fill(18, { Ringz.ar(noise, ExpRand (100, 3000)) });
+		signal = Mix(signal);
+		signal = Pan2.ar(signal, 0);
 
-		{Pulse.ar(
-			80,
-			PinkNoise.ar(0.1),
-			0.1
-		)} !2
-		),
-		1,
-		1
-	).clip2(0.2);
-
-	CombC.ar(signal, 1/30, 1/30, 1, 0.1)
-
-}.play
+		Out.ar(0, signal)
+}).add
 )
+
+Synth(\filters)
