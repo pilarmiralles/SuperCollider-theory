@@ -2,7 +2,7 @@
 /////////////////////////////////////
 
 //Distortion, pitch modulation and delay between synths:
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/Audio-for-granular-examples-1.wav")
 b.numChannels
 b.duration
 
@@ -183,7 +183,7 @@ Routine(
 //Latch distortion for audio samples:
 
 //Better result if something without a constant rhythm is used (maybe for advertisements, speeches, etc.) --> MAINLY FOR VOICE!
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/Audio-for-granular-examples-1.wav")
 
 (
 SynthDef(
@@ -277,8 +277,8 @@ Routine ({
 
 //BASIC "GRANULATOR" (to alternate two buffers, or more):
 (
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav");
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples 2.wav");
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/Audio-for-granular-examples-1.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/Audio-for-granular-examples-2.wav");
 )
 
 (
@@ -353,7 +353,7 @@ Routine ({
 ///////////////////////////////////////////////////////////////
 
 //Very damaged (quite good, adjust clip according to the amp of the specific sample):
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples.wav")
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/Audio-for-granular-examples-1.wav")
 c.numChannels
 
 (
@@ -416,7 +416,7 @@ Routine({
 //////////////////////////////////////////////////////////
 
 //Fading in and out randomly:
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/!For granular examples 2.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/Audio-for-granular-examples-2.wav");
 c.duration
 
 (

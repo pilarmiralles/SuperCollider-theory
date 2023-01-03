@@ -4,8 +4,8 @@
 //SCHNITTKE + BACH (Improvements notated in code from line 80):
 
 (
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Schnittke - Choir Concert.wav");
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Bach - Gm sonata.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Schnittke-Choir-Concert.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Bach-Gm sonata.wav")
 )
 //Two channels / Approx. 235 seconds of duration.
 
@@ -79,8 +79,8 @@ Routine ({
 //STILL SOME ENHANCEMENTS TO TRY (read all notes):
 
 (
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Schnittke - Choir Concert.wav");
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Bach - Gm sonata.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Schnittke-Choir-Concert.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Bach-Gm sonata.wav")
 )
 
 (
@@ -156,9 +156,9 @@ Routine ({
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //ENHANCEMENTS AND IMPLEMENTATION OF A THIRD BUFFER (Chaplin's speech):
 (
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Schnittke - Choir Concert.wav");
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Bach - Gm sonata.wav");
-d = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Chaplin speech.wav") //This could be implemented as suggested in the code, or could be added to a possible piece in the DAW (option with best results should be chosen).
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Schnittke-Choir-Concert.wav");
+c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Bach-Gm sonata.wav");
+d = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Codes for specific tasks/New algorithmic routines - Two buffer practice/Chaplin-speech.wav") //This could be implemented as suggested in the code, or could be added to a possible piece in the DAW (option with best results should be chosen).
 )
 //"b" and "c" had two channels / Approx. 235 seconds of duration --> What about "c"? (only a bit less, 210 secs, also two channels).
 
