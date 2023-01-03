@@ -259,3 +259,14 @@ string = "hello";
 }.play
 )
 
+(
+{
+	var osc1, osc2;
+
+	osc1 = SinOsc.ar(1000, 0, 0.2, 0);
+	osc2 = SinOsc.ar(1005, 0, 0.2, 0);
+
+	osc1 + osc2
+}.play
+)
+
