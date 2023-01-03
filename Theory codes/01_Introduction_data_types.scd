@@ -246,7 +246,7 @@ string = "hello";
 //The sum of two oscillations in phase is constuctive --> the amplitudes are added.
 //The sum of two oscillations anti phase is destructive --> the two oscillations cancel each other.
 
-//Two frequencies at 1000 and 1005 Hz will produce 5 oscillations per second (the difference --> Psychoacoustics).
+//Two frequencies at 1000 and 1005 Hz will produce 5 oscillations per second:
 
 (
 {
@@ -259,14 +259,31 @@ string = "hello";
 }.play
 )
 
+//*IGNORE THIS*
+//Bonus code (so GitHub doesn't turn my file into markdown:
+
 (
-{
-	var osc1, osc2;
+{ var signal;
 
-	osc1 = SinOsc.ar(1000, 0, 0.2, 0);
-	osc2 = SinOsc.ar(1005, 0, 0.2, 0);
+	signal = FreeVerb.ar(
+		Klank.ar(
 
-	osc1 + osc2
+		`[
+			Array.fill(8, { exprand(30, 2000)}),
+			0.4,
+			Array.fill(8, { exprand(0.002, 0.02)}) * 20],
+
+		{Pulse.ar(
+			80,
+			PinkNoise.ar(0.1),
+			0.1
+		)} !2
+		),
+		1,
+		1
+	).clip2(0.2);
+
+	CombC.ar(signal, 1/30, 1/30, 1, 0.1)
+
 }.play
 )
-
