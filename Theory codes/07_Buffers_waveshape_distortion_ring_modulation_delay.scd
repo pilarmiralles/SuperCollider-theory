@@ -382,3 +382,25 @@ p.entries.do{
 ~path.entries.do({arg path, i; ~folder = ~folder.add(Buffer.readChannel(s, path.fullPath, bufnum: i));});
 //~folder.size //For the size ( = 10 ).
 )
+
+
+//IGNORE THIS:
+//Bonus code (so GitHub doesn't turn my file into markdown:
+
+(
+SynthDef(
+	\filters,
+	{
+		var noise, signal;
+
+		noise = WhiteNoise.ar(0.0001);
+
+		signal = Array.fill(18, { Ringz.ar(noise, ExpRand (100, 3000)) });
+		signal = Mix(signal);
+		signal = Pan2.ar(signal, 0);
+
+		Out.ar(0, signal)
+}).add
+)
+
+Synth(\filters)

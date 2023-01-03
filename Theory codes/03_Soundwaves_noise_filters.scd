@@ -387,3 +387,26 @@ FreqScope.new //Evaluate this to analize (visualize) the frequencies when trying
 
 { Ringz.ar(Impulse.ar(1), XLine.ar(440, 880, 10), 1, 0.3)}.play //XLine can be used to trace a line regarding the value of a specific parameter. Here, it traces a cuadratic line between 440 and 880 hz in 10 seconds (it is not an envelope, thus, it does not repeat the process, but rather stays at the final pitch of the line).
 
+
+//IGNORE THIS:
+//Bonus code (so GitHub doesn't turn my file into markdown:
+
+(
+SynthDef(
+	\filters,
+	{
+		var noise, signal;
+
+		noise = WhiteNoise.ar(0.0001);
+
+		signal = Array.fill(18, { Ringz.ar(noise, ExpRand (100, 3000)) });
+		signal = Mix(signal);
+		signal = Pan2.ar(signal, 0);
+
+		Out.ar(0, signal)
+}).add
+)
+
+Synth(\filters)
+
+
