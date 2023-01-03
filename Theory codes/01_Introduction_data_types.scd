@@ -241,6 +241,11 @@ string = "hello";
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //ACOUSTICS
 //It would be essential to remember the basics of acoustics before continuing. Here there are only a few meager notes:
+//Seek proper definitions of: sound, sound source, vibration (air pressure changing patterns), sound wave, waveshape, periodic wave (types of), cycle (wave), period (time), frequency, Hz (cycles per second), hearing limits, amplitude (vertical distance, positive or negative), peak to peak amplitude (vertical distance, positiva and negative), etc.
+
+//The sum of two oscillations in phase is constuctive --> the amplitudes are added.
+//The sum of two oscillations anti phase is destructive --> the two oscillations cancel each other.
+
 //Two frequencies at 1000 and 1005 Hz will produce 5 oscillations per second (the difference --> Psychoacoustics).
 
 (
@@ -253,12 +258,4 @@ string = "hello";
 	osc1 + osc2
 }.play
 )
-
-/*
-//The sum of two oscillations in phase is constuctive --> the amplitudes are added.
-//The sum of two oscillations anti phase is destructive --> the two oscillations cancel each other.
-
-//Seek proper definitions of: sound, sound source, vibration (air pressure changing patterns), sound wave, waveshape, periodic wave (types of), cycle (wave), period (time), frequency, Hz (cycles per second), hearing limits, amplitude (vertical distance, positive or negative), peak to peak amplitude (vertical distance, positiva and negative), etc.
-*/
-
 
