@@ -254,44 +254,11 @@ string = "hello";
 }.play
 )
 
+/*
 //The sum of two oscillations in phase is constuctive --> the amplitudes are added.
 //The sum of two oscillations anti phase is destructive --> the two oscillations cancel each other.
 
 //Seek proper definitions of: sound, sound source, vibration (air pressure changing patterns), sound wave, waveshape, periodic wave (types of), cycle (wave), period (time), frequency, Hz (cycles per second), hearing limits, amplitude (vertical distance, positive or negative), peak to peak amplitude (vertical distance, positiva and negative), etc.
+*/
 
 
-(
-SynthDef(
-	\sine,
-	{| in, amp |
-		var input, signal;
-
-		input = In.kr(in, 1);
-		signal = SinOsc.ar(input * [1, 1.1], 0, amp);
-		Out.ar(0, signal)
-}).add;
-SynthDef(
-	\controlSine,
-	{| out, freq |
-		var signal;
-
-		signal = SinOsc.kr(freq, 0, 500, 1000);
-		Out.kr(out, signal)
-}).add;
-SynthDef(
-	\controlSaw,
-	{| out, freq |
-		var signal;
-
-		signal = LFSaw.kr(freq, 0, 500, 1000);
-		Out.kr(out, signal)
-}).add;
-SynthDef(
-	\controlNoise,
-	{| out, freq |
-		var signal;
-
-		signal = LFDNoise3.kr(freq, 500, 1000);
-		Out.kr(out, signal)
-}).add;
-)
