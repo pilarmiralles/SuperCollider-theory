@@ -188,7 +188,7 @@ f.value("lol") //The result will be either true or false, as the function consis
 f.value("tacocat")
 f.value("dog")
 
-//(see "Set" theory for a method equal to this function): This function compares two arrays and gives back an array featuring all elements only present in one of the arrays: for example, comparing [1, 2, 3, 4] and [2, 3, 4, 5], the result should be [1, 5]
+//This is called symmetric difference (see "Set" theory below in this code for a method equal to this function): This function compares two arrays and gives back an array featuring all elements only present in one of the arrays: for example, comparing [1, 2, 3, 4] and [2, 3, 4, 5], the result should be [1, 5]
 //Approach: comparing each element of the first array: asking the second array how many instances are in there of each element of the first array (if no instances, it passes to the final array) + same viceversa + concatenate both results at the end:
 
 (
@@ -449,7 +449,7 @@ n[3][1] //Contains the second index (6) of the array [5, 6], which is the fourth
 //EXERCISES APPLYING METHODS (AND THEIR SOLUTIONS):
 //1 - Write an array of 11 elements of different type (heterogeneous) and assign the array to a variable "a":
 
-a = [\hi, 5, 68.midicps, PinkNoise.ar(0.2), 0.1, "hello".scramble, 127, SinOsc.ar(PinkNoise.ar(50,70), 0, 0.2), 0.00002, BPF.ar(in: BrownNoise.ar(0.5), mul: 0.5), \end] //(Very random)
+a = [\hi, 5, 68.midicps, {PinkNoise.ar(0.2)}, 0.1, "hello".scramble, 127, {SinOsc.ar(PinkNoise.ar(180, 270), 0, 0.5)}, 0.00002, {BPF.ar(in: BrownNoise.ar(0.5), rq: 0.05, mul: 1.5)}, \end] //(Very random)
 
 //2 - Assign to the variable "b" the second element of "a":
 
@@ -491,7 +491,7 @@ e.plot
 
 f = Array.series(16, 24, 7)
 
-//12 - Assign to "f" the mirror of "f" and apply a plotter to the result (separate processes):
+//12 - Assign to "f" the mirror of "f" and apply a plotter to the result:
 
 f = f.mirror
 f.plot
@@ -519,15 +519,15 @@ Array.fill(101, {[1, 2, 3, 4 ,5].wchoose([0.6, 0.01, 0.29, 0.04, 0.06])}).histo.
 
 //REGARDING COLLECTIONS (ADVANCED)/////////////////////////////////////////
 
-//.SELECT: Answer a new collection which consists of all items in the receiver for which function answers True. The function is passed two arguments, the item and an integer index:
+//.SELECT: Answer a new collection which consists of all items in the receiver for which the function answers True. The function is passed two arguments, the item and an integer index:
 List[1, 2, 3, 4].select({ arg item, i; item.even });
 
 (//Your example from the Ustvolskaya codes:
 var structure, index;
 
-structure = [ "a", "b", "c", "b", "a", "d", "c", "e", "c", "d" ]; //Sections of a piece, for example (for algorithmic composition).s
+structure = [ "a", "b", "c", "b", "a", "d", "c", "e", "c", "d" ]; //Sections of a piece, for example (for algorithmic composition).
 
-(structure.size.div(2)-1).do({ //To calculate the number of iterations of .do so it is adapted to any series in the variable "structure": the size of the array of "structure" is asked and divided by 2 (just because in this case, the number of elements of "structure" are going to be deleted 2 by 2), and 1 is substracted so there is a last element of the series that is not eliminated (avoiding the last iteration of .do according to the size of the array).
+(structure.size.div(2) - 1).do({ //To calculate the number of iterations of .do so it is adapted to any series in the variable "structure": the size of the array of "structure" is asked and divided by 2 (just because in this case, the number of elements of "structure" are going to be deleted 2 by 2), and 1 is substracted so there is a last element of the series that is not eliminated (avoiding the last iteration of .do according to the size of the array).
 
 	index = Array.series(structure.size).scramble.keep(2); //A series with the indexes of the array is created, then the order is changed randomly, and two elements from that random order are chosen (.keep).
 
@@ -537,7 +537,7 @@ structure = [ "a", "b", "c", "b", "a", "d", "c", "e", "c", "d" ]; //Sections of 
 })
 )
 
-//there are too many classes within the superclass Collection: THESE are the ones that interest us:
+//there are too many classes within the superclass Collection: THESE are the ones that interest us for now:
 SequenceableCollection //Superclass of integer indexable collections, such as ARRAY, LIST, SORTED LIST, etc. (STRING is a RawArray of Characters).
 Dictionary //Associative collection mapping keys to values (no order, thus no indexable as Array) = IdentityDictionary (same definition, but only symbols as a key -> identity instead of equality).
 Dictionary -> IdentityDictionary -> Environment (name space for functions) -> Event (environment that represents an action) //Used for Pbind.
@@ -568,15 +568,15 @@ a;
 (
 y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 y.putEach([4, 7], [\smelly, \head]);
-y.putEach([2, 3, 5, 6], \wotsits); //It wraps.
-) //Put the values in the corresponding indices given by keys. If one of the two argument arrays is longer then it will wrap.
+y.putEach([2, 3, 5, 6], \wotsits); //It wraps, meaning \wotsits will be applied to all elements of the array of numbers in .putEach (when in the previous one, there was an object for each of the numbers appointed in the first array).
+) //Put the values in the corresponding indexes given by keys. If one of the two argument arrays is longer then it will wrap.
 (
 y = [\a, \b, \c];
 y.atAll([0, 2]);
 ) //Return a collection of all the items for the keys.
 
 //FOR ITERATION (see more in the help doc):
-//We saw .select above. There are also:
+//We saw .select above. There are also (evaluate each to see the effect, and read the help document for clarificationss):
 List[1, 2, 3, 4].do({ arg item, i; item.postln }); //do
 List[1, 2, 3, 4].collect({ arg item, i; item + 10 }); //collect
 List[1, 2, 3, 4].reject({ arg item, i; item.even }); //reject (CONTRARY of .select)
@@ -585,30 +585,31 @@ List[1, 2, 3, 4].any({ arg item, i; item.even }); //any
 List[1, 2, 3, 4].every({ arg item, i; item.even }); //every
 List[1, 2, 3, 4].count({ arg item, i; item.even }); //count
 List[1, 2, 3, 3, 4, 3, 4, 3].occurrencesOf(3); //occurrencesOf
-List[1, 2, 3, 4].sum; //Addition. Two examples:
-(0..8).sum { |i| 1 / (2 ** i) };
+List[1, 2, 3, 4].sum; //Addition. Also allows a function:
+(0..8).sum({ arg item, i; 1 / (2 ** item) });
 
 
 /* Other methods:
 
 - .asInteger (or .asInt): turns a float into an integer (rounding it down).
-- .flat: unifies nested arrays into a single array containing all the elements.
+- .flat: unifies nested arrays into a single array containing all the elements of the nested arrays.
 - .asStream: sent to objects that are not streams to turn them into streams (patters, envelopes, etc.). Should be used in combination with .next.
 - .clump(n): opposite of .flat. Its argument indicates the number of elements (n) that are going to be clumped into nested arrays within a bigger array.
 - .stutter(n): its argument indicates the number of repetitions (n) of each element of a given collection.
-- .normalizeSum: converts an array of numbers into ratios from 0 to 1 (so the total addition would be equal to 1). Used with .wchoose or Pwrand, etc.
-- .odd, .even, 0.5.coin (for instance), .isNil, .notNil, .and, .or, etc.: methods for boolean expressions.
-- .postln, .plot, .poll, .histo, .trace: they represent values in different ways: POSTLN prints values that are not signals (applied to a signal or any other "alive" thing in the server, it will just indicate that there is a pattern or a synth) / PLOT shows a graph (it needs to be applied to a function, not to a signal without the {} / POLL prints values from signals (that are running in the server) / HISTO shows a graph of probabilities / TRACE prints the values given by a pattern (they are "alive", but not like a UGen (which uses .poll instead).
-Note that .poll can be used alongside a label, so when printing many different values at a time, you can tell which one is from which UGen. Example: { LFNoise1.kr.poll(3, "a value"); LFNoise1.kr.poll(5, "another value"); }.play;
+- .normalizeSum: converts an array of numbers into ratios from 0 to 1 (so the total addition would be always equal to 1). Used with .wchoose or Pwrand, etc.
+- .odd, .even, .coin, .isNil, .notNil, .and, .or, etc.: methods for boolean expressions.
+- .postln, .plot, .poll, .histo, .trace: they represent values in different ways: POSTLN prints values that are not signals (applied to a signal or any other "alive" thing in the server, it will just indicate that there is a pattern or a synth) / PLOT shows a graph (it needs to be applied to a function, not to a signal without curly brackets / POLL prints values from signals (that are running in the server) at a specific rate (10 values per second by default, can be changed as an argument) / HISTO shows a graph of probabilities / TRACE prints the values given by a pattern (they are "alive", but not like a signal, which uses .poll instead).
+Note that .poll can be used alongside a label, so when printing many different values at a time, you can tell which one is from which UGen. Example:
+{ LFNoise1.kr.poll(3, "a value"); LFNoise1.kr.poll(5, "another value"); }.play;
 - .mod(12): module 12 of all values of a given collection.
 - .div(2): divides by 2 (for instance), rounding the result down (always returns integers).
 - .min y .max: .min returns only the values below the number given as its argument / .max returns only the values above.
-- .lastIndex: indicates which one is the index of the last element of a collection (.size would indicate one more number because it starts by 1, instead of by 0, as with the index).
-- .range: calculates the mul / add needed for a modulation (without the studied calculations, although it is better to understand how it is calculated). For example: LFDNoise3.ar(0.1).range(400, 1200)
-- .fork: it is a wraper, a Routine + .play (none of those have to be stated because they are contained within .fork, but it is still necessary to use .wait or .yield).
+- .lastIndex: indicates which one is the index of the last element of a collection (.size would indicate one more number because it starts by 1, instead of by 0 as the index does).
+- .range: calculates the mul / add (or any other value range) needed for a modulation (without the studied calculations, although it is better to understand how it is calculated). For example: LFDNoise3.ar(0.1).range(400, 1200)
+- .fork: it is a wraper, that is to say, a Routine + .play (none of those have to be stated because they are contained within .fork, but it is still necessary to use .wait or .yield).
 - .linlin is for mapping (y.linlin(-1, 1, 40, 80) = converts the range -1 to 1 of "y" into 40 to 80, with a linear interpolation.
 - .linexp is for mapping from linear to exponential (y.linexp(0, 127, 30, 8000), for example, would convert the linearity of the MIDI values from 0 to 127, mapping them into exponential values of frequency between 30 and 8000 Hz), just for instance.
-- .drop(-1): eliminates an element of a collection. If the collection is reassigned to its variable, it will diminished: */
+- .drop(-1): eliminates an element from a collection each time it is evaluated. If the collection is reassigned to its variable, it will become smaller: */
 
 ~structure = [ "a", "b", "c", "d", "e" ]
 ~structure = ~structure.drop(-1) //Deletes the elements from the last to the first.
@@ -618,7 +619,7 @@ Note that .poll can be used alongside a label, so when printing many different v
 //ARRAYS SHORTCUTS:
 (0..20) //Array with numbers from 0 to 20.
 (60, 60.25..65) //Array with numbers from 60 to 65 with a step of 0.25 between each number.
-(10, 10.1..20).cs //.cs avoid the .etc in the postwindow when the lists are too big, in case we need to visualize all the values (but be careful because SC saves memory from this with the .etc for a reason).
+(10, 10.1..20).cs //.cs (compile string) avoids the .etc in the postwindow when the lists are too big, in case we need to visualize all the values (but be careful because SC saves memory from this with the .etc for a reason).
 (rrand(10, 15)..rrand(16, 20)) //Series between numbers from 10 to 20. The low and high limits of the series will be random, from the minimum range (2 possible values from 15 to 16) to the maximum range (11 possible values from 10 to 20).
 (rrand(10, 15)..rrand(16, 20)).plot  //Former example, visualized in a graph.
 //Some operations can be applied to these arrays as normally. For instance:
@@ -629,7 +630,7 @@ sin((0, 0.1..20)).plot //Sin function (values from -1 to 1 (20 numbers with a st
 a = [1, 2, 3, 4, 5] //Given this array, you can take part of its indexes only:
 a[3..] //From index 3 to last index (remember, it's the index, not the content of the index), including index 3.
 a[..3] //From first index to index 3, including index 3.
-//Example of function playing with this: Given an array of numbers, return the middle to the end (if two middle, take the second):
+//Example of function playing with this: Given an array of numbers, return the middle to the end (if two middle numbers, take the second):
 
 (
 f = {
@@ -650,8 +651,9 @@ f.value([1, 2, 3, 4, 5, 6])
 //SET (METHODS):
 //According to SC help: A Set is s collection of objects, no two of which are equal. Most of its methods are inherited from Collection. The contents of a Set are unordered. You must not depend on the order of items in a set. For an ordered set, see OrderedIdentitySet. Also, all elements in the set, or from outside when applying methods, are checked for equality (not for identity):
 
-Set[1, 3, 7, 4] //This is a set. Methods:
+Set[1, 3, 7, 4] //This is a set.
 
+//Methods:
 Set[1, 2, 3].add(4).postln; //Add an Object to the Set. An object which is equal to an object already in the Set will not be added.
 Set[1, 2, 3].remove(3).postln; //Remove an Object from the Set.
 Set[1, 2, 3].includes(2).postln; //Returns true if the specified item is present in the Set.
@@ -670,13 +672,13 @@ Set[1, 2].isSubsetOf(a); // true
 Set[1, 5].isSubsetOf(a); // false
 // you can use Set to efficiently remove duplicates from an array:
 a = [1, 2, 3, 4, 3, 5, 5, 2, 2, 1];
-a.as(Set); // convert to set
-a.as(Set).as(Array); // and convert back
+a.as(Set); // convert to set (and remove duplicates).
+a.as(Set).as(Array); // and convert back (order matters again).
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //THE FIRST UGEN: SinOsc:
 
-SinOsc //The simplest oscillatory pattern, equivalent to a dock or a pendulum:
+SinOsc //The simplest oscillatory pattern, equivalent to a spring or a pendulum:
 
 {SinOsc.ar(440, 0, 0.3, 0)}.plot(1/440) //Here the graph (one cycle).
 
@@ -685,24 +687,24 @@ SinOsc //The simplest oscillatory pattern, equivalent to a dock or a pendulum:
 
 SinOsc.ar(69.midicps, 0, 0.4, 0)
 
-//2nd argument = phase (starting position in the wave): 0 (0) = beginning / 90º (0.5pi) = top point / 180º (1pi) = half period / 270º (1.5pi) = bottom point / 360º (0) = back to the beginning. This is only perceptible when the sine wave is not played at sample rate, but slow enough to hear its shape (for example, when used for a modulation).
-//3rd argument = mul (from multiplication). The amplitude of the signal is multiplied by that value. Default value is 1, but that is the limit before saturation (distortion). Thus, it is best to write a value below 1 (exceptions will be shown later on). When lowering the mul, the shape of the wave is morizontally narrower, the amplitude changes, but not the timbre.
-//4th argument = add. It is the vertical position of the wave. It will be useful later on (when modulating).
+//2nd argument = phase (starting position in the wave): 0 (0) = beginning / 90º (0.5pi) = top point / 180º (1pi) = half period / 270º (1.5pi) = bottom point / 360º (0) = back to the beginning. This is only perceptible when the sine wave is not played at sample rate, but slow enough to hear its shape (for example, when used for a modulation, as LFO).
+//3rd argument = mul (from multiplication). The amplitude of the signal is multiplied by that value. Default value is 1, but that is the limit before saturation (distortion). Thus, it is best to write a value below 1 (exceptions will be shown later on). When lowering the mul, the shape of the wave is vertically narrower, the amplitude changes, but not the timbre.
+//4th argument = add. It is the vertical position of the wave with respect to its center (by default, and for any signal at audio rate, it will be 0). This default value will be changed when, for example, modulating (using the SinOsc as a LFO).
 
 //The arguments can be changed in a different order (or without needing to specify all of them if the default values suit our needs). We use then the keyword assignment:
 
-SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" (name:). If using this grammar, all arguments should be written as keys.
+SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" (name:). If using this syntax, all arguments should be written as keys (at least from that argument onward in the list).
 
 //Modulation of arguments (3rd and 4th arguments of SinOsc, or any other signal with mul and add):
 
 ({
-	a = LFTri.ar(1, 0, 500, 1500); //A triangular wave between moves in the graph between 1000 and 2000 Hz each second (up and down).
+	a = LFTri.ar(1, 0, 500, 1500); //A triangular wave moves in the graph between 1000 and 2000 Hz each second (up and down).
 	a = a.round(125); //This creates little steps of 125 hz within the continuous movement of the wave (1000 / 125 = 8 levels, 7 steps as in a scale from one octave to its higher octave). Without this, the sound of the SinOsc would be continuous. If the modulating wave was another SinOsc instead of a LFTri, the steps would not sound regular (try it).
-	c = SinOsc.ar(a, 0, 0.3) //The frequency of the sine wave is modulated by the triangular wave (we can hear now the steps).
+	c = SinOsc.ar(a, 0, 0.3) //The frequency of the sine wave is modulated by the triangular wave (we can hear now the steps), whose frequency is not at audio rate. The LFTri is being used as a LFO (low frequency oscillator).
 }.play
 )
 
-//The "mul" argument's value is 1 by default. The soundwave will move vertically from -1 to 1 regarding the amplitude. On the other hand, "add" (the 4th argument), is a, addition to the mul. It will move vertically the soundwave: the center is 0 by default. If "add" is changed, "mul" will conserve its value, but the vertical point were the soundwave is situated will vary. "Add" is only used when using a signal in a modulation.
+//The "mul" argument's value is 1 by default. The soundwave will move vertically from -1 to 1 regarding the amplitude. On the other hand, "add" (the 4th argument in SinOsc), is an addition to the mul. It will move vertically the soundwave: the center is 0 by default. If "add" is changed, "mul" will conserve its value, but the vertical point were the soundwave is situated will vary. "Add" is only used when using a signal in a modulation.
 /*In order to modulate a sine wave, for instance, from 440 to 880 Hz, we use a signal in its frequency argument, and calculate the mul and add of such signal as it follows:
 
 1 - Calculate the peak to peak amplitude: top freq - bottom freq: 880 - 440 = 440.
