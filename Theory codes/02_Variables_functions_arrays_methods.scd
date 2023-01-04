@@ -2,23 +2,23 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //VARIABLES:
-//Variables are data containers. The data is asigned to a variable, which will represent such data. Then, we can apply transformations and processes to such data.
+//Variables are data containers. The data is asigned to a variable, which will represent such data. Then, we can apply transformations and processes to that data through the variables.
 
 a = 1 //"a" contains a number 1 when the code is evaluated.
-a = 2 * 1 //The value of "a" is reasigned when evaluating a new value for the variable. Now "a" contains the multiplication 2 * 1.
+a = 2 * 1 //The value of "a" is reasigned to new value. Now "a" contains the multiplication 2 * 1.
 
 //Each variable can contain only one value at a time.
-//Variables "a" to "z" are not declared variables and can be used wherever in the code. It is best, though, to declare variables within a block of code, which will only work inside such block. The declared variables can receive a specific (and more descriptive) name. "s" can't be used as a variable because it contains the server by default (if its value is reasigned, the communication with the audio server would be lost).
+//Variables "a" to "z" are non-declared variables and can be used wherever in the code. Sometimes it is more convenient, though, to declare the variables used within a specific block of code. Those declared variables could be only called within that code. The declared variables can receive a specific (and more descriptive) name. "s" can't be used as a non-declared variable because it contains the server by default (if its value is reasigned, the communication with the audio server is lost).
 
-//Non-declared variables (if used elsewhere in the code, their value would be reasigned and its function within this block would change):
+//Non-declared variables (if used elsewhere in the code, their value will be reasigned and its function within this block of code wills change):
 
 (
 a = 2;
 b = 16;
-c = a ** b //We only get the result of the last line of the entire block.
+c = a ** b //Note: in the postwindow, we only get the result of the last line of the entire block.
 )
 
-//Declared variables (they contain values only within this block of code, thus, its value cannot be reasigned from the outside):
+//Declared variables (they contain specific data only within this block of code and hence its value cannot be reasigned from the outside):
 
 (
 var value1, value2, power;
@@ -28,30 +28,31 @@ value2 = 16;
 power = value1 ** value2 //Same result.
 )
 
-//Non-declared variables can receive a descriptive name different than a letter. For this, we use the following character. It could be useful to use this kind of non-declared variables, but for now it is better to control their use and to declare the variables as much as possible and within the smallest possible portion of code:
+//Non-declared variables can receive a descriptive name different than a letter. In this case, we use the following character ~ and the name. These variable can be useful to send data from one block of code to another, but when working within a single block of code, it is advisable to declare the variables so the data they contain won't be accidentally changed from the outside of the specific code. If a block of code contains smaller portions of code, the variables could be declared within the smaller sections to limit their usage as much as possible and avoid the confusion.
 
-~variable //This would have the same function as a letter, but we write the name as we wish.
+~variable //This variable is equivalent to a letter, but we can give it a more descriptive name.
 
 
 //###########################################
-//"this" --> communication with the interpreter. Use "this.dump" to see what it is asigned to each variable in the code (the state of the interpreter).
+//"this" --> communication with the interpreter. Use "this.dump" to see what it is asigned to each non-declared variable in the code (the state of the interpreter). For instance, you can see that the Server is assigned to "s" by default.
 //--> Note for myself: reminder of other informative methods:
 s.meter //Inputs and outputs.
-{LFTri.ar(440, mul: 0.1)}.scope //Plays + shows the signal.
-{LFTri.ar(SinOsc.ar(1/3, 0.5pi, 250, 550).poll(5), mul: 0.1)}.scope //.poll prints the live values of a signal (here is the frequency of the LFTri, which is being modulated by the SinOsc. It prints 10 values per second by default. Here there is 5 values per second (as defined in its argument between parenthesis). The phase is changed in the modulating signal, because the "carrier" (the LFTri) is reproduced at audio rate (with a freq between 300 and 800 Hz).
+{LFTri.ar(440, mul: 0.1)}.scope //.scope: plays + shows the signal.
+{LFTri.ar(SinOsc.ar(1/3, 0.5pi, 250, 550).poll(5), mul: 0.1)}.scope //.poll: prints the live values of a signal (here is the frequency of the LFTri, which is being modulated by the SinOsc). .poll prints 10 values per second by default. Here I specified in its argument (between parenthesis) that I want 5 values per second. The phase is changed in the modulating signal, because the "carrier" (the LFTri) is reproduced at audio rate (with a freq between 300 and 800 Hz), therefore the phase won't be perceptible.
 //###########################################
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //FUNCTIONS:
-//They are blocks of code carrying out a specific task + they are written between square brackets (braces). They need to be evaluated through the message (method) ".value", and a list of arguments for the function can be sent through this method.
+//Functions are blocks of code carrying out a specific task. They are written between square brackets (braces). They need to be evaluated through the message (method) ".value", and a list of arguments for the function can be sent through this method (in the order we declared the arguments in the code):
 
 //Useless function (because of fixed result) as an example:
 
-a = {1 + 1} //Run this line to compile the function.
+a = {1 + 1} //Run this line to compile the function (the function is assigned to a non-declared variable, so the method to obtain the value can be applied outside the code).
 a.value //Run this line to evaluate the function and obtain its result.
 
-//A function is more useful when there are variable values, sent as arguments through the method .values:
+//A function is more useful when there are variable values, sent as arguments through the method .value:
 
 (
 a = {
@@ -62,7 +63,7 @@ a = {
 }
 )
 
-a.value(2, 3) //Those are the arguments in order.
+a.value(2, 3) //Those are the arguments in order, now with values different than the default.
 
 //Another example:
 
@@ -72,72 +73,73 @@ b = {
 	var result;
 
 	result = 1 + secondValue;
-	result * mul //Here the value of the variable "result" is reasigned (overwritten).
+	result = result * mul; //Here the value of the variable "result" is reasigned (overwritten).
+	result //Only the last line of the code will be shown when evaluating the function.
 }
 )
 
 b.value(1, 10)
 
-//There is an alternative grammar for writing the arguments, as it can be seen here. I suggest to choose and stick to one of them. This function creates a cluster using pitch classes from 0 by default (notice the use of the module 12 to keep the pitch classes between 0 and 11):
+//There is an alternative syntax for declaring the arguments as shown in the following code. It is advisable to choose and stick to one of them. This function creates a cluster using pitch classes starting by 0, by default (notice the use of the module 12 to keep the pitch classes between 0 and 11):
 
 (
 c = {
 	| fundamental = 0 | //Alternative way of writing the arguments.
 
-	fundamental + [0, 1, 2] % 12
+	fundamental + [0, 1, 2] % 12 //This will create a three-note cluster.
 }
 )
 
-c.value(7) //Da [7,8,9], clúster de tres notas desde la nota 7 en pitch class
+c.value(7) //This will create a semitonal cluster of three pitches from pitch 7 in pitch class ([7, 8, 9]).
 
-//Another example: function that chooses random numbers within a uniform distribution (rrand).
+//Another example: this function chooses random numbers within a uniform distribution within a given range (rrand), which is 0.0 to 1.0 by default.
 
 (
 f = {
 	arg bottomValue = 0.0, topValue = 1.0;
 
-	rrand (bottomValue, topValue) //The use of "exprand" in here would choose numbers within an exponential distribution, which would suit better the work, for instance, with frequencies. When using exponential distributions, the value 0 must be excluded.
+	rrand (bottomValue, topValue) //Using "exprand" instead of "rrand" would provide with random values according to an exponential distribution (more advisable when working with frequencies in Hz). When using exponential distribution, the value 0 must be avoided within the range of choice.
 }
 )
 
 f.value //Random numbers between 0.0 and 1.0 (floats, due to float input in rrand).
-f.value (0, 10) //Random numbers between 0 and 10, integers (due to integer input in rrand).
-f.value (0, 5.2) //Random numbers between 0 and 5.2 --> if only one of the numbers is a float, the result will be always float anyways.
-f.value (topValue: 2) //Changing only the second argument thanks to the use of the key-word assignment.
+f.value (0, 10) //Random numbers between 0 and 10, integers (due to integer input in rrand, both numbers).
+f.value (0, 5.2) //Random numbers between 0 and 5.2 --> if only one of the numbers is a float, the result will always be a float anyway.
+f.value (topValue: 2) //Changing only the second argument thanks to the use of the key-word assignment (argument: value), which allows you to write the arguments and their value in whichever order, especially useful when only specific arguments need a value different than the default one, and especially when the list of arguments is long.
 
-//The message ".value" can be directly applied to the block of code of the function this way (putting the function into a non-declared and detaching the .value method allows us, nontheless, to evaluate the function anywhere in the code. This choice depends on the task of the function):
+//The message ".value" can be directly applied to the block of code of the function as the following code shows. This way, the function would be compiled and evaluated with a single click, and the non-declared variable wouldn't be needed anymore. Though, the function couldn't be called from anywhere else in the code, but this choice depends on the task of the function:
 
-(
+(//This function calculates the Pythagorean theorem:
 {
 	arg sideA = 1, sideB = 1;
 	var calculation;
 
-	calculation = (sideA + sideB).sqrt
+	calculation = (sideA.pow(2) + sideB.pow(2)).sqrt
 
-}.value(5, 4) //Here the .value method is applied directly to the block of code of the function.s
+}.value(5, 4) //Here the .value method is applied directly to the block of code of the function. The result is given right away.
 )
 
-//Other examples of functions:
+//Other examples of functions (advanced):
 
-//Calculates the mul and add for a modulation:
+//This function calculates the mul and add for the modulation of a parameter between two values (which will be studied later on):
 (
 d = {arg bottomValue, topValue;
 	var mul, add;
 
 	mul = topValue - bottomValue /2;
 	add = mul + bottomValue;
-	[mul, add] //It returns as a result the mul and add at the same time within an array.
+	[mul, add] //Using an array will allow you to make the function return two values (mul and add) at the same time.s
 }
 )
 
-d.value(500, 1000) //It is calculated here, for instance, a modulation between 500 and 1000 Hz.
+d.value(500, 1000) //It is calculated here, for instance, a modulation between 500 and 1000 Hz for a sine wave (which will be studied later on).
 
 //Applying the former function in a more complex block of code:
 (
 {
 	var function, mulAdd, freqs;
 
-	//A first function calculates the mul and add (the variable "function" contains the array with the mul and add):
+	//A first function calculates the mul and add (the variable "function" contains the array with the mul and add values):
 	function = {arg bottom, top;
 		var mul, add;
 
@@ -146,26 +148,26 @@ d.value(500, 1000) //It is calculated here, for instance, a modulation between 5
 		[mul, add]
 	};
 
-	//The former function is applied to a real modulation:
+	//The former function is applied to a real modulation within the same code:
 	freqs = Array.fill(2, { rrand (30, 16000)}).sort; //A series of random frequencies in order is created.
-	mulAdd = function.value(freqs[0], freqs[1]); //The bottom and top frequencies are applied to the mulAdd function.
-	SinOsc.ar(SinOsc.ar(10, 0, mulAdd[0], mulAdd[1]), 0, 0.1) //The mul and add are taken from the resulting array of "function" using the index of each one, and applied to a SinOsc modulated by another SinOsc.
+	mulAdd = function.value(freqs[0], freqs[1]); //The bottom and top frequencies are applied to the previous function. The variable mulAdd contains its evaluation.
+	SinOsc.ar(SinOsc.ar(10, 0, mulAdd[0], mulAdd[1]), 0, 0.1) //The mul and add values are taken from the resulting array of "function" using the index of each one, and applied to a SinOsc whose frequency is being modulated by another SinOsc.
 
 }.play
 )
 
-//Create a function that receives the overtone number within the series (n) and which gives back the pitch of that overtone in Hz and Midi.
+//This function receives the overtone number within the overtone series (n) and gives back the pitch of that overtone in Hz and MIDI.
 (
 {
-	arg n, fundFrecMidi = 24; //Fundamental frequency by default = C1 (24 midi): using Midi as it is easier to choose a specific frequency.
+	arg n, fundFrecMidi = 24; //Fundamental frequency by default = C1 (24 MIDI).
 	var hz, midi;
 
-	hz = n * fundFrecMidi.midicps; //Converting the fundamental freq into Hz so the Hz of the overtone is = n * fund freq.
+	hz = n * fundFrecMidi.midicps; //Converting the fundamental freq into Hz so the frequency of the overtone can be calculated as "n * fund freq".
 	midi = hz.cpsmidi.round(1); //Now using the result of Hz, so the value is coming from the natural temperament, although when converting into midi, there are decimals, which will be rounded in order to obtain an integer for the midi value.
 
 	[hz, midi]
 
-}.value(8) //Here, as an example, calculating the C4 (8th overtone of the C1 series).
+}.value(8) //Here, as an example, calculating the C4 (8th overtone of the C1 series, hence n = 8).
 )
 
 //This function checks out whether a word (a string of letters) is a palindrome or not):
@@ -178,15 +180,15 @@ f = {
 
 		reverse = word.reverse;
 
-		original == reverse; //Better than the ===, although those also work because you are comparing the same string and not two different strings with the same content.
+	original == reverse; // === (identity) could be used here as we are comparing the same string and not two different strings with the same content, but using == (equality) is clearer.
 	}
 )
 
-f.value("lol")
+f.value("lol") //The result will be either true or false, as the function consists of a boolean expression.
 f.value("tacocat")
 f.value("dog")
 
-//I think this is called symmetric (see "Set" theory for a method equal to this function): compares two arrays and gives back an array featuring all elements only present in one of the arrays: for example, comparing [1, 2, 3, 4] and [2, 3, 4, 5], the result should be [1, 5]
+//(see "Set" theory for a method equal to this function): This function compares two arrays and gives back an array featuring all elements only present in one of the arrays: for example, comparing [1, 2, 3, 4] and [2, 3, 4, 5], the result should be [1, 5]
 //Approach: comparing each element of the first array: asking the second array how many instances are in there of each element of the first array (if no instances, it passes to the final array) + same viceversa + concatenate both results at the end:
 
 (
@@ -196,7 +198,7 @@ a = {
 
 	//Comparing the array and obtaining the unique values of each:
 
-	result1 = array1.select({ //The method select receives a collection and features a function and two arguments (item and index), and answers a collection consisting of all items in the receiver for which its function answers "true".
+	result1 = array1.select({ //The method select receives a collection and features a function and two arguments (item and index). The method answers a collection consisting of all items in the receiver for which its function answers "true".
 		arg item;
 		array2.occurrencesOf(item) == 0 //OccurrencesOf(item) refers to the number of repetitions of the given item within a collection.
 	});
@@ -221,16 +223,16 @@ a.value([1, 2, 3, 3, 6, 7, 7], [5, 2, 1, 4, 6, 8, 1]) //--> The solution should 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //METHODS
-//The transformation and process of objects created by Classes are defined by the methods. They can be (as shown is the document 1), instance of class methods (class methods create objects / instance methods apply transformations and processes to objects already created by classes).
+//The transformation of and operations with objects created by Classes are defined by methods. They can be (as shown is the document 1) instance of class methods (class methods create objects / instance methods apply transformations and operations to objects already created by classes).
 
 /* Definition of "message" and "method" according to SC guide:
 MESSAGE: A request for an object to perform an operation (the operation itself and the act of assigning the operation to an object, the request).
-METHOD: A description of the operations necessary to implement a message for a particular class (the word of the message and its arguments, the text itself, the "physical" form of the message.
+METHOD: A description of the operations necessary to implement a message for a particular class (the word of the message and its arguments, the text itself, the "physical" form of the message).
 */
 
-//Practical/utopical example of how the objects, classes, messages (methods) work in SC:
+//Theoretical example of how the objects, classes, messages (methods) work in SC:
 
-//These two are our Classes (capital letter)
+//These two are our Classes (capital letter):
 Sandwich
 Ham
 
@@ -238,26 +240,26 @@ Ham
 Sandwich
 * prepare //Class method (creates the sandwich)
 hitUp //Instance methods (modify the sandwich)
-  cut
+cut
 
 Ham
 * marinate
-  fry
+fry
 
-//Syntax object-message --> class-method:
+//Syntax object-message --> class.method:
 
 Sandwich.prepare
 
 //Real example in SuperCollider:
 
-{SinOsc.ar}.play //.ar is a class method, .play is an instance method.
+{SinOsc.ar}.play //.ar is a class method (ask the class to create an audio signal), .play is an instance method (plays the audio signal created by the class, requested by .ar).
 
-//Defining arguments for the methods within out Sandwich Class:
+//Defining arguments for the methods within our Sandwich Class:
 
 Sandwich {
 
-	*prepare{ arg extraIngredients = [ 'tomato', 'cheese'], //Our class method "prepare" (with the *) and its arguments and default values.
-		bread = 'baguette', //These names would be specific things (these just examples).
+	*prepare{ arg extraIngredients = [ 'tomato', 'cheese'], //Our class method "prepare" (*) and its arguments and default values.
+		bread = 'baguette',
 		meat = 'chicken';
 		...
 		...
@@ -270,12 +272,12 @@ Sandwich {
 	}
 }
 
-//Now we can define its arguments:
+//Now we can define its arguments, change their default values:
 
 Sandwich.prepare(['tomato'], 'baguette', 'tofu')
 Sandwich.prepare(meat: 'tofu')  //Key-word assignment, changing just the third argument (rest of them by default).
 
-//Another example, using the rest of out methods for the Sandwich Class
+//Another example, using the rest of our methods for the Sandwich Class:
 
 a = Sandwich.prepare(
 	[ 'pepper'],
@@ -284,52 +286,52 @@ a = Sandwich.prepare(
 	Ham.marinate.fry(260) //First argument of the method .fry is the temperature.
 )
 
-a = a.hitUp
+a = a.hitUp //Now what the class created applying the class method .prepare can be further transformed by the instance method .hitUp.
 a = a.cut(4) //Argument of the method .cut is the number of pieces.
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //ARRAYS:
-//A collection is an object which contains a group of objects: the elements of the collection. An array is a type of collection (the most used one), containing a specific number of literals between square brakets and separated by commas:
+//A collection is an object which contains a group of objects: the elements of the collection. An array is a type of collection (the most used one).
 
-//An array is written between square brackets and the elements inside it are separated by commas. They can contain homogeneous (same kind of elements, for example, numbers), or heterogeneous (different kind of elements). The elements are put into a collection so they can be accessed using indexes.
+//An array is written between square brackets and the elements inside it are separated by commas. Arrays can contain homogeneous (same kind of elements, for example, numbers), or heterogeneous (different kindss of elements). The elements within a collection can be accessed using indexes.
 
 [ 1, 2, 3, 4, 5 ] //Homogeneous collection (integers).
 
-[ \symbol, 67, "string", {SinOsc.ar(mul: 0.1)} ] //Heterogeneous collection (symbol, integer, string and sine wave).
+[ \symbol, 67, "string", {SinOsc.ar(mul: 0.1)} ] //Heterogeneous collection (symbol, integer, string and sine wave function).
 
-a = [ 1, 2, 3, 4, "hello", {SinOsc.ar(mul: 0.1)} ] //A collection assigned to a global variable.
+a = [ 1, 2, 3, 4, "hello", {SinOsc.ar(mul: 0.1)} ] //A collection assigned to a non-declared variable.
 
 //The index indicates the position of the element within the collection, starting by 0 (IMPORTANT: THE 1st ELEMENT WILL BE INDEX 0).
 
 a[0] //This will be equal to 1.
 a[4] //This will be equal to te string "hello".
-a[5].play //This will directly play the sine wave
+a[5].play //This will apply the method .play to the sine wave function.
 
 //Instance / class methods can be applied to arrays.
 //CLASS METHODS: they create arrays:
 
 //ARRAY.FILL:
-//Array.fill(size, function): it creates an array with a specific size (1st argument). Then, it will evaluate the given function (2nd argument) as many times as stated in the size argument. Remember that the function should always be written between curly brackets. First exception for the spaces: avoid the space between Array.fill and the parenthesis:
+//Array.fill(size, function): it creates an array with a specific size (1st argument). Then, it will evaluate the given function (2nd argument) as many times as stated in the size argument. Remember that the function should always be written between curly brackets. Avoid the space between Array.fill and the parenthesis:
 
-Array.fill(6, { rrand (0, 11)}) //Creates an array with random numbers between 0 and 11.
+Array.fill(6, { rrand (0, 11)}) //Creates an array with 6 random numbers between 0 and 11.
 
-Array.fill(6, {arg i; i}) //The argument "i" (index) = number of the index of each element of the array, as seen before (any name can be used for the index arg).
+Array.fill(6, {arg i; i}) //The argument "i" (index) = number of the index of each element of the array, as seen before (any name can be used for the index arg). This array will contain the numbers of the indexes (0 to 5).
 
-Array.fill(6, {arg i; [i, rrand(0, 11)]}) //Here creating separate arrays containing the index and a random number from 0 to 11.
+Array.fill(6, {arg i; [i, rrand(0, 11)]}) //Here creating separate arrays containing each index and a random number from 0 to 11.
 
-//Using Array.fill to obtain 30 sine waves, which will be the overtones of the fundamental frequency 440Hz:
+//Using Array.fill to obtain 30 sine waves, which will be the overtones of the fundamental frequency 440Hz (this content will be studied later on):
 (
 {
 	{
 		Mix( //"Mix" will mix all frequencies in a single channel. This is why the entire function needs to be duplicated in order to get a stereo sound.
-			Array.fill (30, {
+			Array.fill(30, {
 				arg n;
 				var overtone;
 
-				overtone = n + 1; //This will add 1 to every index number. This avoids the first zero of the series.
+				overtone = n + 1; //This will add 1 to every index number, avoiding starting by 0.
 
-				SinOsc.ar((440 * overtone).postln, 0, 0.01/overtone) //Mul is divided into each index number, so each frequency is weaker as it goes up in frequency (it is now a bit too quiet, but the resulting sound is also quite piercing, aking to a sawtooth wave).
+				SinOsc.ar((440 * overtone), 0, 0.01/overtone) //Mul is divided into each index number, so each frequency is weaker as it goes up in frequency (it is now a bit too quiet, but the resulting sound is also quite piercing, akin to a sawtooth wave).
 
 			})
 		)
@@ -337,7 +339,7 @@ Array.fill(6, {arg i; [i, rrand(0, 11)]}) //Here creating separate arrays contai
 }.play
 )
 
-//Same function, now changing the size of the array and the root of the overtone series (this function only gives the frequencies, it doesn't include the sine wave and the .play function):
+//Same function, now changing the size of the array (number of overtones) and the root of the overtone series (this function only gives the frequency values, excluding the sound synthesis part):
 (
 {
 	arg root = 50, slots = 7; //Default values.
@@ -350,68 +352,68 @@ Array.fill(6, {arg i; [i, rrand(0, 11)]}) //Here creating separate arrays contai
 
 	});
 
-}.value(50, 8) //50 Hz for the root freq, and 8 overtones (the first one is the root freq) calculated.
+}.value(50, 8) //50 Hz for the root's freq, 8 overtones calculated (the first one being the root).
 )
 
-//Duplicate is equivalent to Array.fill:
+//Duplicating (n!) is equivalent to Array.fill:
 
 //Equal functions:
-({arg i; [ i, rrand(0, 11) ]} !6)
+({arg i; [ i, rrand(0, 11) ]} !6) //and:
 
 Array.fill(6, {arg i; [i, rrand(0, 11)]})
 
 //ARRAY.SERIES:
 //The second class method for arrays is Array.series(size, start, step): it creates an aritmetic series:
 
-Array.series(12, 0, 1) //Series from 0 to 11 (12 values, starting by 0, 1 step between each).
+Array.series(12, 0, 1) //Series from 0 to 11 (12 values, starting by 0, 1 step between each value).
 
-Array.series(24, 60, 0.5) //Scale within an octave, in tone-quarters, from midi 60 (central C).
+Array.series(24, 60, 0.5) //Scale within an octave, in quarter tones (thus, 24 steps for an octave), from midi 60 (central C).
 
-//It can be assigned to a variable and visualized on a chart:
+//An array can be assigned to a variable and visualized on a chart:
 
 x = Array.series(50, 0, 5)
 x.plot(discrete:true) //Discontinuous points.
-x.plot(discrete: false) //Continuous line (but this is a series of "points").
+x.plot(discrete: false) //Continuous line (although the content of the array is still a series of "points").
 
 //ARRAY.GEOM:
-//The third class method for arrays is Array.geom(size, start, grow): it creates a geometric series. The arguments are the same as in Array.series (size and start), but the third argument is grow, is the product (multiplication) for the geometric series, as the step would be for the aritmetic series (but in there, it is just a sum, and not a product):
+//The third class method for arrays is Array.geom(size, start, grow): it creates a geometric series. The arguments are the same as in Array.series (size and start), but the third argument is grow, the product (multiplication) for the geometric series, as the step (sum) would be for the aritmetic series.
 
-//It is really useful to calculate frequencies based on a certain interval, using the ratios of each interval (that would work according to the natural or Pitagoric tuning):
-Array.geom(5, 220, 2) //For example, the 2 would mean octaves (regarding frequency in Hz) --> Five octaves from the A3, counting the A3 itself.
+//It is really useful to calculate frequencies based on a certain interval, using the ratios (numeral relationship between overtones within the overtone series) of each interval (for natural or Pitagoric tuning):
+Array.geom(5, 220, 2) //For example, grow = 2 will create octaves (regarding frequency in Hz) --> Five octaves from A3, counting the A3 itself.
 
-//As a brief reminder of the ratios for the intervals (useful for the upcoming noise filters):
+//The ratios for each interval in natural tuning can be found in document 4 (with regard to banks of filters), but they can be easily calculated looking at the overtone series.
 
-//It is also useful for accelerando and diminuendo, (speeding up and down processes, for example, applied to rhythms), lowering or raising the amplitude in an exponential way. It should be used with caution as the values can grow really fast (depending on the grow argument). Be careful, especially with frequencies and amplitude.
+//It is also useful for speeding up and down processes (for example, applied to rhythms or rates), or for lowering and raising the amplitude in an exponential way. It should be used with caution as the values can grow really fast (depending on the grow argument). Be careful, especially with frequencies and amplitude (always check the content of the array).
 
 //Here inside a variable and plotted to see the exponential line:
 f = Array.geom(10, 1, 2)
 f.plot(discrete: true)
 
-//INSTANCE METHODS: they are applied to the arrays that already exist:
+//INSTANCE METHODS: applied to arrays that already exist:
 
 y = Array.series(12, 0, 1) //An array in a variable.
 y.reverse //Retrograded series.
 y = y.reverse //Now the variable is reasigned to the retrograded series.
 y.scramble //Changes the order of the elements randomly.
-y = y.scramble.keep(5) //Trick to choose 5 random numbers from a series withour repeating them.
+y = y.scramble.keep(5) //Trick to choose 5 random numbers from a series without repeating them.
 y.sort //Puts the values in upward order (if they are numbers).
 y.sort.reverse //Puts the values in opposite order (downwards).
 
 //For very long arrays, in order to see all the elements (for example, if needed to see the last one), we can use:
 Array.series(200, 0, 1) //It shows etc... because it is too long, but we can't know the last value.
-Array.series(200, 0, 1).asCompileString //This will show all the elements.
-Array.series(200, 0, 1).last //This will show just the last element (thus, this line is no longer an array, but just ONE value).
+Array.series(200, 0, 1).asCompileString //This will show all elements (if needed).
+Array.series(200, 0, 1).last //This will show just the last element (thus, this line is no longer an array, but just its last value).
 
 e = Array.series(4, 60, 10) //New series.
 e = e.mirror //This includes the original + the retrograded (mirror) series.
-e.plot(discrete: true) //Sort of triangle in the graph
+e.plot(discrete: true) //Sort of triangle in the graph representing the mirror series.
 
 [ 0, 1, 2, 3 ].choose //Chooses one random element from the collection.
-[ 0, 1, 2, 3 ].wchoose([ 0.2, 0.3, 0.49, 0.01 ]) //Chooses one random elements from the collection according to the probability (out of 1) for each element stated in the second array (which is its argument, an array of ratios for probability). They have to sum 1 in total (100%) and there has to be one value per element in the first array (other wise, the values are going to rotate for the values in the first array).
-[ 0, 1, 2, 3 ].wchoose([ 5, 8, 4, 2 ].normalizeSum) //NormalizeSum converts other values into ratios from 0 to 1.
+[ 0, 1, 2, 3 ].wchoose([ 0.2, 0.3, 0.49, 0.01 ]) //Chooses one random element from the collection according to the probability (out of 1) for each element stated in the second array (which is its argument, an array of ratios for probability). They have to sum 1 in total (100% probability) and there has to be one value per element in the first array (if having fewer elements in the array of weights (probabilities), their values would rotate when applied to the first array until all elements receive a weight value).
+[ 0, 1, 2, 3 ].wchoose([ 5, 8, 4, 2 ].normalizeSum) //NormalizeSum converts other values into ratios from 0 to 1, so probability can be calculated easier without summing 1.
 [ 0, 1, 2, 3 ].rotate(1) //Rotation of the elements to the right. If using a negative number, they rotate to the left. If using a different number other than 1, they rotate those many slots within the series.
 
-//When applaying aritmetic operations using arrays of different size: the values of the small array rotate to be applied to the big array:
+//When applaying aritmetic operations using arrays of different size, as commented before, the values of the small array rotate to be applied to the big array:
 //Hence these operations are equal:
 
 [1, 2, 3, 4, 5] + [1, 2, 3]
@@ -421,16 +423,16 @@ e.plot(discrete: true) //Sort of triangle in the graph
 
 a = [0, 1, 2, 3, 4]
 a = a.add(1000) //Adds the value between parenthesis.
-a //Now "a" contains a 1000 at the end of the collection.
+a //Now "a" contains 1000 at the end of the collection.
 
 a = [0, 1, 2, 3, 4, 1000]
 a[1] = 2000 //This is the method "put": it puts the indicated value into the indicated index (subsequently removing what was there first).
 a[0] = 0.5
 
-b = a.removeAt(1) //Removes the second index (which is index 1, as stated between parenthesis) and returns it in the post-window. "b" is just a 1 then.
+b = a.removeAt(1) //Removes the second index (which is index 1, as stated between parenthesis) and returns it in the post-window. "b" is just that index then.
 a //"a" is lacking the second element now.
 
-[1, 2, 3, 4, 5].sum //Addition of the elements of the array (only with homogeneous array). Could be applied to an array of signals to put them together into the same channel.
+[1, 2, 3, 4, 5].sum //Addition of the elements of the array (only with homogeneous arrays). Could be applied to an array of signals to put them together into the same channel (beware of the sum of amplitudes when adding signals).
 
 //Concatenation of arrays:
 k = [1, 2, 3]
