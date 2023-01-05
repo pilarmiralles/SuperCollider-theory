@@ -688,7 +688,7 @@ SinOsc //The simplest oscillatory pattern, equivalent to a spring or a pendulum:
 SinOsc.ar(69.midicps, 0, 0.4, 0)
 
 //2nd argument = phase (starting position in the wave): 0 (0) = beginning / 90º (0.5pi) = top point / 180º (1pi) = half period / 270º (1.5pi) = bottom point / 360º (0) = back to the beginning. This is only perceptible when the sine wave is not played at sample rate, but slow enough to hear its shape (for example, when used for a modulation, as LFO).
-//3rd argument = mul (from multiplication). The amplitude of the signal is multiplied by that value. Default value is 1, but that is the limit before saturation (distortion). Thus, it is best to write a value below 1 (exceptions will be shown later on). When lowering the mul, the shape of the wave is vertically narrower, the amplitude changes, but not the timbre.
+//3rd argument = mul (from multiplication). The amplitude of the signal is multiplied by that value. Default value is 1 (which means that the amplitude or range of values if applied to a modulation will be -1 to 1), but that is the limit before saturation (distortion). Thus, it is best to write a value below 1 (exceptions will be shown later on). When lowering the mul, the shape of the wave is vertically narrower, the amplitude changes, but not the timbre.
 //4th argument = add. It is the vertical position of the wave with respect to its center (by default, and for any signal at audio rate, it will be 0). This default value will be changed when, for example, modulating (using the SinOsc as a LFO).
 
 //The arguments can be changed in a different order (or without needing to specify all of them if the default values suit our needs). We use then the keyword assignment:
@@ -704,15 +704,15 @@ SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" 
 }.play
 )
 
-//The "mul" argument's value is 1 by default. The soundwave will move vertically from -1 to 1 regarding the amplitude. On the other hand, "add" (the 4th argument in SinOsc), is an addition to the mul. It will move vertically the soundwave: the center is 0 by default. If "add" is changed, "mul" will conserve its value, but the vertical point were the soundwave is situated will vary. "Add" is only used when using a signal in a modulation.
-/*In order to modulate a sine wave, for instance, from 440 to 880 Hz, we use a signal in its frequency argument, and calculate the mul and add of such signal as it follows:
+//Modulations:
+/*In order to modulate a sine wave, for instance, its frequency from 440 to 880 Hz, we use a signal in its frequency argument, and calculate the mul and add of such signal as follows:
 
 1 - Calculate the peak to peak amplitude: top freq - bottom freq: 880 - 440 = 440.
 2 - Mul will be equal to the peak to peak amplitude / 2: 440 / 2 = 220.
 3 - Add will be equal to mul + bottom freq: 220 + 440 = 660.
 */
 
-//This would be the resulting signal of our calculations: a sinewave modulating from 440 to 880 (back and forth) each 2 seconds (for instance):
+//This would be the resulting signal of our calculations: a sinewave modulating from 440 to 880 (back and forth) each 2 seconds (the frequency of the modulating signal is 0.5 or 1/2, thus the modulation will happen within the span of 2 seconds):
 
 (
 {
@@ -725,7 +725,7 @@ SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" 
 }.play
 )
 
-//Side note: another option to hear the signal through both channels: this is a UGen for panning (a "panner"). It's first argument is our signal, and its second argument is the position (-1 = left / 1 = right / 0 = center). It automatically turns the signal into a stereo signal:
+//Side note: another option to hear the signal through both channels is using Pan2, a UGen for panning. It's first argument is our signal, and its second argument is the position (-1 = left / 1 = right / 0 = center, and everything in between). It automatically turns the signal into stereo, and position = 0 will keep it in the center:
 
 (
 { Pan2.ar(
@@ -735,13 +735,13 @@ SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" 
 }.play
 )
 
-//Remember that the phase argument (the 2nd one) will only be noticeable when changing it in the modulating signal (for example, in here, if needing to start from 880 instead of 440, which is the top frequency, the soundwave should start with a phase = 0.5pi).
+//Remember that the phase argument (the 2nd one) will only be noticeable when changing it in the modulating signal (for example, in here, if needing to start from 880 instead of 660, which is the center frequency corresponding to phase = 0, the soundwave should start with a phase = 0.5pi).
 
-//The mul of the "carrier" signal should still be between 0 and 1. Here is a different way to control the mul: the mul is equal to 1 (by default), but the whole signal is multiplied by 0.1, so the mul will drop to that value:
+//The mul of the "carrier" signal should still be between 0 and 1. Here is a different way to control the mul: mul is equal to 1 (by default), but the whole signal is multiplied by 0.1, so the mul will drop to that value:
 (
 {
 	SinOsc.ar(
-		SinOsc.ar(1/2, 0.5pi, 220, 660),
+		SinOsc.ar(1/2, 0.5pi, 220, 660), //Starting by the top frequency as phase = 0.5pi.
 		0,
 		1 !2,
 		0
@@ -749,13 +749,13 @@ SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" 
 }.play
 )
 
-//Here, you can actually visualise what happens to the soundwave when moving the add:
+//Here, you can actually visualise what happens to the soundwave when changing the mul and add values (do not play these functions!):
 ({
 	[
 		SinOsc.ar(440, 0, 1), //Modifying the mul only: the amplitude changes.
 		SinOsc.ar(440,0, 4),
 	]
-}.plot(1/440, minval: -5, maxval: 5)
+}.plot(1/440, minval: -5, maxval: 5) //Displaying one cycle of the sine wave within amplitude values -5 to 5.
 )
 
 ({
@@ -766,28 +766,28 @@ SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" 
 }.plot(1/440, minval: -150, maxval: 150)
 )
 
-//Now we can modulate other parameters apart from the frequency: here, the amplitude is also modulates from 0 to 0.5 mul:
+//Now we can modulate other parameters apart from the frequency: here, the amplitude is also modulated from 0 to 0.5 mul. Compare the frequencies of each modulating signal:
 
 (
 {SinOsc.ar
-	(SinOsc.ar(1/10,1.5pi, 100, 400),
-		0, //It is useless to modify the phase of the "carrier" signal.
-	SinOsc.ar(2, 0, 0.25, 0.25)
+	(SinOsc.ar(1/10,1.5pi, 100, 400), //The modulation of the frequency is completed each 10 seconds.
+		0,
+	SinOsc.ar(2, 0, 0.25, 0.25) //The modulation of the amplitudes occurs two times per second.
 	)
 }.play
 )
 
-//The frequency of the modulating signal has to be below 20 Hz. Otherwise, it would become a frequency modulation or FM. The same happens with the amplitude modulation, which would bring about AM (or Ring modulation).
+//The frequency of the modulating signal has to be below 20 Hz. Otherwise, it would become a frequency modulation or FM. The same happens with the amplitude modulation, which would bring about AM (or Ring modulation depending on the depth).
 
 {SinOsc.ar(SinOsc.ar(880, 1.5pi, 100, 400), 0, 0.1 !2)}.play //Quick example of frequency modulation (there can be heard more than one frequency).
 
-//Last but not least, it is possible to modulate the frequency of the modulating signal (although this is already a bit of a mess and a bit advance), but just as an example:
+//Last but not least, it is possible to modulate the frequency of the modulating signal, so its speed, so to say, will be variable (will modulate)
 
 (
 {
 	SinOsc.ar(
 		SinOsc.ar(
-			SinOsc.ar(2, 0, 2, 3), //Between 1 and 5 seconds: applying the mul-add calcutalions. Then, this frequency modulation of the modulation will happen each 2 seconds.
+			SinOsc.ar(1/5, 0, 2, 3), //The frequency of the modulating signal will change in the span of 5 seconds from 1 to 5 times per second.
 			0.5pi,
 			220,
 			660).poll,
