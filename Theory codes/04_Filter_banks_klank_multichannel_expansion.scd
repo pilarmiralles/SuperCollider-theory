@@ -1,17 +1,17 @@
 //4 - FILTER BANKS, KLANK, MIX
 ////////////////////////////////////////////////
 
-//CHANNELS: channels are arrays --> there are 128 audio channels by default and 4096 control channels by default (for example, for Midi control and so forth). A stereo signal is an array of two elements (two channels), and so forth.
-//By default, there are two channels out and two channels in, occupaying the four first indexes within the array of channels (0, 1 for out L-R; 2, 3 for in L-R). From index 4 onwards, the channels are free up to 127 (those are the indexes that we'll use, for instance, to send other signals via private channel).
+//CHANNELS: channels are arrays --> there are 128 audio channels by default and 4096 control channels by default (for example, for Midi control). A stereo signal is an array of two elements (two channels).
+//By default, there are two channels out and two channels in, occupaying the four first indexes within the array of channels (0, 1 for out L-R; 2, 3 for in L-R). Channels with indexes 4 to 127 are private channels free to use for sending other signals.
 
-s.meter //Shows the in /out channels and their level (volume), if evaluated without any signal in SC, it is possible that it shows what the microphone of the computer is capturing.
+s.meter //Shows the in /out channels and their level (volume). If evaluated without any signal running in SC, it is possible that it shows what the microphone of the computer is capturing.
 
 s.scope //Shows the signal at the active channels (remember that .scope ALSO plays the audio).
 
-{ SinOsc.ar(440, 0, 0.3)}.scope //Coming out through the left channel (index 0).
-{ SinOsc.ar(440, 0, 0.3)}.scope(outbus: 10) //Now the signal is at channel 10 (we cannot hear it, because channel 10 is already a private channel, not an out if we're not using 11 loudspeakers. But .scope shows it).
+{SinOsc.ar(440, 0, 0.3)}.scope //Coming out through the left channel (index 0).
+{SinOsc.ar(440, 0, 0.3)}.scope(outbus: 10) //Now the signal is in channel 10 (we cannot hear it, because channel 10 is already a private channel, not an out possibility unless we have 11 loudspeakers. But .scope shows it).
 
-//Now we'll send several signals to several channels: here two sine waves, through L-R (there is a pulse each second due to the difference in frequency). More than two signals won't sound unless we have more than two loudspeakers:
+//Now we'll send several signals to several channels: here two sine waves through L-R (there is a pulse each second due to the difference in frequency). More than two signals won't be heard unless we have more than two loudspeakers (but they are being played regardless):
 
 (
 {
@@ -24,14 +24,14 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 
 //MULTICHANNEL EXPANSION
 
-{ SinOsc.ar([440, 441], 0, 0.3)}.play //This UGen has an array as one of its arguments (the freq). It will create subsequently as many instances of itself as elements in the array (here, two sine waves: the rest of the arguments are shared for both UGens).
+{ SinOsc.ar([440, 441], 0, 0.3)}.play //This UGen has an array as one of its arguments (the freq). It will subsequently create as many instances of itself as elements in the array (here, two sine waves: the rest of the arguments are shared for both UGens).
 
-//We are creating here 100 sine waves between 30 and 8000 Hz, mixed in a single channel. The amplitude should be taken into account, so this is why we write 1/100, which will be a mul = 1 for the total sum of signals.
+//We are creating here 100 sine waves between 30 and 8000 Hz, mixed in a single channel using the class Mix. The amplitude should be taken into account as the signals are summed up. This is why we write 1/100, which would imply a mul = 1 for the total sum of signals. Notice that the selection of frequencies is different each time the function is evaluated:
 (
 {
 	Mix(
 	SinOsc.ar(
-			Array.fill(100, { exprand (30, 8000)}), //We use exprand as a better option than rrand when working with frequencies due to the natural exponential distribution of them (otherwise, the high spectrum would be too present, not balanced, because it occupies a large amount of numbers, linearly).
+			Array.fill(100, { exprand(30, 8000)}), //We use exprand as a better option than rrand when working with frequencies due to their natural exponential distribution (otherwise, the high spectrum would be too present, not balanced, because it linearly occupies a larger span of numbers).
 			0,
 			1/100 //This is already really loud, 1/200 would be a mul of 0.5 for the total.
 	))
@@ -54,15 +54,15 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 }.play
 )
 
-//This would be the result of such code:
+//This would be the result of the former code code:
 (
 {
 	var xline;
 
-	//The XLine is shared as a common argument (so is the 0.005 for the rq). If we want to keep it for real the same (shared) for both UGens, we should put it inside a variable, so it gives the same values for both (if it was a random process, the result would be very different).
+	//The XLine is shared as a common argument (so is the rq = 0.005). If we want to keep it the same (shared) for both UGens, we should put it inside a variable, so it gives the same values for both UGens (if it involved a random process, the result would be very different if not separated into a variable).
 	xline = XLine.ar(8000, 400, 5);
 
-	//An array of two filters with the two different Saw waves, with the two different frequencies, is created:
+	//An array of two filters is created with the two different Saw waves featuring each of the values from the array of frequencies:
 	[
 	RLPF.ar(Saw.ar(100, 0.05), xline, 0.005),
 	RLPF.ar(Saw.ar(250, 0.05), xline, 0.005)
@@ -71,11 +71,11 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 }.play
 )
 
-//Here is an example to see what it would happen if the shared process is a random process:
+//Here is an example to see what it would happen if the shared process involves randomness:
 
-{ RLPF.ar(Saw.ar([100, 250], 0.05), LFDNoise3.ar(1, 1000, 1030), 0.005)}.play
+{ RLPF.ar(Saw.ar([100, 250], 0.05), LFDNoise3.ar(1, 1000, 1030), 0.005)}.play //Original version with the array of two frequencies.
 
-( //Both RLPF use the same LFDNoise, so the result is the same:
+( //Both RLPF use the same LFDNoise, so the modulation is the same here:
 {
 	var noise;
 
@@ -88,7 +88,7 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 }.play
 )
 
-( //If not properly shared into a variable, the LFDNoise procudes different random values for each element of the array of UGens, eventhough its values are the same:
+( //If not properly shared by using a variable, the LFDNoise procudes different random values for each instance of the RLPF, eventhough their arguments are the same:
 {
 
 	[
@@ -98,11 +98,11 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 }.play
 )
 
-//In the next example we have two arrays in two of the arguments of a UGen. In this case, the biggest array tells us how many instances will be created. On the other hand, the elements from the small array will be distributed cyclically (as when two arrays of different size are added). The single elements are shared, as before:
+//In the next example we have two arrays in two of the arguments of a UGen. In this case, the biggest array tells us how many instances will be created. On the other hand, the elements from the small array will be distributed cyclically (like a sum of arrays of different size). The single elements are shared, as before:
 
-{ Pulse.ar([400, 500, 600], [0.5, 0.1], 0.2)}.play //A UGen with two arrays in two of its arguments.
+{ Pulse.ar([400, 500, 600], [0.5, 0.1], 0.2)}.play //A UGen with arrays in two of its arguments.
 
-//Result: how the elements of the arrays would be distributed (3 UGens, as the biggest array had three elements):
+//Result: how the elements of the arrays would be distributed (3 instances, as the biggest array had three elements):
 (
 {
 	[
@@ -110,7 +110,7 @@ s.scope //Shows the signal at the active channels (remember that .scope ALSO pla
 		Pulse.ar(500, 0.1, 0.2),
 		Pulse.ar(600, 0.5, 0.2)
 	]
-}.play
+}.play //We can only hear two of the three signals due to the limitation of 2 channels in stereo.
 )
 
 //USE OF MIX FOR MULTICHANNEL EXPANSION:
@@ -132,7 +132,7 @@ Mix(
 )
 
 //USE OF PAN2.AR:
-//Pan2 is a panner for mono signals. Its arguments are in, pos and level: "in" has to be a mono signal / "pos" indicate the position from -1 (Left) to 0 (center) to 1 /right) / "level" is similar to mul, it is not necessary to change it normaly (if the signal in is already balanced).
+//Pan2 is a panner for mono signals. Its arguments are in, pos and level: "in" has to be a mono signal / "pos" indicate the position from -1 (Left) to 0 (center) to 1 (right) / "level" is similar to mul, but normally, it is not necessary to change its deafult value:
 
 {Pan2.ar(PinkNoise.ar(0.1), SinOsc.ar(1, 0, 1))}.play //Here an example of the use of Pan2: The "in" is a Pink Noise and its position is modulated by a sine wave --> Try to change the frequency of the sine wave (the speed of the modulation).
 
@@ -145,10 +145,10 @@ Mix(
 )
 }.play
 )
-s.scope
+s.scope //Visualization.
 
 //////////////////////////////////////////////////////////////
-//OTHER EXAMPLES FOR MULTICHANNEL EXPANSION:
+//OTHER EXAMPLES OF MULTICHANNEL EXPANSION:
 
 //An array of 100 sine waves is created in 100 different channels, then those are mixed through a single channel using Mix (amplitude 1/100 = mul 1 for the total sum of signals) - basic example, already studied above:
 
@@ -199,7 +199,7 @@ s.scope
 }.play
 )
 
-//Mix in two different channels (below, just using a !2, as seen before), creating an array of two Mix. The result will be 100 different sine waves through each side of the stereo (thus, 200 sine waves in total: the sound is much richer):
+//Mix in two different channels (below, just using a !2, also could have applied Pan2), creating an array of two Mix. The result will be 100 different sine waves through each side of the stereo (thus, 200 sine waves in total: the sound is much richer):
 
 (//Use of the array:
 {
@@ -219,20 +219,20 @@ s.scope
 
 (//Use of the duplicator (!2):
 {
-	{
-		Mix(
-			SinOsc.ar(
-				Array.fill(100, { exprand(20, 16000) }),
-				0,
-				Array.fill(100, { exprand(0.025, 1) })/100,
-			)
-		)
-	} ! 2
+    {
+        Mix(
+            SinOsc.ar(
+                Array.fill(100, { exprand(20, 16000) }),
+                0,
+                Array.fill(100, { exprand(0.025, 1) })/100,
+            )
+        )
+    } ! 2
 }.play
 )
 
 
-//Using 30 different sine waves modulated through a BrownNoise (Freq) and Dust (Amp) through each side of the stereo (due to the !2, which needs the Mix between curly brackets in order to affect it all):
+//Using 30 different sine waves modulated through a BrownNoise (Freq) and Dust (Amp) through each side of the stereo (due to the !2, which needs the Mix between curly brackets in order to duplicate the Mix as a function):
 (
 {
 	{ Mix(
@@ -241,12 +241,12 @@ s.scope
 				BrownNoise.ar(40, 60).midicps,
 				0,
 				Dust.ar(20, 200).lag(0.5))
-			* 0.5})
-	)}!2 // --> This would be equivalent to applying the duplicator directly to the mul of a Uegn, but since in Mix we don't have the mul directly, this is the easiest way of duplicating the function.
+            * 0.5}) //Compensating the amplitude directly with a multiplication at the end of the code (total mul = 0.5).
+	)} !2 // --> This would be equivalent to applying the duplicator directly to the mul of a Uegn, but since in Mix we don't have the mul directly, this is the easiest way of duplicating the function.
 }.play
 )
 
-(//Otherwise, with no curly brackets, the Mix is copied from one side to the other (duplicated mono) and the sound is not richer, but just a copy of the same frequencies in each side of the stereo):
+(//Otherwise, with no curly brackets, the Mix is copied from one side to the other (mono-duplicated) and the sound is not richer, but just a copy of the same frequencies in each side of the stereo):
 {
 	Mix(
 		Array.fill(30, {
@@ -255,24 +255,11 @@ s.scope
 				0,
 				Dust.ar(20, 200).lag(0.5))
 			* 0.5})
-	) !2 //Only mono-duplicated, because it is outside the parenthesis.
+	) !2 //Mono-duplicated because of the lack of curly brackets.
 }.play
 )
 
-(//Compare the same code duplicated differently through each side of the stereo (the duplicator creates two functions and not only duplicates one):
-{
-	{Mix(
-		Array.fill(30, {
-			SinOsc.ar(
-				BrownNoise.ar(40, 60).midicps,
-				0,
-				Dust.ar(20, 200).lag(0.5))
-			* 0.5})
-	)} !2 //Duplicated differently in both sides.
-}.play
-)
-
-//Similar example, applying XLine to the density of the Dust:
+//Similar example, applying XLine to the density of the Dust (now with the duplicated function):
 (
 {
 	{ Mix(
@@ -331,7 +318,7 @@ s.scope
 {
 	var freqDeviation, noise, amps, freqs;
 
-	freqDeviation = LFNoise2.ar(0.05, 0.2, 1); //This variable was already independent and is applied to each frequency.
+	freqDeviation = LFNoise2.ar(0.05, 0.2, 1); //This variable was already independent and applied to each frequency.
 
 	noise = BrownNoise.ar; //The BrownNoise is shared (same noise for all BPF).
 	freqs = Array.geom(5, 440, 3/2) * freqDeviation; //Array of frequencies (index 0 to 4), modified by the freqDeviation: random number for all freqs.
@@ -348,17 +335,17 @@ s.scope
 }.play
 )
 
-//Another example: an array is applied to the frequency of the filter: the rest of the arguments are shared (the noise and RQ), and the smaller arryas (amp) are shared cyclically:
+//Another example: an array is applied to the frequency of the filter: the rest of the arguments are shared (the noise and RQ), and the smaller array (amp) is shared cyclically:
 (
 {
 	Mix(
 		BPF.ar(
 			BrownNoise.ar,
-			Array.fill(5, { exprand (50, 1000)}),
+			Array.fill(5, { exprand(50, 1000) }),
 			0.01,
 			[0.2, 0.6]
 		)
-	) !2
+	) !2 //Mono-duplicated only.
 
 }.play
 )
@@ -369,7 +356,7 @@ s.scope
 
 	in = BrownNoise.ar;
 	rq = 0.01;
-	freq = Array.fill(5, { exprand (50, 1000)});
+	freq = Array.fill(5, { exprand(50, 1000) });
 	amps = [0.2, 0.6];
 
 	Mix(
@@ -389,7 +376,7 @@ s.scope
 //FILTER BANKS:
 //We can use the multichannel expansion to create banks of filters based on specific intervals. We use Array.geom for this:
 
-//In this case, the fundamental frequency (start) is 30 Hz. Then we should take care of the top frequency of the filter not to surpass the 15000 Hz more or less.  The grow argument of the Array.geom determines the interval using ratios of the overtone numbers in the case of Pitagoric or natural temperament (for example, here using 5ths, the number of overtones in the overtone series creating a fifth are 3 and 2: 3/2 in the grow will create fifths. Inverting the ratio, using 2/3 will create a series of fifths but downwards - take into consideration the start freq, which should be higher then and not reaching a freq lower than 30-50Hz). We use a BPF to filter a PinkNoise in this case. The RQ of the filter has to be narrow in order to hear the frequencies. The narrower the filter is, the more mul (amplitude) it needs (even over 1). Last but not least, the Mix allows us to create 16 BPF (due to the freq array) mixed through a single channel (and here, mono-duplicated due to the !2 and no use of {}):
+//In this case, the fundamental frequency (start) is 30 Hz. Then we should take care of the top frequency of the filter not to surpass the 15000 Hz more or less.  The grow argument of the Array.geom determines the interval using ratios of the overtone numbers in the case of Pitagoric or natural temperament (for example, here using 5ths, the number of overtones in the overtone series creating a fifth are 3 and 2: 3/2 in the grow will create fifths. Inverting the ratio, using 2/3, will create a series of fifths, but downwards - take into consideration the start freq, which should be higher then and not reaching a freq lower than 30-50Hz). We use a BPF to filter a PinkNoise in this case. The RQ of the filter has to be narrow in order to hear the frequencies. The narrower the filter is, the more mul (amplitude) it needs (even over 1). Lastly, Mix allows us to create 16 BPF (due to the freq array) mixed through a single channel (and here, mono-duplicated):
 
 (
 {
@@ -418,7 +405,7 @@ s.scope
 }.play
 )
 
-//Some reminder of pitagoric relationships (the intervals are not exact, especially those that are not P5hts, 4ths or the 8ve):
+//Some reminder of pitagoric (natural) relationships (the intervals are not exact, especially those that are not P5ht, P4th or P8ve):
 /*
 (Here, ascending intervals --> invert the ratio to get the descending version):
 Unison --> 1
@@ -436,9 +423,9 @@ perfect 8th --> 2
 (Remember that a division is expensive for the processing of the program: it is better to express these rations in floats whenever possible).
 */
 
-//Method .midiratio (and .ratiomidi for opposite result), turns an interval calculated in number of semitones into an interval ratio, but in this case, the temperament is equal (sometimes, the little tunning deviations from the Pitagoric temperament could be interesting, and in other cases, the equal temperament could be more convenient, depends on your objectives):
+//Method .midiratio (and .ratiomidi for opposite result): turns an interval calculated in number of semitones into an interval ratio, but in this case, the temperament is equal (sometimes, the little tunning deviations from the Pitagoric temperament could be interesting, and in other cases, the equal temperament could be more convenient, depends on your objectives):
 
-7.midiratio //Tempered fifths.
+7.midiratio //Tempered fifth.
 
 //Filter bank of fifths, now with equal temperament:
 (
@@ -453,7 +440,7 @@ perfect 8th --> 2
 }.play
 )
 
-//Octave filter (ratio = 2/1, thus 2), "organ filter". Try different RQ: rq = 0.1 will create a dirtier sound:
+//Octave filter (ratio = 2/1, thus 2), "organ filter". Try different RQ: rq = 0.1 will create a muddier sound:
 (
 {
 	Mix(
@@ -466,7 +453,7 @@ perfect 8th --> 2
 }.play
 )
 
-//Minor seventh filter (Pitagoric temperament, so not as perfect as the equal one, which could be interesting), between the 4th and 7th overtones:
+//Minor seventh filter (in Pitagoric temperament) between the 4th and 7th overtones:
 (
 {
 	Mix(
@@ -499,28 +486,28 @@ perfect 8th --> 2
 }.play
 )
 
-//Here, we create a filter bank using all intervals in order (m2nd, M2nd, m3rn, M3rd, P4th, etc. up to M7th), using the method .integrate (obtaining the distance in semitones of each further step in the scale, and converting it to interval ratios with .midiratio, and finally multiplying by the fundamental freq:
+//Here, we create a filter bank using all intervals in order (m2nd, M2nd, m3rn, M3rd, P4th, etc. up to M7th), using the method .integrate (obtaining the distance in semitones of each further step in the scale, and converting it to interval ratios with .midiratio, and finally multiplying by the fundamental freq):
 
-( //Notice the use of Array.series intead of Array.geom (not working with Hz in the first moment, thus no need for an exponential series):
+(//Notice the use of Array.series intead of Array.geom (not working with Hz in the first moment, thus no need for a geometric series):
 {
-	var freqs;
+    var freqs;
 
-	freqs = 35 * Array.series(12, 0, 1).integrate.midiratio; //Using -1 as the step, the series will be created downwards. The factor 35 is the fundamental frequency (multiplied by each interval ratio, it will give back each frequency of the series).
+    freqs = 35 * Array.series(12, 0, 1).integrate.midiratio; //Using -1 as the step, the series will be created downwards. The factor 35 is the fundamental frequency (multiplied by each interval ratio, it will give back each frequency of the series).
 
-	Mix(
-		BPF.ar(
-			PinkNoise.ar,
-			freqs,
-			0.01,
-			1)
-	)!2
+    Mix(
+        BPF.ar(
+            PinkNoise.ar,
+            freqs,
+            0.01,
+            1)
+    )!2
 }.play
 )
 
 //Here how the method .integrate works:
 [3, 4, 1, 1].integrate; //It simply returns a collection with the incremental sums of all elements = [3, 3+4, 3+4+1, 3+4+1+1] = [3, 7, 8, 9]
 
-//Example of the same process, using midi notes instead (addition instead of product, with no .midiratio method and converting to Hz at the end) - 36 midi is higher than 35 Hz, do not expect the same result as in the previous code:
+//Example of the same process, using midi notes instead (addition instead of product for obtaining the overtones, with no .midiratio method and converting to Hz at the end) - 36 midi is higher than 35 Hz, do not expect the same result as in the previous code:
 
 (
 {
@@ -558,23 +545,23 @@ perfect 8th --> 2
 }.play
 )
 
-//Same process here, but the detunning will be greater (higher) from no detunning. The argument "i" is the number of the index (instance) of the array.fill (as studied before)
+//Same process here, but the detunning will be greater (higher) from no detunning. The argument "i" is the number of the index (instance) of the array.fill (as studied before):
 
 (
 {
-	var freqs;
+    var freqs;
 
-	freqs = Array.geom(10, 30, 2/1)
-	        *
-	        Array.fill(10, { arg i; ((i + 1/10) * 0.5).midiratio}); //The i + 1/10 calculate a number, everytime a bith higher and adapted to each of the 10 frequencies, finally multiplied by the quarter tone up detunning.
+    freqs = Array.geom(10, 30, 2/1)
+    *
+    Array.fill(10, { arg i; ((i + 1/10) * 0.5).midiratio}); //The i + 1/10 calculate a number, everytime a bith higher and adapted to each of the 10 frequencies, finally multiplied by the quarter tone up detunning. It will sum i + 1, then /10, then *5 --> Operations in SC do not follow a hierarchy if not separated with parenthesis (it is not i + (1/10)!!).
 
-	Mix(
-		BPF.ar(
-			PinkNoise.ar,
-			freqs,
-			0.01,
-			1)
-	)!2
+    Mix(
+        BPF.ar(
+            PinkNoise.ar,
+            freqs,
+            0.01,
+            1)
+    )!2
 }.play
 )
 
@@ -584,7 +571,7 @@ perfect 8th --> 2
 {
 	var freqs;
 
-	freqs = Array.fill(10, { arg i; (i + 1 * 35)}); // We add i + 1 just to avoid starting by 0 and having an empty freq.
+	freqs = Array.fill(10, { arg i; (i + 1 * 50)}); // We add i + 1 just to avoid starting by 0 and having an empty freq.
 
 	Mix(
 		BPF.ar(
@@ -602,7 +589,7 @@ perfect 8th --> 2
 {
 	var freqs;
 
-	freqs = 50 * Array.series (25, 1, 1); //Directly creating a linear series of simple integers from 1 and multiplying by the fundamental freq.
+	freqs = 50 * Array.series (25, 1, 1); //Directly creating a linear series of simple integers from 1 multiplied by the fundamental freq.
 
 	Mix(
 		BPF.ar(
@@ -614,7 +601,7 @@ perfect 8th --> 2
 }.play
 )
 
-//Half tone chord from 35 Hz, up to six octaves:
+//Half tone chord (cluster chord) from 35 Hz, up to six octaves:
 //We can check the last freq of the array using the method .last (do not put the method inside the filter code, otherwise, wou'll get played just the last frequency of the array):
 Array.geom (72, 35, 1.midiratio).last
 
@@ -648,7 +635,7 @@ Array.geom (72, 35, 1.midiratio).last
 			PinkNoise.ar,
 			freqs,
 			0.002,
-			amps)
+			amps * 2) //It is a bit quiet still.
 	)!2
 }.play
 )
@@ -696,9 +683,9 @@ Array.geom (72, 35, 1.midiratio).last
 )
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//KLANK UGEN: BANK OF RINGZ FILTERS:
+//KLANK: BANK OF RINGZ FILTERS:
 
-{Ringz.ar(Impulse.ar(0.5), 1000, 1, 0.1)}.play  //A single Ringz filtering an Impulse with a frequency of 1000 Hz and 1 second of delay time (the frequency - speed - of the impulse is 1 each 2 second).
+{Ringz.ar(Impulse.ar(0.5), 1000, 1, 0.1)}.play  //A single Ringz filtering an Impulse with a frequency of 1000 Hz and 1 second of delay time (the frequency of the impulse is 1 each 2 second).
 
 //Klank is a bunch of Ringz filters mixed together. Its main argument is "specificationsArrayRef", which is a reference of an array of specifications. Those specifications are (in this order): frequencies, amplitudes and decay times. An array of values (or single value) is indicated for each one of the parameters, which will be the parameters of the Ringz filters inside Klank (and chosen randomly).
 
@@ -743,20 +730,20 @@ Array.geom (72, 35, 1.midiratio).last
 			1,
 			[0.002, 0.012, 0.018, 0.013, 0.002, 0.012, 0.018, 0.013]
 		],
-		{Dust.ar(3, 0.1)} !2 //Using Dust: tapping sound, quite realist (ASMR).
+		{Dust.ar(3, 0.1)} !2 //Using Dust: tapping sound, quite realistic.
 )}.play
 )
 
 (
 {
-	Klank.ar(
-		`[
-					[178.4, 570.3, 7384, 605, 356.9, 1150.6, 14768, 1210],
-					1,
-					[0.002, 0.012, 0.018, 0.013, 0.002, 0.012, 0.018, 0.013] * 16 //The product in here works as a lag for each decay time.
-				],
-				{Dust.ar(3, 0.1)} !2
-	)}.play
+    Klank.ar(
+        `[
+            [178.4, 570.3, 7384, 605, 356.9, 1150.6, 14768, 1210],
+            1,
+            [0.002, 0.012, 0.018, 0.013, 0.002, 0.012, 0.018, 0.013] * 16 //The product in here works as a lag for each decay time (this is the reason why in this code, the dust is more resonant than in the former example).
+        ],
+        {Dust.ar(3, 0.1)} !2
+)}.play
 )
 
 //Using Array.fill to produce random freqs and decay times (instead of writing the specific list of values):
@@ -766,7 +753,8 @@ Array.geom (72, 35, 1.midiratio).last
 		`[
 			Array.fill(8, { exprand(150, 14000)}),
 			1,
-			Array.fill(8, { exprand(0.002, 0.02)}) * 32],
+			Array.fill(8, { exprand(0.002, 0.02)}) * 32
+        ],
 		{PinkNoise.ar(0.01)} !2
 )}.play
 )
