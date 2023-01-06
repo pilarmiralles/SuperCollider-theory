@@ -1,44 +1,43 @@
 //7 - BUFFERS, WAVESHAPE DISTORTION, RING MODULATION AND DECAY
-/////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 
 //BUFFERS:
-//Something very basic, but important to bear in mind, is that SuperCollider does not read MP3 files. Use .aiff or .wav or, for compressed audios (lossless), .flac. Now, regarding Buffer: a buffer is usually used to hold sampled audio (audio files), but it can be used to hold other types of data. It is an array of floats running in the audio server. We need to boot the Buffer in order to create the space in the memory, then the audio is copied in this space to it can be read. Each buffer is identified with a number "bufnum", which is automatically assigned by the server.
+//Something very basic, but important, to bear in mind is that SuperCollider does not read MP3 files. Use .aiff or .wav or, for compressed audio (lossless), .flac. Now, regarding Buffer: a buffer is usually used to contain sampled audio (audio files), but it can be used to contain other types of data. It is an array of floats running in the audio server. We need to boot the Buffer in order to create the space in the memory, then the audio is copied in that space so it can be read. Each buffer is identified with a number, "bufnum", which is automatically assigned by the server (it can also be assigned by us).
 
-//Buffer.read: regarding the arguments, the first one is the server in use, which in SC can be reached through the global variable "s". Then, we need to copy the path of the audio file as a string (literally dragging the file to the space of the second argument), the startFrame is the frame (see equivalences below) from which the audio will be read, and the numFrames, the number of frames that will be read (by default it will read the entire audio and this argument is useful only when the file is really long), action indicates when the action is done, and bufnum is the identifier of the buffer (which is better set by the server by default).
+//Buffer.read: regarding the arguments, the first one is the server in use, which in SC can be reached through the variable "s". Then, we need to copy the path of the audio file as a string (dragging the file into the space of the second argument), the "startFrame" is the frame (see equivalences below) from which the audio will be read, and the "numFrames", the number of frames that will be read (by default it will read the entire audio and this argument is only useful when the file is really long), "action" can include a function to be evaluated when the file has been read, and bufnum is the identifier of the buffer (which is better set by default the servers).
 
-//We normally assign the buffer to a variable, so we can ask it for some information:
+//We normally assign the buffer to a variable, so that we can ask that variable some information about the buffer (about the file contained in the buffer):
 a = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") //This is a SC default sound (it might have a different path in each computer).
 a.numChannels //Asking its number of channels.
-a.bufnum //Asking its bufnum
-a.query //All information about the buffer will be printed in the postwindow (bufnum, numFrames, numChannels and sampleRate)
+a.bufnum //Asking its bufnum.
+a.query //All information about the buffer will be printed in the postwindow (bufnum, numFrames, numChannels and sampleRate).
 a.play //To simply play the audio.
 {PlayBuf.ar(a.numChannels, a.bufnum)}.play //Playing the buffer (this UGen will be studied later on) and modifying parameters.
 
-//There is an alternative way to indicate the path of the audio files, but it only works if the audios are located in the same drive (in C, in the case of Windows). This technique is called "standardizePath" and it is useful to work on the same project from different computers. This following line searches in the SC resources folder, which contain the SC default audios, really ugly, but useful to work with the same audio with all students in the class. This is the equivalent to the path written above:
+//There is an alternative way to indicate the path of the audio files, but it only works if the audios are located in the same drive (in C, in case of using PC). This technique is called "standardizePath" and it is useful to work on the same project from different computers. This following line searches in the SC resources folder, which contain the SC default audios (really ugly, but useful to work with the same audio with all students in the class). This is the equivalent to the path written above:
 
-p = Platform.resourceDir +/+ "sounds/a11wlk01.wav"
-b = Buffer.read(s, p)
-{PlayBuf.ar(b.numChannels, b.bufnum)}.play //Check it out.
+p = Platform.resourceDir +/+ "sounds/a11wlk01.wav" //Path.
+b = Buffer.read(s, p) //Reading the file.
+{PlayBuf.ar(b.num.Channels, b.bufnum)}.play //Playing the file from the buffer.
 
 //Regarding the frame and the equivalence to duration in seconds:
 b.numFrames / b.sampleRate //The duration in seconds is equal to the number of frames divided by the sample rate.
-b.duration //There is already a method which executes that operation and gives the number of seconds directly.
+b.duration //There is already a method which executes that operation and gives the number of seconds directly (though it is good to bear in mind where this value is coming from, how it is calculated).
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //PLAYBUF
-//PlayBuf is used for reading audio files located into buffers (using, for example, Buffer.read before). As Buffer.read can't be located inside a SynthDef, we can use PlayBuf to read it from inside the SynthDef. The arguments:
+//PlayBuf is used for reading audio files located into buffers (using, for example, Buffer.read before). As Buffer.read can't be located inside a SynthDef, but we can use PlayBuf to read it from inside the SynthDef. The arguments:
 
+PlayBuf.ar(numChannels, bufnum, rate, trigger, startPos, loop, doneAction) //numChannels (number of channels, which is important to know because within a SynthDef the number of channels has to be fixed as the size of the arrays cannot be modified), bufnum (it is advisable to ask the buffer about it rather than giving a number ourselves. That way, it is guaranteed that the number won't repeat in other bufnums), rate (1 = original, 0.5 = half of the original and an octave lower, 2 = doubled the original and an octave higher, -1 = original rate, but inverted reading, and everything in between and beyond), trigger (triggers the following argument), startPos (when the previous argument causes a trigger, the audio will come back to the position set as starting position --> startPos is calculated in frames --> to calculate it in seconds, the number of seconds should be multiplied by the sampling rate, 44100), loop (loops to audio file: 1 = loop on, 0 = loop off), doneAction (normally using doneAction = 2 to kill the synth when the audio file is done).
 
-PlayBuf.ar(numChannels, bufnum, rate, trigger, startPos, loop, doneAction) //numChannels (number of channels, which is important to know because within a SynthDefm the number of channels has to be fixed as the size of the arrays cannot be modified), bufnum (which is better to ask directly the buffer about it using its variable), rate (1 = original, 0.5 = half of the original and an octave lower, 2 = doubled the original and an octave higher, -1 = original rate, but inverted reading), trigger (triggers the following argument), startPos (when the previous argument is triggered, the audio will come back to the position set as start position --> the start position is calculated in frames --> to calculate it in seconds, the number of seconds should be multiplied by the sampling rate, 44100), loop (1 = loop on, 0 = loop off), doneAction (use 2 in case you want to kill the synth when the audio file is done).
-
-//When the sampling rate of the audio is different than the sampling rate of the buffer (which, by default, is 44100), the rate read by PlayBuf can be misleading. The following UGen can be used in the rate argument in order to compensate different sampling rates (but this is normally not needed):
+//When the sampling rate of the audio is different than the sampling rate of the buffer (which is 44100 by default), the rate read by PlayBuf can be misleading. The following UGen can be used in the rate argument in order to compensate different sampling rates (but this is normally not needed):
 
 rate * BufRateScale.kr(bufnum)
 
 //EXAMPLES:
 
-c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") //Let's use this one as a base (it has to be evaluated in order to use the codes below):
+c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") //Let's use this one as a base for all our examples (it has to be evaluated in order to use the codes below):
 
 //Using PlayBuf within a function (just to illustrate the arguments as variables):
 (
@@ -48,7 +47,7 @@ c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") 
 	numChannels = c.numChannels;
 	bufnum = c.bufnum;
 
-	PlayBuf.ar(numCanales, bufnum)
+	PlayBuf.ar(numChannels, bufnum)
 
 }.play
 )
