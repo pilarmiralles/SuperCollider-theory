@@ -1,11 +1,11 @@
-//9 - ITERATIONS AND ROUTINES
+//8 - ITERATIONS AND ROUTINES
 ////////////////////////////////
 
 //METHOD .DO
-//The method .do evaluates a function for every of the elements into the collection that is sent to the method. It's receiver (left side) is a collection and its message (right side) is a function.
-//Sintax of .do: [element1, element2, ...].do(function). Two arguments can be sent to the function: the element of the arrey in use at each iteration, and the index or such element within the array, or number of iteration (repetitions of the function).
+//The method .do evaluates a function for each element of the collection to which the method is applied. It's receiver (left side) is a collection and its message (right side) is a function:
+//Syntax of .do: [element1, element2, ...].do( arg item, i; {function}). Two arguments can be sent to the function: the element of the array (item) and the index (iteration) of each element (or number of repetitions of the function assigned).
 
-//A first (useless) example for illustration: this function gives back each element of the array and its index in separated arrays (and it always gives back what is at its left side, the original array in this case). .postln is needed in case we want to visualize the result of evaluating the function in the postwindow. .do evaluates the function, but does not collect the results by itself: if .do was contained in the variable "a", "a" would be = to the original array (what is at the left side of the method. The method .collect works in a similar way, but giving back the results of the function into an array and actually collecting the results.
+//First example for illustration: this function gives back each element of the array and its index in separated arrays. In addition, the method .do always gives back its receiver (the original array in this case). The method .do does not give back (collect) the result of the function, it just performs it. Therefore, if we want to see the result of the function, we need the method .postln (other options are locating the result into a variable or making the result sound). If .do was contained in the variable "a", "a" would be equal to .do's receiver. The method .collect works in a similar way, but giving back the results of the function into an array, that is to say, collecting the results.
 
 (
 [\Feldman, \Ustvolskaya, \Xenakis].do({|surname, index|
@@ -14,37 +14,35 @@
 })
 )
 
-//Another example: putting into a sentence the elements (concatenation of the strings of text with the symbols of the array), it is repeated for each element of the array. The parenthesis are necessary in otder to get the .postln affecting the entire sentence:
+//Another example: locating into a sentence the elements (concatenation of the strings of text and the symbols from the array) and repeating this action for each element of the array. The parenthesis are necessary to get the .postln affecting the entire sentence:
 (
 [\dog, \cat, \horse].do({|animal, index|
 
-	("the animal " ++ animal ++ " features the index " ++ index).postln //The spaces for the sentence though, some other more elegant way to get them?
+	("the animal " ++ animal ++ " features the index " ++ index).postln //Is there some other more elegant way of adding the spaces in between the words?
 })
 )
 
-//Posting is only one option to make visible or audible the results of the function in .do: putting into a variable, or make it sound are two more possibilities.
+//This function changes the range of rrand: the high limit is modified with each iteration of the .do:
 
-//This function changes the range of the rrand as the high limit is changed with each iteration of the .do:
+([ 10, 20, 30, 40, 50 ].do({| num | rrand(0, num).postln})) //It will post 5 random values within the new limits imposed by the elements of the array.
 
-([ 10, 20, 30, 40, 50 ].do({| num| rrand(0, num).postln}))
-
-//Taking the former code as a point of departure, the numbers of the array in "a" are used as lower limit of rrand, and the following number of the array is used as top limit. The function is repeated only 5 times instead of the 6 times that the array "a" would imply because the last number wouldn't have any sense as lower limit:
+//Taking the former code as a point of departure, the numbers of the array in "a" are used as lower limit of rrand, and the following number of the array is used as top limit. The function is repeated only 5 times, excluding the last item of the array in "a" becuase that value shouldn't be stablished as lower limit:
 
 (
 a = [0, 10, 20, 30, 40, 50];
 
-a[..4].do({|num, i| rrand(a[i], a[i + 1]).postln})
+a[..4].do({|num, i| rrand(a[i], a[i + 1]).postln}) //As in the former code, it print five random values between the limits imposed by the function.
 )
 
-//The receiver of .do can be also a single number instead of an array: the function will be evaluated as many times as the number tells it to do (as it happens with Array.fill but without creating an array). It still gives back the number of the receiver as it happended with the array:
+//The receiver of .do can be a single number instead of an array: the function will be evaluated as many times as the receiver value indicates (as it happens with Array.fill but without creating an array). It still gives back the receiver:
 
 100.do({rrand(1, 64).postln}) //100 random values between 1 and 64.
 
-//When using a number istead of an array as the receiver of .do, the argument we can use is the index:
+//When using a number istead of an array as the receiver of .do, the only argument we can use is the iteration:
 
-100.do({|index| index.postln})
+100.do({|i| iteration.postln}) //Printing the iteration value.
 
-//Here a brown noise type of aleatoric movement is created when reassigning the value of the variable: "a" is = 0 as a default value, but with every iteration of the function it is reassigned adding a random value from -1 to 1:
+//Here a brownian type of aleatoric movement is created when reassigning the value of the variable: "a" = 0 as a default value, but with every iteration of the function it is reassigned adding a random value from -1 to 1. Then, "a" is printed:
 
 (
 a = 0;
@@ -54,7 +52,7 @@ a = 0;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //ROUTINES
-//Functions have an "eager" evaluation because all its instructions are evaluated in one shot and at the end it gives back the result of the last line of the text by default:
+//Functions have an "eager" evaluation because all their instructions are evaluated in one shot and at the end they give back the result of the last line of the text by default:
 
 (
 f = {
@@ -66,9 +64,9 @@ f = {
 
 }
 )
-f.value //Giving back only the last line of the operations (having performed the rest of them before).
+f.value //Giving back only the last line of the operations (having performed the rest of the operations before).
 
-//Now the operations are evaluated, but the result is "hi" because the string is placed in the last line of the function:
+//Now the operations are evaluated, but the result is "hi" because the string is placed at the last line of the function:
 (
 g = {
 	var result;
@@ -82,7 +80,7 @@ g = {
 )
 g.value
 
-//Now the result given in the postwindow is still "hi" because it occupies the last line of the code, but the variable "z" contains the result of the former operations (as in the first example of these functions):
+//Now the result given in the postwindow is still "hi" because it occupies the last line of the code, but the variable "z" contains the result of the former operations. Therefore, we can reach the result of the operations through the variable "z" (and demonstrate that, despite the value of the function is "hi", all the operations it contains are performed):
 (
 h = {
 	var result;
@@ -90,18 +88,18 @@ h = {
 	result = 1 + 1;
 	result = result * 1000;
 	z = result = rrand(0, result);
-	"hola"
+	"hi"
 
 }
 )
-h.value //It will be = to "hi".
-z //It will contain the result of the last operation after peforming the former ones. It can be used outside because it is a general variable, but it works only when the method .value has been executed before.
+h.value //Giving back the last line of the code.
+z //The variable "z" still contains the result of the operations within the function, although their result is not shown as the value of the function (though we need to use the method .value before for "z" to contain this value.
 
-//On the contrary, the evaluation of a Routine is lazy instead of eager, the lines are evaluated one at a time when it is ordered to do so. The message .yield separates the instructions and gives back the result up to that point as if the line it is sent to was the last line of a function. Then, we can continue evaluating the routine from that line onwards. In order to make the routine run, we use the method .next instead of .value: evaluating .next the results of each block of code up to a .yield will be evaluated each time in order.
+//On the contrary, the evaluation of a Routine is lazy instead of eager, the lines are evaluated one at a time when it is ordered to do so. The message .yield separates the instructions and gives back the result up to that point of the function as if the line it is sent to was the last line of such a function. Then, we can continue evaluating the routine from that line onwards. In order to evaluate the routine, we use the method .next instead of .value: when evaluating .next, the results of each block of code up to a .yield will be evaluated each time in order from top to bottom within the function:
 
 //Simple example with numbers:
 (
-r = Routine({ //The first argument of a Routine is a function, hence we need the burly brackets.
+r = Routine({ //The first argument of a Routine is a function, hence we need the curly brackets.
 
 	1.yield;
 
@@ -110,11 +108,9 @@ r = Routine({ //The first argument of a Routine is a function, hence we need the
 })
 )
 
-r.next //Result of the operations up to the first .yield of the routine.
+r.next //Result of the operations up to the first .yield of the routine. Keep evaluating for obtaining the rest of the values. When there are no more values next, "nil" ("empty") is printed in the post window.
 
-r.next //Result of the operations after the first .yield and up to the second.
-
-r.reset //Gives back the reseted routine.
+r.reset //Gives back the reseted routine, to be evaluated from its top again.
 
 //Example with more elements: strings, something that sounds, something that turns off the sound, etc.:
 (
@@ -131,10 +127,10 @@ r = Routine({
 })
 )
 
-r.next //First time: give back "hello", the sound of the SinOsc and the number 1 / Second time: gives back "here" and the number 15, and turns off the SinOsc in "a" / If it is evaluated for the third time, it gives back "nil", which means "empty", because there are no more instructions to be evaluated within the routine unless it is reseted.
+r.next //First evaluation: give back "hello", the sound of the SinOsc and the number 1 (receiver of .yield) / Second evaluation (without stopping the server): gives back "here" and the number 15, and turns off the SinOsc in "a" (using .release, with 1 second of decay) / If it is evaluated for the third time, it gives back "nil", which means "empty", because there are no more instructions to be evaluated within the routine unless it is reseted.
 r.reset
 
-//Another example (the string in the line of .yield does not need the .postln because .yield gives back the string as if it was the last line of a function, but the other string contained within the first block of .yield needs the .postln in order to be visible in the postwindow):
+//Another example (the string as a receiver of .yield does not need to be printed with .postln because .yield gives back the string as if it was the last line of a function. However, the other string contained within the first block of instructions needs to be printed with .postln to be visible in the postwindow):
 (
 r = Routine({
 	var synth1, synth2, synth3;
@@ -161,7 +157,7 @@ r = Routine({
 })
 )
 
-r.next //Follow the steps of each block within the .yields.
+r.next //Follow the steps of each block of instructions up to each .yield.
 
 /////////////////////////////////////////////////////////////////
 

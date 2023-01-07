@@ -1,4 +1,4 @@
-//8 - DELAY, COMB FILTERS, REVERBERATORS AND IN/OUT SYNTHS
+//9 - DELAY, COMB FILTERS, REVERBERATORS AND IN/OUT SYNTHS
 ///////////////////////////////////////////////////////////////
 
 //DELAY LINES
