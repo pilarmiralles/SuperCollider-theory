@@ -162,7 +162,7 @@ r.next //Follow the steps of each block of instructions up to each .yield.
 /////////////////////////////////////////////////////////////////
 
 //LOOPS WITH ROUTINES
-//Now we can apply .do to the routines in order to create loops.
+//Now we can apply .do to the routines in order to create loops (iterative operations):
 
 (
 r = Routine({
@@ -174,9 +174,9 @@ r = Routine({
 })
 )
 
-r.next //With this message .next, the routine is activated, the three symbols go into the variable "options", and the first value of "options" is asked to .do. It only gives back one result each time because .yield is included in the function of .do. It can be evaluated 5 times until it gives back "nil" (with no .yield, the 5 results would be given back at the same time, but .postln would be necessary to see the results in the postwindow).
+r.next //With the message .next, the routine is activated, the three symbols go into the variable "options", and a first choice from "options" is asked to .do. It only gives back one result each time because .yield is included in the function of .do. The routine can be evaluated up to 5 times before it gives back "nil" (with no .yield, the 5 results would be calculated at the same time, but .postln would be necessary to print them in the post window. Remember that .yield prints the result as if it was the last line of a function).
 
-//This is how the former code worked, but without the .do:
+//This is how the former code works without .do:
 (
 r = Routine({
 	var options;
@@ -194,7 +194,7 @@ r = Routine({
 
 r.next
 
-//Now we create an infinite loop, so it will always give back values instead of giving back "nil" at some point. Be aware of .yield: when .inf is sent to .do, yield is essential in order to stop the infinite loop, which would make the interpreter collapse (in such a case, try patiently to open the menu "language" above and press "quit interpreter". Later on you can "boot interpreter" again):
+//We can create an infinite loop so it will always give back values instead of giving back "nil" after a specific number of iterations. Be aware of .yield: when inf is sent to .do, .yield is essential in order to stop the infinite loop, which would otherwise make the interpreter collapse (in such a case, try patiently to open the menu "language" above and press "quit interpreter". Later on you can "boot interpreter" again. Until the interpreter is quitted, there will be a great lag):
 
 (
 r = Routine({
@@ -206,12 +206,13 @@ r = Routine({
 })
 )
 
-r.next
+r.next //Now we can obtain all the results we want.
 
-//If the routine is controlled by .play, then a clock ask the routine for results automatically (without having to send the message .next). The routine is evaluated automatically each certain amount of time:
+//If the routine is controlled by .play, then a clock ask the routine for results automatically (without having to send the message .next). The routine is evaluated automatically each certain amount of time. This amount of time is indicated through a number next to .yield (its receiver). If the routine is controlled by a clock, .yield cannot receive any other kind of objects as receivers but numbers.
 
 (
 r = Routine({
+
 	inf.do({
 		[\paper, \scissors, \rock].choose.postln;
 		1.yield
@@ -219,18 +220,18 @@ r = Routine({
 })
 )
 
-r.play //In here, .yield goes to the number 1, which will be interpreted as the number of seconds between each evaluation of the routine. Yield cannot receive now any other kind of objects but numbers.
+r.play //A value is selected and printed every second.
 
 //Controlling the clock in SC:
 r.clock //We open the communication with the clock, called "TempoClock".
 r.clock.tempo //We ask about the tempo of the clock ("getter" message, because it gives back a value), which is 1 by default.
-r.clock.tempo = 100/60 //We assign 100 bpm to the clock (as the default is 60 bpm = 1 sec), ("setter" message, because it changes the value).
+r.clock.tempo = 100/60 //We assign 100 bpm to the clock (as the default is 60 bpm = 1 sec), ("setter" message, because it changes the value of an object).
 
-//Syntax of the clock control: if the clock is not specified, the default clock will be used.
+//Syntax of the clock control (if the clock is not specified, the default clock will be used):
 
 Routine.new(function).play(clock)
 
-//There are different kinds of clocks in SC: TempoClock is used by default and understand the time as pulses within a unit (can be seconds) / SystemClock is not there by default and understand the time only in seconds, thus it is less flexible / AddClock is used for operations that are not a priority, meaning that they are not related to audio production (such as graphic content or midi), for example (if the program is reaching the CPU limit, the priority is given to TempoClock and SystemClock).
+//There are different types of clocks in SC: TempoClock is used by default. It understands the time as pulses within a unit (which can be seconds) / SystemClock is not set by default. It understands the time only in seconds, thus it is less flexible than TempoClock / AddClock is used for operations that are not a priority, meaning that they are not related to audio synthesis (such as graphic content or midi operations), for example (if the program is reaching the CPU limit, the priority is given to TempoClock and SystemClock, rather than processes controlled by AddClock).
 
 TempoClock.new(tempo) //Syntax: tempo is specified in bpm ratios (like metronomic tempo):
 /*
@@ -240,12 +241,12 @@ TempoClock.new(tempo) //Syntax: tempo is specified in bpm ratios (like metronomi
 And so on. Writing the ratios is easier and clearer.
 */
 
-//If we change the clock of a routine, this clock is == (equal) and === (identic) to TempoClock.default, which is the master clock of SC --> All clocks will be modify within the whole code. This is why we create TempoClock.new in ordr to create an independent clock to change the clock of the routine.
+//If we change the clock of a routine, this clock is == (equal) and === (identic) to TempoClock.default, which is the master clock of SC --> All clocks will be modify within the whole code. This is why we use TempoClock.new to create an independent clock to change only the clock of a specific routine:
 (
 r = Routine({
 	inf.do({
 		[\paper, \scissors, \rock].choose.postln;
-		1.yield //The number 1 is now interpreted as 1 unit of time within the 180 units of time per minute that will be produced by the clock.
+		1.yield //The number 1 is now interpreted as 1 unit of time within the 180 units of time per minute that will be produced by the clock (see below).
 	})
 });
 
@@ -270,7 +271,7 @@ SynthDef(
 	{| freq |
 		var signal;
 
-		signal = Saw.ar(freq * [1, 1.1]) //The product of the frequency is creating a slight detuning.
+		signal = Saw.ar(freq * [1, 1.1]) //The product of the frequency will bring about two freqs slightly detuned.
 		*
 		EnvGen.ar(Env.sine(0.1, 0.125), doneAction: 2); //doneAction = 2 is essential so the envelopes do not accumulate with each iteration of the loop.
 
@@ -286,9 +287,9 @@ r = Routine({
 
 	inf.do({ //The Synth is created within the .do loop.
 		Synth(\sawtooth,
-			[\freq, overtones.choose.postln]
+			[\freq, overtones.choose.postln] //The overtone is chosen and sent to the frequency of the sawtooth wave.
 		);
-		[1, 0.25, 0.125].wchoose([0.1, 0.4, 0.5]).yield //This will create different random units of thempo (within the default clock).
+		[1, 0.25, 0.125].wchoose([0.1, 0.4, 0.5]).yield //This will create random units of tempo (within the default clock, 60 bpm).
 	})
 }).play
 )
@@ -298,10 +299,10 @@ r = Routine({
 
 (
 Routine({
-	e = Env([120, 130], 60).asStream;
+	e = Env([120, 130], 60).asStream; //.asStream turns something that is not a stream (an envelope) into a stream (that is so say, something with "lazy" evaluation).
 
 	inf.do({
-		TempoClock.default.tempo = (e.next/60).postln; //.postln will show the values.
+		TempoClock.default.tempo = (e.next/60).postln; //.postln will show the values (10 times per second as 0.1.wait indicates).
 		0.1.wait;
 	})
 }).play
@@ -309,7 +310,7 @@ Routine({
 //######################################################
 
 //When using automatic evaluation in the routines, the message .wait is usually used instead of .yield, but both messages are equivalent.
-//Another example applied to sound: here there is a bigger loop containing two smaller loops which alternate between each other: the first one contains the Synth, and the second one creates its own synth with .play:
+//Another example applied to sound: here there is a bigger loop containing two smaller loops which alternate between each other thanks to the bigger loop: the first one contains the Synth, and the second one creates its own synth with .play:
 (
 SynthDef(
 	\sawtooth,
@@ -330,16 +331,16 @@ r = Routine({
 
 	overtones = 400 * (1..11);
 
-	inf.do({
+	inf.do({ //The bigger loop (provoking the alternation between the two small loops) is infinite.
 
-		([5, 7, 10, 3].choose).do({
+		([5, 7, 10, 3].choose).do({ //The first small loop will produce 3, 5, 7 or 10 sawtooth freqs, one each one tenth of a second.
 			Synth(\sawtooth,
 				[\freq, overtones.choose.postln]
 			);
 			0.1.wait;
 		});
 
-		4.do({
+		4.do({ //The second small loop will always produce 4 sine wave freqs, one each second.
 			{SinOsc.ar(
 				exprand(1000, 8000),
 				0,
@@ -353,3 +354,4 @@ r = Routine({
 }).play
 )
 
+r.clock.tempo = 60/60 //In case the default clock was changed at some point of this document, you can evaluate this line to put it back to 60 bpm.
