@@ -302,7 +302,7 @@ FreqScope.new //Evaluate this to analize (visualize) the frequencies when trying
 
 //There is also Blip, which is sort of an impulse, but featuring a filter and amplified (BEWARE THE AMPLITUDE).
 
-{Blip.ar(1, 500, 0.1)}.play //The first argument is the frequency of the impulses (the speed), and the second argument is the number of harmonics, which gives the frequency (the pitch) of each impulse. Last, but not least, the mul.
+{Blip.ar(1, 500, 0.1)}.play //The first argument is the frequency of the impulses (the speed), and the second argument is the number of harmonics (from 0 = sine wave, to as many harmonics as we want = the higher, the more "squared" the timbre), which gives the frequency (the pitch) of each impulse. Last, but not least, the mul.
 
 /////////////////////////////////////////////////////////////////////////////////////
 //BUTTERWORTH FILTERS: HPF, LPF, BPF y BRF: when filtering a signal, the amplitude of its frequencies falls at a specific pace from a cut-off frequency onwards. It is not an abrupt cut, but a gradual one: in SuperCollider, these are 2nd order filters, which means that the freqs from the cut-off point are going to fall 12 dB per octave.
