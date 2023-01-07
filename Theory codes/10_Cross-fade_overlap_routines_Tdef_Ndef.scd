@@ -1,21 +1,21 @@
 //10 - CROSS FADE AND OVERLAP ROUTINES, TDEF and NDEF
 /////////////////////////////////////////////////////////
 
-//Creation of continuous textures using routine, which change over time thanks to the concatenation or overlapping of various synths --> Cross-fade routine + Overlap routines.
+//This document is about the creation of continuous textures using routines which change over time thanks to the concatenation or overlapping of various synths --> Cross-fade routine + Overlap routines.
 
 //CROSS-FADE ROUTINES
-//The idea is to create a synthesizer with a fade-in and a fade-out: when the fade-out is initiated, the fade-in from the next synthesizer begins. This way the fade-out from one synth has to feature the same duration as the fade-in of the next synth (transition time = cross-fade). On the other hand, during the sustain time, there will be just one synthesizer at a time. The synth goes out of the server using doneAction = 2. The objective is a continuous sound rather than a sequence of sounds.
+//The idea is to create a synthesizer with a fade-in and a fade-out: when the fade-out is initiated, the fade-in of the next synthesizer begins. This way the fade-out from one synth has to feature the same duration as the fade-in of the next synth (transition time = cross-fade). On the other hand, during the sustain time, there will be just one synthesizer at a time. The synths go out of the server using doneAction = 2. The objective is to bring about a continuous sound rather than a sequence of sounds.
 
-Env([ 0, 1, 1, 0 ], 1, \sine).plot //This is the basic envelope normally used for the fades, but the type of envelope can be changed, using an exponential, gaussian, etc. Then, the number in the "times" argument will be replaced by our transition / sustain times.
+Env([ 0, 1, 1, 0 ], 1, \sine).plot //This is the basic envelope normally used for fading in and out, but the type of envelope can be changed (exponential, gaussian, etc.). Then, the number in the "times" argument will be replaced by our transition and sustain times.
 
-//Simple example: here the transition times are always the same (periodic routine). We'll try to variate this in the following examples, but this is also a good possibility depending on our necessities:
+//Simple example: here the transition times are always the same (periodic routine). We will try to variate this in the following examples, keeping in mind that the choice on this matter depends on our necessities:
 (
 SynthDef(
 	\filters,
 	{ arg freq1, freq2, freq3, transTime1, sustTime, transTime2;
 		var signal, env;
 
-		signal = { //BPF featuring three frequencies, and three different RQs:
+		signal = { //BPF featuring three frequencies, and three different RQs, then mixed in one channel.
 			Mix(
 				BPF.ar(
 					BrownNoise.ar,
@@ -24,9 +24,10 @@ SynthDef(
 					2
 				)
 			)
-		} !2; //Stereo signal: the BrownNoise will be different on each channel = richer signal.
+		} !2; //Duplicated function: the BrownNoise will be different in each channel.
 
-		env = EnvGen.ar( //The commented envelope:
+		//Basic envelope, now applying the transition and sustain times:
+		env = EnvGen.ar(
 			Env(
 				[0, 1, 1, 0],
 				[transTime1, sustTime, transTime2],
@@ -34,12 +35,12 @@ SynthDef(
 			),
 			doneAction: 2 //doneAction = 2 is essential when working with infinite routines.
 		);
-		Out.ar(0, signal * env)
+		Out.ar(0, signal * env) //Applying the envelope to the signal.
 }).add
 )
 
 (
-Routine({ //Periodic times (fixed), hypnotical result:
+Routine({ //Fixed values for the transition and sustain times:
 
 	inf.do({
 		Synth(\filters, [
@@ -56,11 +57,11 @@ Routine({ //Periodic times (fixed), hypnotical result:
 }).play
 )
 
-//Introducing arrays are arguments, for example, for the multiple frequency in the former code. This is especially useful when working with a larger number of frequencies (writing three freqs is not that cumbersome). Remember that the size of the array cannot be changed once the SynthDef has been compiled:
+//Introducing arrays as arguments, for example, to replace the multiple choice of three frequencies in the former code. This is especially useful when working with a larger number of frequencies. Remember that the size of the array cannot be changed once the SynthDef has been compiled:
 (
 SynthDef(
 	\filters,
-	{ arg freqs = #[0, 0, 0], transTime1, sustTime, transTime2; //Using a single argument now for all the frequencies.
+	{ arg freqs = #[0, 0, 0], transTime1, sustTime, transTime2; //Using a single argument now for all three frequencies.
 		var signal, env;
 
 		signal = {
@@ -91,7 +92,7 @@ Routine({
 
 	inf.do({
 		Synth(\filters, [
-			\freqs, {exprand(100, 1000)} !3, //We need to repeat the function 3 times in order to obtain 3 different freqs (this will create an array automatically, remember that this is equivalent to an Array.fill).
+			\freqs, {exprand(100, 1000)} !3, //We need to duplicate the function 3 times in order to obtain an array of 3 random freqs (it could also be written using Array.fill, as it will be shown in future examples).
 			\transTime1, 3,
 			\sustTime, 3,
 			\transTime2, 3
@@ -136,7 +137,7 @@ SynthDef(
 Routine({
 	var freqs;
 
-	freqs = (27.5 * Array.series(120, 2)); //The fundamental freq is 27.5 Hz. Array.series create a series of 120 harmonics from the harmonic 2 of the series (the overtone 1 is the fundamental freq), up to roughly 3000 Hz (remember that thre freq of the overtone is = to the fundamental freq * no. of the overtone. This is how this code works.
+	freqs = (27.5 * Array.series(120, 1)); //The fundamental freq is 27.5 Hz. Array.series create a series of 120 harmonics from the harmonic 1 of the series (the overtone 1 is the fundamental freq), up to roughly 3200 Hz (remember that the freq of an overtone is = to the fundamental freq * number of the overtone in the series). This is how this line of code works.
 
 	inf.do({
 		Synth(\filters, [
@@ -151,7 +152,7 @@ Routine({
 }).play
 )
 
-//Now we'll variate the transition and sustain time of each synth, so the routine won't be periodic, but flexible. We need to distinguish the transTime1 and transTime2. The synth in fade-out has to pass its fade-out duration to the next synth so it can be used as the new fade-in. Then, the new fade-out will be chosen by change, for example (varying it then).
+//Now we will variate the transition and sustain time of each synth, so the routine won't be periodic, but flexible. We need to distinguish the transTime1 and transTime2. The synth in fade-out has to pass its fade-out duration to the next synth so it can be used as the new fade-in. Then, the new fade-out will be randomly chosen, for instance:
 (
 SynthDef( //Same exact synth, just adding the two different transTimes:
 	\filters,
@@ -185,7 +186,7 @@ SynthDef( //Same exact synth, just adding the two different transTimes:
 Routine({
 	var transTime1, sustTime, transTime2;
 
-	transTime1 = rrand(1.0, 8); //The first transTime (fade-in) is chosen here, outside the loop. After the first iteration, the next fade-in will always depend on the previous fade-out (this avoids that the transTime renews the value with each iteration, so it can depend of the other choice).
+	transTime1 = rrand(1.0, 8); //The first transTime (fade-in) is chosen here, outside the loop, during the first iteration of the routine. After the first iteration, the next fade-in will always depend on the previous fade-out. It is placed out of the loop to allow the variable to reassign with each iteration of the routine:
 
 	inf.do({
 
@@ -199,37 +200,37 @@ Routine({
 			\transTime2, transTime2
 		]);
 
-		[ transTime1, sustTime, transTime2 ].round(0.1).postln; //Here the three times are posted in the postwindow just to visualize (delete this line in order to save CPU percentage), only with one decimal (thanks to round 0.1).
+		[ transTime1, sustTime, transTime2 ].round(0.1).postln; //Here the three times are posted in the postwindow just to visualize rounded to one decimal (delete this line in order to save CPU percentage).
 
 		(transTime1 + sustTime).wait; //Same system for the wait time, only adding the fade-in (transTime1) time and the sustTime.
 
-		transTime1 = transTime2; //The secret of the code is here when the variable of the fade-in is reassigned to the fade-out.
+		transTime1 = transTime2; //The variable of the fade-in is reassigned here to the fade-out at the end of each iteration.
 
 	})
 }).play
 )
 
-//Another example using other kind of synths: here Klank:
+//Another example using Klank:
 (
 SynthDef(
 \klanks,
 	{ var freqs, times, signal, env;
 
-		//These two variables are for the klank references array:
+		//These two variables will define Klank's references array:
 		freqs = Array.fill(50, { LinRand(30, 14000) }); //Rand would highlight the high freqs and ExpRand would balance low and high freqs. LinRand is in the mid way of both distributions (linear distribution).
-		times = Array.fill(50, { Rand(0.01, 0.1) });
+		times = Array.fill(50, { Rand(0.01, 0.1) }); //Uniform distribution for the decay times.
 
 		//Our synth here: the input of Klank is a Resonz filter, filtering a Dust and modulating its freq with an exponential line:
 		signal = Klank.ar(
-			`[ freqs, 1, times], //The ` of the array in Klank hides the array so it is not turned into a multichannel expansion.
+			`[ freqs, 1, times],
 			Resonz.ar(
-				Dust.ar(35 !2, 0.075), //Though we have here a duplicator provoking the multichannel expansion.
-				XLine.ar(14000, 30, 15), //The freqs are not decided in the routine but here directly. The line is fixed, but the timbre changes due to the random freqs in Klank in each iteration of the Synth.
+				Dust.ar(35 !2, 0.075), //The function is duplicated here, provoking the stereo sound.
+				XLine.ar(14000, 30, 15), //The freqs are not decided in the routine (which could be) but directly here. The line is fixed, but the timbre changes due to the random freqs in Klank with each iteration of the Synth.
 				0.2
 		));
 
 		env = EnvGen.ar(
-			Env([ 0, 1, 1, 0 ], 5, \sine), //we are using the same time for all segments in the envelope (trans / sust times), so one single number can be set.
+			Env([ 0, 1, 1, 0 ], 5, \sine), //we are using the same time for all segments in the envelope (trans / sust times), so one single number can be set (this could be defined in the routine as well).
 			doneAction: 2
 		);
 
@@ -237,7 +238,7 @@ SynthDef(
 }).add
 )
 
-( //No arguments are being choosen in the Routine, just the move between the synths.
+( //No arguments are being choosen in the Routine: it just activate one synth after another.
 Routine({
 	inf.do({
 		Synth(\klanks);
@@ -249,27 +250,27 @@ Routine({
 //////////////////////////////////////////////////////////////
 
 //OVERLAP ROUTINES
-//It will create several synths at the same time and this density can be controlled. The synths will replaced each other continuously in order to create a constant texture. Using the same system as in the cross-fade routine, the waiting time of the routine will be transTime1 + transTime2 + sustTime / density, that is to say, the duration of the entire envelope divided between the number of synths we want to hear at the same time.
+//An overlap routine will create several synths at the same time and this density (number of synths) can be controlled. The synths will replaced each other continuously in order to create a constant texture. The waiting time of this kind of routine will be transTime1 + transTime2 + sustTime / density, that is to say, the duration of the entire envelope divided by the number of synths we want to hear at the same time.
 
-//First simple example: five synths renewing themselves with every iteration (open the NodeTree in order to see how the synths replace themselves successively):
+//First simple example: five synths overlap and renew with each iteration (open the NodeTree in order to see how the synths replace themselves successively):
 (
 SynthDef(
 	\filtering,
 	{| freq, transTime, sustTime, density |
 		var signal, env, individualAmp;
 
-		individualAmp = ((density.log2 + 1) * -3.01).dbamp * 0.5; //This formula allows the amplitude to be modified automatically according to the density we set in the routine. You can try the formula by itself giving different values to the density. This is a formula given by my almighty first SC professor and I don't really understand why there is + 1 after the log2 (it is calculated in db, so it depends on the db functioning), after all, it is adapted to be always below 0.25, which will be applied to the envelope. Maybe it could be simplified, but this one works (IF 0.5 IS TO LOUD, REPLACE IT WITH 0.25 for instance).
+		individualAmp = ((density.log2 + 1) * -3.01).dbamp * 0.5; //This formula allows the amplitude to be modified automatically according to the density we set in the routine. You can try the formula by itself giving different values to the density. This is a formula given by my almighty first SC professor and I don't really understand why there is + 1 after the log2 of the density is calculated (the result of the operation is in db, so it depends on the db functioning), after all, it is adapted to be always below 0.25, which will be applied to the envelope. Maybe it could be simplified, but this one works (IF 0.5 IS TOO LOUD OR TOO QUIET, REPLACE IT with any other factor).
 
 		signal = BPF.ar(
 			BrownNoise.ar(1!2),
 			freq,
-			0.5/freq,
+			0.5/freq, //The RQ depends on the frequency.
 			10
 		);
 
 		env = EnvGen.ar(
 			Env(
-				[0, 1, 1, 0] * individualAmp, //Balancing the amplitude according to the density (and the formula above).
+				[0, 1, 1, 0] * individualAmp, //Balancing the amplitude according to the density (applying the formula above as a factor).
 				[ transTime, sustTime, transTime ],
 				\sine
 			),
@@ -283,7 +284,7 @@ SynthDef(
 Routine({
 	var density, transTime, sustTime, freqs;
 
-	density = 5; //Change the density taking into consideration the number of freqs created in the Array.geom (which will be the maximum density). The size of the array also depends on the type of interval chosen for the "grow" argument, so be aware of this. Density = 1: the routine wait until the synth is done, so there is only one layer.
+	density = 5; //Change the density (the number of freqs created by the Array.geom does not matter because they are chosen randomly, and therefore they can be repeated, for instance). Density = 1: the routine wait until the synth is done, so there is only one layer.
 
 	transTime = 5; //Fixed transTime and sustTime for now.
 	sustTime = 5;
@@ -297,12 +298,12 @@ Routine({
 				\sustTime, sustTime,
 				\density, density,
 		]);
-		((transTime + sustTime + transTime) /density).wait
+		((transTime + sustTime + transTime) /density).wait //The different synths will appear and dissapear at different moments.
 	})
 }).play
 )
 
-//ALL OF THIS CAN BE DONE WITH PATTERNS, which will be studied later on:
+//ALL OF THIS CAN BE DONE WITH PATTERNS, which will be studied in documents 11 and 13.
 //Using the same SynthDef as before (\filtering):
 (
 Routine({
@@ -313,11 +314,11 @@ Routine({
 	sustTime = 5;
 
 	freqs = Array.geom(200, 35, 0.5.midiratio); //0.5.midiratio creates quarter tones.
-	line = Env([0, freqs.lastIndex], 30).asStream; //This is an envelope which will give values from 0 to 199 (which is the lastIndex of the Array.geom) to another during 30 seconds (and the values are taken in the loop, asked by the .next message in each iteration + as the density is 100, the wait time is very small, so the values change fast successively). See the continuation in the freq argument of the loop:
+	line = Env([0, freqs.lastIndex], 30).asStream; //This is an envelope which will give values from 0 to 199 (which is the lastIndex of the Array.geom) during 30 seconds. The values are then asked by the .next message in the loop in each iteration. as the density is 100, the wait time is very small, so the values change fast, completing the spectrum from the bottom to the top and ending on the very last top freq). The envelope is turned into a stream (.asStream) so its values can be asked one at a time from within the loop (using .next as shown in the frequency argument of the synth). This explanation continues in the freq argument of the loop:
 
 	inf.do({
 		Synth(\filtering,
-			[ \freq, freqs[line.next.asInt.postln..].choose, //Using .asInt so the index values are integers for sure. [first value wanted..], creates an array from the first value we want up to the last one: our first value is the value of the line created above, which will be changing successively (and posted just for us to see, but delete .postln to save CPU). At the end, it maintains the last frequencie (all the layers, because there is nothing else among which they can choose regarding the freqs array).
+			[ \freq, freqs[line.next.asInt.postln..].choose, //Using .asInt so the index values are integers for sure. [first value wanted..], creates an array from the first value we want up to the last one available in that array ("freqs"): our first value is the first value of the envelope created above ("line"), which will be changing successively (and posted just for testing). At the end, it maintains the last frequency (there is not only one layer, but rather all layers playing the last value of the envelope of freqs at the end of the process, because that freq is the only available at that point).
 				\transTime, transTime,
 				\sustTime, sustTime,
 				\density, density,
@@ -327,31 +328,7 @@ Routine({
 }).play
 )
 
-//Here same routine, but the process (sort of glissando) is 3 seconds long (so the transTimes and sustTime should be = 1, so everything fits in 3 seconds):
-(
-Routine({
-	var density, transTime, sustTime, freqs, line;
-
-	density = 100; //Para cuartos de tono en el geom
-	transTime = 1;
-	sustTime = 1;
-
-	freqs = Array.geom(200, 35, 0.5.midiratio);
-	line = Env([0, freqs.lastIndex], 3).asStream;
-
-	inf.do({
-		Synth(\filtering,
-			[ \freq, freqs[line.next.asInt.postln..].choose,
-				\transTime, transTime,
-				\sustTime, sustTime,
-				\density, density,
-		]);
-		((transTime + sustTime + transTime) /density).wait
-	})
-}).play
-)
-
-//Contrary direction for the glissando (from high to low): just changing the order of the values in the Envelope (line). You can try out different times for the envelope (adapting the trans and sust times). At the end all the freqs are available because the freqs array is opened instead of closed:
+//Here is same routine, but the process (sort of glissando) is 3 seconds long (the transTimes and sustTime are equal to 1 so everything fits in 3 seconds):
 (
 Routine({
 	var density, transTime, sustTime, freqs, line;
@@ -361,11 +338,11 @@ Routine({
 	sustTime = 1;
 
 	freqs = Array.geom(200, 35, 0.5.midiratio);
-	line = Env([freqs.lastIndex, 0], 3).asStream;
+	line = Env([0, freqs.lastIndex], 3).asStream; //Upward series of freqs.
 
 	inf.do({
 		Synth(\filtering,
-			[ \freq, freqs[line.next.asInt.postln..].choose,
+			[ \freq, freqs[line.next.asInt.postln..].choose, //Closing the choice of freqs up to the top freq only.
 				\transTime, transTime,
 				\sustTime, sustTime,
 				\density, density,
@@ -375,23 +352,21 @@ Routine({
 }).play
 )
 
-//Here is the same, but remaining only with the low freqs at the end: changing the syntax of the freqs array [..last value wanted], so the array includes all the values up to the one we choose (so if the first one is 0, and we reduce the possibilities from 199 to 0, then at the end the only possibility will be 0).
-
-
-(//Aquí para que empiece con todo y se quede solo con el grave (cambiando los .. al principio, así acota dónde se corta el segmento del array y no que vaya hasta el final. Provar también con la env al revés [0, freqs.lastIndex]
+//Contrary direction for the glissando (from high to low): just changing the order of the values in the Envelope (line). You can try out different times for the envelope (adapting the trans and sust times, so their total sum is the time of the envelope). At the end, all freqs are available to be chosen because the array of freqs opens intead of closing (and of course, the freqs keep changing due to the overlap routine random choices):
+(
 Routine({
 	var density, transTime, sustTime, freqs, line;
 
-	density = 100; //Para cuartos de tono en el geom
+	density = 100;
 	transTime = 1;
 	sustTime = 1;
 
 	freqs = Array.geom(200, 35, 0.5.midiratio);
-	line = Env([freqs.lastIndex, 0], 3).asStream;
+	line = Env([freqs.lastIndex, 0], 3).asStream; //Downward series of freqs.
 
 	inf.do({
 		Synth(\filtering,
-			[ \freq, freqs[..line.next.asInt.postln].choose,
+			[ \freq, freqs[line.next.asInt.postln..].choose, //Openin the choice of freqs up to the whole spectrum.
 				\transTime, transTime,
 				\sustTime, sustTime,
 				\density, density,
@@ -401,7 +376,32 @@ Routine({
 }).play
 )
 
-//Try out other combinations of the former codes.
+//Here is the same, but remaining only with the lowest freq at the end: changing the syntax of the freqs array [..last value wanted], so the array includes all the values up to the one we choose (so if the first one is 199, and we reduce the possibilities from 199 to 0, then at the end the only possibility will be 0):
+
+
+(
+Routine({
+	var density, transTime, sustTime, freqs, line;
+
+	density = 100;
+	transTime = 1;
+	sustTime = 1;
+
+	freqs = Array.geom(200, 35, 0.5.midiratio);
+	line = Env([freqs.lastIndex, 0], 3).asStream; // Downward series of freqs. This could be also tested with [0, freqs.lastIndex] (upward series).
+
+	inf.do({
+		Synth(\filtering,
+			[ \freq, freqs[..line.next.asInt.postln].choose, //Closing the choice of freqs up to the bottom on only. If the array of freqs is inverted ([0, freqs.lastIndex], then opening the choice of freqs up to the whole spectrum
+				\transTime, transTime,
+				\sustTime, sustTime,
+				\density, density,
+		]);
+		((transTime + sustTime + transTime) /density).wait
+	})
+}).play
+)
+
 /*REMINDER OF THE ARRAYS SHORTCUTS:
 
 [..this] --> From the beginning of the array up to the value we want it to end at.
@@ -410,7 +410,7 @@ Routine({
 
 /////////////////////////////////////////////////////////////////////////////////////
 //SOLUTIONS TO PROBLEMS POSED BY DONEACTION 2:
-//DoneAction = 2 can provoke that a processes such as envelopes, delays or reverbs are not concluded before the Synth is removed from the server. There are different solutions to this problem: DetectSilence, dissengaged Line or overall envelope:
+//DoneAction = 2 can provoke that processes such as envelopes, delays or reverbs do not conclude before the Synth is removed from the server. There are different solutions to this problem: using DetectSilence, a dissengaged Line or an overall envelope:
 
 //Here is our SynthDef and the different solutions mentioned before:
 (
