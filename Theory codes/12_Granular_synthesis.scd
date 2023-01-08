@@ -1,4 +1,4 @@
-b//12 - GRANULAR SYNTHESIS
+//12 - GRANULAR SYNTHESIS
 //////////////////////////////
 
 //The objective here is to create our own granulators instead of using the UGens already prepared for such a purpose in SC. The advantage of this is to be able to control every single parameter, being conscious of the background process.
