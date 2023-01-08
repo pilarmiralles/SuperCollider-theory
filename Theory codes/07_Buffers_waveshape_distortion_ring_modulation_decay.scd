@@ -206,7 +206,7 @@ b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav")
 {
 	Latch.ar(
 		PlayBuf.ar(b.numChannels, b.bufnum, loop: 1),
-		Impulse.ar(16000) //Here we take 16000 frames out of its 44100 by default. The smaller the number, the harsher the distortion. Test it with lower numbers such as 12000, 8000, 2000, etc.
+		Impulse.ar(14000) //Here we take 16000 frames out of its 44100 by default. The smaller the number, the harsher the distortion. Test it with lower numbers such as 12000, 8000, 2000, etc.
 	)
 }.play
 )

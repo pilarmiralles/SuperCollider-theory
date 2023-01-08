@@ -1,17 +1,17 @@
-//11 - ALGORITHMIC COMPOSITION, PATTERNS (other patterns related to distributions in the document related to Pbind)
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//11 - ALGORITHMIC COMPOSITION, PATTERNS (other patterns related to distributions are explained in the theory file 13)
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //BOOLEAN EXPRESSIONS
-//They give back the literals "true" or "false" as a result. Some boolean expressions are: == (equal to), != (not equal to), <= (higher or equal to), .odd (odd number), .even (even number), .isNil (it's empty, for example, a variable or an array), > (lower than), .coin (sent to a number between 0.0 and 1.0 = probability between 0-100% of obtaining true, and false in consequence - Notice that 0.5.coin is equal probability for both options, but this does not asure you to get the same number of each result as it is just probability).
+//They give back the literals "true" or "false" as a result. Some boolean expressions are: == (equal to), != (not equal to), <= (higher or equal to), .odd (odd number), .even (even number), .isNil (it's empty, for example, a variable or an array), > (lower than), .coin (sent to a number between 0.0 and 1.0 = probability between 0-100% of obtaining true, and false in consequence - Notice that 0.5.coin means equal probability for both options, but that is not a guarantee for obtaining the same number of each result, as it is just probability).
 
 //IF METHOD
-//The method .if conditions the evaluation of a function or whichever piece of code. There are different possibilities for the syntax:
+//The method .if conditions the evaluation of a function. There are different possibilities for its syntax:
 
-if (1 > 2, {"true".postln}, {"false".postln}) //This is the one I normally use.
+if (1 > 2, {"true".postln}, {"false".postln}) //This is the one I normally use: if (boolean expression, {function if true}, {function if false}).
 
-(0.7.coin).if({"true".postln}, {"false".postln}) //This is the conventional way for other methods, such as .play, but is equal to the one above.
+(0.7.coin).if({"true".postln}, {"false".postln}) //This other syntax resembles that of other methods such as .do: (boolean expression).if({function if true}, {function if false}).
 
-if(3.odd) {"true".postln} {"false".postln}; //This is supposed to be the new recommended way.
+if(3.odd) {"true".postln} {"false".postln}; //This is supposed to be the new recommended way: if(boolean expression) {function if true} {function if false};
 
 //.and / .or --> For comparing two or more boolean expressions:
 
@@ -21,50 +21,50 @@ if(3.odd) {"true".postln} {"false".postln}; //This is supposed to be the new rec
 
 //In order to make things happen every given number of times (for example, one time out of three), we can use the module:
 
-(21 % 3) == 0) //Use the number of iterations of a routine instead of "21" in here, so the number keeps changing. The module 3 will only let pass the numbers that are multiple of 3.
+(21 % 3) == 0) //The number to which the module is applied could be, for instance, the changing number of the iterations of a routine. The module 3 will only give back "true" for the numbers that are multiple of 3.
 
-((21 % 3) == 0).and((21 % 7) == 0) //Using both the multiples of 3 and 7 (replace the 21 in both as well).
+((21 % 3) == 0).and((21 % 7) == 0) //Using both the multiples of 3 and 7 (the receiver of the module could be, once again, replaced by a variable value).
 
-//Sometimes, in order to alternate between two options, we could think about several options to use with "if":
-if (i.asInt.even, {"true".postln}, {"false".postln}) //Using .even or .odd in combination with the argument index if used within a routine is a good option, but the argument index is considered a float, to it can bring about errors. Using the argument .asInt (.asInteger) will solve that problem.
-if ((i % 2) == 0, {"true".postln}, {"false".postln})//Though an even better option is to use the module 2, so it will keep the numbers between 0 and 1.
+//Sometimes, in order to alternate between two options, we could think about several strategies using "if":
+if (i.asInt.even, {"true".postln}, {"false".postln}) //Using .even or .odd in combination with the argument index if used within a routine is a good option, but the argument index is considered a float, bringing about errors. Using the argument .asInt (.asInteger) will solve that problem.
+if ((i % 2) == 0, {"true".postln}, {"false".postln})//Though an even better option is to use the module 2, keeping the numbers between 0 and 1.
 
-//In case of using "if" within a routine and wanting to avoid applying a transformation or operation to the very first value given by the routine, you can add to your conditional ".and(i != 0)
+//In case of using "if" within a routine and wanting to avoid applying an operation to the very first iteration, you can add to your conditional ".and(i != 0)" using the method "i" from .do:
 if (0.5.coin.and(i != 0), {"true".postln}, {"false".postln})
 
 //////////////////////////////////////////////////////////////////
-//OTHER CONTROL STRUCTURES (expanded, apart from "if"):
+//OTHER CONTROL STRUCTURES (advanced, apart from "if"):
 
-//WHILE -> syntax and example in Spanish:
+//WHILE -> syntax and example:
 while ( testFunc, bodyFunc );
 
 (
 var structure, newStructure, position;
 
 structure = [ "a", "b", "c", "b", "a", "d", "c", "e", "c", "d" ];
-position = -1; //Initial value of -1, so there is a possibility for choosing just "a" during the first iteration (otherwise, it would always start further within the array because of position + rrand (1, 3) later on).
+position = -1; //Initial value of -1, so there is a possibility for choosing just "a" during the first iteration (otherwise, it would always start further within the array because of position + rrand (1, 3) applied later on).
 
 while( //"while": it only executes the second function if the first one is true. It is going to be executed as many times as the first function is evaluated (here, as many times as "position" receives a value, whenever it is lower than "structure.lastIndex").
 
 	{ position < structure.lastIndex }, //"lastIndex" is used here ( = last index of the collection), so the function is only evaluated when the position value is lower than the last index of the collection.
 
-	{  position = (position + rrand(1, 3)).min(structure.lastIndex); //A number between 1 and 3 is chosen randomly = this is equal to the number of indexes that will be added in order in each iteration until the series of structure is completed. The use of ".min(structure.lastIndex) is redundant (I think), as the filter for the lastIndex is already overcome in the previous function. "position" keeps reassigning its value in each iteration, thus it continues where is stayed during the former iteration.
+	{  position = (position + rrand(1, 3)).min(structure.lastIndex); //A number between 1 and 3 is chosen randomly = this is equal to the number of indexes that will be added in order in each iteration until the series of structure is completed. The use of ".min(structure.lastIndex) is redundant (I think), as the filter for the lastIndex is already applied in the previous function. "position" keeps reassigning its value in each iteration, thus it continues where is stopeed during the former iteration.
 
-		structure[..position].postln; //The new "position" value becomes the limit for the array up to which the collection of the structure is read, in order to print the different results of the growing structure up to the completed series.
+		structure[..position].postln; //The new "position" value becomes the limit for the array up to which the collection of the structure is read, in order to print the different results of the growing structure up to the completed series (all at once thanks to "while").
 })
 )
 
 //FOR -> syntax and example:
 for ( startValue, endValue, function )
 
-for (3, 7, { arg i; i.postln }); //Prints values 3 through 7: so between those values, the function is evaluated.
+for (3, 7, { arg i; i.postln }); //Prints values 3 through 7, which means that the function is evaluated between those values.
 
 //FORBY -> syntax and example:
 forBy ( startValue, endValue, stepValue, function )
 
-forBy (0, 8, 2, { arg i; i.postln }); //Prints values 0 through 8 by 2's: same as previous, but jumping between values.
+forBy (0, 8, 2, { arg i; i.postln }); //Prints values 0 through 8, 2, by 2: same as previous, but adding a step between the values.
 
-//DO -> Syntax (already part of your vocabulary):
+//DO -> Syntax (already part of your vocabulary, see theory file 8):
 collection.do(function)
 
 //SWITCH -> syntax and example:
@@ -73,9 +73,9 @@ switch (value,
         testvalue2, trueFunction2,
         ...
         testvalueN, trueFunctionN,
-        defaultFunction);
+        defaultFunction); //Else case.
 
-(//This example was taken from the Xenakis code (review its synthdef in the other document):
+(//This example was taken from the Xenakis code (review its synthdef in its own document - "codes for specific tasks"):
 Routine({
 
 	var thisIteration, xenakisCode, counter, modulo, iterationsPattern;
@@ -89,23 +89,23 @@ Routine({
 		thisIteration = iterationsPattern.next;
 
 		switch
-		(counter.next % modulo.next) //So depending on the result value of this first operation, switch will choose between these options:
-		{0}{{~do1.value}.fork; ~iterations = thisIteration; "first path".postln}
+		(counter.next % modulo.next) //Depending on the result value of this first operation, switch will choose between these options:
+		{0}{{~do1.value}.fork; ~iterations = thisIteration; "first path".postln} //Three actions within a function in this case.
 		{1}{{~do2.value}.fork; ~iterations = thisIteration; "second path".postln}
 		{2}{{~do3.value}.fork; ~iterations = thisIteration; "third path".postln}
 		{3}{{~do4.value}.fork; ~iterations = thisIteration; "fourth path".postln}
-		{{~do5.value}.fork; ~iterations = thisIteration; "fifth path".postln} //The "else" case
+		{{~do5.value}.fork; ~iterations = thisIteration; "fifth path".postln} //The "else" case (when none of the previous results is the result of the first operation).
 	};
 
 	inf.do({
 		xenakisCode.value;
-		thisIteration.wait //Then the number of iterations would be the waiting time before activating the switch again (but number of iterations is not equal to seconds, that is a little issue right there)
+		thisIteration.wait //Then the number of iterations will be used as waiting time before activating the switch again (this value is not equal to seconds, take this into consideration).
 	})
 
 }).play
 )
 
-//CASE -> Function implements a case method which allows for conditional evaluation with multiple cases. Since the receiver represents the first case this can be simply written as pairs of test functions and corresponding functions to be evaluated if true. It does not need the operation which it depends on at the beginning within the method, because the equality is written within the different cases):
+//CASE -> The case method allows for conditional evaluation with multiple cases. Since the receiver represents the first case this can be simply written as pairs of test functions and corresponding functions to be evaluated if true. Compared to "switch", it does not need to incorporate the operation on which its results depend on because the boolan expression is written within each case (instead of just the result):
 
 (
 var i, x, z;
@@ -118,20 +118,21 @@ x = case
     { i == 1.5 } { \wrong }
     { i == 2 }   { \wrong }
     { i == 0 }   { \true }
-    {\hehe}; //"Else" case, will be activated with 3 or 4 from the collection.
+    {\hehe}; //"Else" case: it will be activated when 3 or 4 are chosen from the collection.
 x.postln;
 )
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //ALGORITHMIC COMPOSITION WITH ROUTINES
-//We will use a very simple SynthDef in order to work in a more complex level on the client and not on the server:
+//We will use a very simple SynthDef in order to work in a more complex level on the client and not on the server dimension of SC:
 (
 SynthDef(
 	\sine,
 	{ | freq = 262, amp = 0.1, durEnv = 1, pan = 0 |
 		var signal, env;
 
+		//A simple sine wave with a percussive envelope, duplicated using Pan2:
 		signal = SinOsc.ar(freq, 0, amp);
 		env = EnvGen.ar(Env.perc(0.005, durEnv, 0.2), doneAction: 2);
 		signal = Pan2.ar(signal * env, pan);
@@ -141,10 +142,10 @@ SynthDef(
 }).add
 )
 
-//Algorithmic composition scale: BORING (maximum number of rules) ----> Maximum interest ----> BAFFLING (minimum number of rules). The middle point (maximum interest point) depend so much on the composer and the listener: it can be closer either extreme.
+//Algorithmic composition scale: BORING (maximum number of rules) ----> Maximum interest ----> BAFFLING (minimum number of rules). The middle point (maximum interest point) depends so much on the composer and the listener: it can be closer to either extreme of our scale.
 //Here we will apply codes from BAFFLING to BORING in that order, using the former SynthDef:
 
-//Minimum number of rules: random pitch with no tunning system, from 32nd-note to half-note:
+//Minimum number of rules: random pitch in Hz and random duration from 32nd-note to half-note (taking the second as unit for the quarter-note):
 (
 Routine({
 	inf.do({
@@ -152,12 +153,12 @@ Routine({
 			\sine,
 			[ \freq, exprand(27.5, 4186) ] //In a piano, from A0 to C8, whole register.
 		);
-		rrand(1/8, 2).wait //Uniform distribution of the note values, from 32nd-note to half-note.
+		rrand(1/8, 2).wait //Uniform distribution of the note values, from 32nd-note to half-note (and everything in between).
 	})
 }).play
 )
 
-//A bit of more order: exponential distribution in durations --> short durations are most likely going to appear together in groups (higher probability for short values):
+//Increasing the order: exponential distribution for choosing durations --> Higher probability for short values:
 (
 Routine({
 	inf.do({
@@ -165,12 +166,12 @@ Routine({
 			\sine,
 			[ \freq, exprand(27.5, 4186) ]
 		);
-		exprand(1/16, 2).wait //Including 64th-notes, so the range of "short values" is larger.
+		exprand(1/16, 2).wait //Expanding the duration range up to 64th-notes.
 	})
 }).play
 )
 
-//Now unifying the durations using just 32nd-notes: rhythmic complexity is removed:
+//Unifying the durations using just 32nd-notes so rhythmic complexity is removed:
 (
 Routine({
 	inf.do({
@@ -183,7 +184,7 @@ Routine({
 }).play
 )
 
-//Simplifying the pitches now: the freqs are transformed into midi and rounded to integers (exprand always give back floats), so there is equal temperament. The range is reduced to one octave only:
+//Simplifying the pitches: the freqs are transformed into midi and rounded to integers (as exprand always give back floats) in order to use equal temperament. The range is also reduced to one octave only:
 (
 Routine({
 	inf.do({
@@ -199,7 +200,7 @@ Routine({
 
 //Now we move from BORING to BAFFLING in that order, using the former SynthDef, and building different levels of randomness:
 
-//Two routines interacting with each other: the first one functions thanks to a .next asking for pitches from a loop with each iteration, and we can get as many as we want because it is inf, but just one at a time because of .yield. The second routine is the one asking for pitches and functions automatically thanks to .play. The durations are now equal, there is no variation at all (all of this will be simplified when studying the patterns, but it is useful to understand how it works internally). Arpeggiator:
+//Two routines are interacting with each other: the first one, an infinite loop, functions thanks to a .next asking for pitches from the second loop in each iteration. We obtain one pitch at a time because of .yield. The second routine asks for pitches and runs automatically thanks to .play. The durations (wait time) are now equal, there is no variation (all of this will be simplified when studying the patterns, but it is useful to understand how it works internally):
 (
 var pitches;
 
@@ -216,14 +217,14 @@ pitches = Routine({
 Routine({
 	inf.do({
 		Synth(\sine,
-			[\freq, pitches.next.postln.midicps] //The freqs are in midi numbers. If postln is placed after .midicps, the freqs will be posted in Hz.
+			[\freq, pitches.next.postln.midicps] //The freqs are in midi numbers. If postln is placed after .midicps, the freqs would be posted in Hz.
 		);
 		(1/8).wait
 	})
 }).play
 )
 
-//Let's add some complexity to our system: 1 out of 5 times there is the probability of obtaining the arpeggio transposed a tritone up. The coin is the last step of the routine, so the alternative arpeggio has a probability to appear after the first, and if not, the first arpeggio remain:
+//Let's add some complexity to our system: 1 out of 5 times there is the probability of obtaining the arpeggio transposed a tritone up. The coin is the last step of the first routine, so the alternative arpeggio has a probability to appear after the first. If it doesn't, the loop will come back to the beginning of the first arpeggio:
 (
 var pitches;
 
@@ -235,7 +236,7 @@ pitches = Routine({
 		70.yield; //Bb4
 		72.yield;//C5
 
-		if ((1/5).coin.postln, { //Postln to see when we get true / false (but this is not necessary).
+		if ((1/5).coin.postln, { //When getting "true" out of the .coin, the second arpeggio is played.
 			66.yield; //F#4
 			69.yield; //A4
 			73.yield; //C#5
@@ -257,7 +258,7 @@ Routine({
 }).play
 )
 
-//A bit of more freedom: the variable "transposition" chooses a number between 0 (no transposition) and 6 (tritone transposition). After that, there is a new loop (after the first one, or after the second one if chosen): a G7 chord from which 0, 1 or 2 pitches are selected (it chooses pitches from the chord thanks to .do, and it does it from 0 to 2 times), and the variable "transposition" is added (being 0 or 6, so obtaining or not a transposition anyway). If the transposition is added, the chord will be C#7. Now we are playing with three .do (but two routines still):
+//Opening the choice a bit more: the variable "transposition" chooses a number between 0 (no transposition) and 6 (tritone transposition). After that, there is a new loop: a G7 chord from which 0, 1 or 2 pitches are selected (pitches are chosen from the chord thanks to .do, and it does it from 0 to 2 times), and the variable "transposition" is added. If transposition = 6, the chord will be C#7. Now we are playing with three .do, two of them nested within a single routine:
 (
 var pitches;
 
@@ -283,7 +284,7 @@ pitches = Routine({
 
 		transposition = [0, 6].choose;
 
-		rrand(0, 2).do({ ([91, 94, 98, 101, 103].choose //Try out rrand(0, 4) so more notes from the chord are chosen each time.
+		rrand(0, 2).do({ ([91, 94, 98, 101, 103].choose //Try out rrand(0, 4) so more notes from the chord can be chosen each time.
 			+
 			transposition
 		).yield
@@ -301,7 +302,7 @@ Routine({
 }).play
 )
 
-//Now we'll add new algorithmic processes to the second routine. Looking at the wait time, durations of 32nd note OR durations between 8th-notes and half-notes are chosen. Wchoose prioritizes the short values:
+//Now we'll add new algorithmic processes to the second routine. Looking at the wait time, durations of 32nd note OR durations between 8th-notes and half-notes are chosen. Wchoose prioritizes the random short values:
 (
 var pitches;
 
@@ -384,7 +385,7 @@ Routine({
 		var dur, thisPitch;
 
 	inf.do({
-			thisPitch = pitches.next;
+			thisPitch = pitches.next; //When using random values chosen with .next in several places, it is best to locate it in a variable so the result is the same whenever the values are asked.
 			if (thisPitch > 90, {dur = exprand(0.5, 2)}, {dur = 1/8});
 
 		Synth(\sine,
@@ -444,7 +445,7 @@ Routine({
 }).play
 )
 
-//Now, every 24 notes, something is going to happen, using the module %24 connected to the index argument of the second routine's loop. We need a second "transposition" variable. Every 24 notes, a  random number from 0 to 11 is going to be chosen. Then, the new modulation is going to be added to the pitches obtained from the first routine (rememeber that it can be 0, so there can be no modulation):
+//Now, every 24 notes, something is going to happen, using the module %24 connected to the index argument of the second routine's loop. We need a second "transposition" variable. Every 24 notes, a  random number from 0 to 11 is going to be chosen. Then, the new transposition is going to be added to the pitches obtained from the first routine (rememeber that it can be 0 = no transposition):
 (
 var pitches;
 
@@ -498,7 +499,7 @@ Routine({
 }).play
 )
 
-//And we could continue adding layers of algorithmic processes.
+//Continue experimenting with other possibilities, other choices, expanding the code, playing with the extremes between boring and baffling...
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -521,28 +522,28 @@ SynthDef(
 )
 
 //STREAMS
-//The message .asStream is sent to objects that do not feature a lazy evaluation, so they turn into such (into routines, for instance). The envelope tells us it is a routine now, and it will happen just once:
+//The message .asStream is sent to objects that do not feature a lazy evaluation, so they turn into streeams with lazy evaluation (into routines, for instance). When evaluating the envelope with the method .asStream, its has turned into a Routine:
 
-a = Env([0, 1, 2.99, 1, 0], 3).asStream //There is a time of 3 seconds between each value, but it will only appear as we evaluate the variable (the faster we evaluate it successively, the more values in between we get, the more defined is the envelope).
+a = Env([0, 1, 2.99, 1, 0], 3).asStream //There is a time of 3 seconds between each value, but values will only appear when asking for them using .next (the faster we ask for values successively, the more values in between we get, and the more defined is the envelope).
 
-a.next //Evaluate successively to obtain the values from the envelope in a lazy way.
+a.next //Evaluate successively to obtain the values from the envelope in a lazy way (from 0 to 0).
 
 //PATTERNS
-//Patterns define simple algorithms, methods that we already know, but compressed and ready to use for other kind of processes using lazy evaluation. There are more than 150 patterns by default in SuperCollider: we'll focus on a few of them:
-//Patterns receive the method .asStream and are activated through .next:
+//Patterns define simple algorithms, methods that we already know, but compressed and ready to use for other kind of processes using lazy evaluation. There are more than 150 patterns by default in SuperCollider: we'll focus on a few of them.s
+//Patterns receive the method .asStream and realize their tast when applying the method .next:
 
 //PSEQ
-Pseq(list, repeats, offset) //Pseq reads an array in loop. Its arguments are the list (array to read), the number of repeats (how many times the array is read) and the offset (if we want the array to start by an index other than 0).
+Pseq(list, repetitions, offset) //Pseq reads an array in loop. Its arguments are the list (array to read), the number of repetitions (how many times the array is read) and the offset (if we want the array to start by an index other than 0, which is the default value).
 
 //Example with numbers: it gives back the five numbers once (the rest of the iterations of .do up to 15 are filled up with "nil" (empty).
 (
 var stream;
 
-stream = Pseq([0, 1, 2, 3, 4], 1).asStream; //Try out with 2 repetitions (make it sure that .do have enough iterations).
+stream = Pseq([0, 1, 2, 3, 4], 1).asStream; //Try out with 2 repetitions (make sure that .do have enough iterations to show all values).
 15.do({ stream.next.postln })
 )
 
-//Example with sound (using the SynthDef above): this is the first arpeggiator, but simplified using a pattern as mentioned before:
+//Example with sound (using the SynthDef above): this is the first arpeggio code we created before, but simplified using patterns as mentioned above:
 (
 var pitches;
 
@@ -559,7 +560,7 @@ Routine({
 }).play
 )
 
-//We can perform arithmetic operations between patterns: here there is an addition: the addition between arrays with different size is cyclical from the smaller to the bigger. The .asStream method should affect both patterns. Now we are also creating a second pattern for the durations:
+//We can perform arithmetic operations with patterns. Here there is an addition: the addition between arrays with different size is cyclical from the smaller to the bigger, as seen when studying the arrays. The method .asStream should affect both patterns. Now we are also creating a second pattern for the durations:
 (
 var pitches, durations;
 
@@ -569,7 +570,7 @@ pitches = (
 	Pseq([0, 0, 12], inf) //It raises the octave of a pitch every three pitches.
 ).asStream;
 
-durations = Pseq([0.25, 0.5, 0.25], inf).asStream; //Try to divide the array by 4, so the durations are shorter.
+durations = Pseq([0.25, 0.5, 0.25], inf).asStream; //Fixed rhythm (short - long - short): try to divide the array by 4, so the durations are shorter.
 
 Routine({
 	inf.do({
@@ -582,7 +583,7 @@ Routine({
 }).play
 )
 
-//We can also embed patterns (nested pattersn): here, in the bigger pattern of the former addition, there are two smaller patterns creating smaller loops to write a more complex series of numbers in the array in a shorter way: 3 times of 60-63 loop, 67, 70, and 5 times of 73-72 loop. The inner loops shouldn't have an infinite number of repetitions, because the bigger pattern would be stuck at them. The .asStream is only applied to the outer pattern:
+//We can also embed patterns (nested patterns): here, in the bigger pattern of the former addition, there are two smaller patterns creating smaller loops to write a more complex series of numbers in the array in a shorter way: 3 times of 60-63 loop, 67, 70, and 5 times of 73-72 loop. The inner loops shouldn't have an infinite number of repetitions, because the bigger pattern would be stuck at them. The method .asStream is only applied to the outer pattern:
 (
 var pitches, durations;
 
@@ -592,7 +593,7 @@ pitches = (
 	Pseq([0, 0, 12], inf)
 ).asStream;
 
-durations = (1/8); //Stable durations now so we can focus on the pitches pattern.
+durations = (1/8); //Stable durations now so we can focus on the pattern of pitches.
 
 Routine({
 	inf.do({
@@ -607,24 +608,24 @@ Routine({
 
 
 //PRAND
-//Prand gives back a number of random elements from the given list.
-Prand(list, repeats) //Arguments: array and number of random elements to give back.
+//Prand gives back a number of random elements from the given list:
+Prand(list, repeats) //Arguments: given list (array) and number of random elements to pick from the list.
 
 //Example with numbers: functions like a .choose:
 (
 var stream;
 
-stream = Prand([0, 1, 2, 3, 4], 1).asStream; //Here one single random value. The rest of iterations are filled up with "nil".
+stream = Prand([0, 1, 2, 3, 4], 5).asStream; //Five random values chosen here. The rest of iterations are filled up with "nil".
 15.do({ stream.next.postln })
 )
 
-//Example with numbers: using same SynthDef as the former one:
+//Example with sound:
 (
 var pitches, durations;
 
-pitches =  Prand([ 60, 62, 66, 67, 71, 72 ], inf).asStream; //In order to work with random pitches, a smaller number of options is usually better (chromatic = baffling)
+pitches =  Prand([ 60, 62, 66, 67, 71, 72 ], inf).asStream; //In order to work with random pitches, a smaller number of options is usually better (chromatic = baffling).
 
-durations = Prand([2, 3] /8, inf).asStream; //Prime numbers work well as random durations + later on, applying a division so the values are proportionally shorter.
+durations = Prand([2, 3] /8, inf).asStream; //Prime numbers work well as random durations. A division is also applied so the values are proportionally shorter.
 
 Routine({
 	inf.do({
@@ -656,11 +657,11 @@ Routine({
 }).play
 )
 
-//Nested pattern here regarding the durations, using an Array.geom instead of a simple list (and applying .mirror so the values go back and forth). Then, in the outer pattern, there is a choice between 0.1 and this inner patter (Pseq is repeated just once by default):
+//Nested pattern here regarding the durations, using an Array.geom (and applying .mirror so the values go back and forth). Then, in the outer pattern, there is a choice between 0.1 and this inner pattern (Pseq is repeated just once by default):
 (
 var pitches, durations;
 
-pitches =  Prand((60..65), inf).asStream;
+pitches =  Prand((60..65) + 12, inf).asStream; //Adding an octave higher.
 
 durations = Prand([0.1, Pseq(Array.geom(8, 0.1, 1.5).mirror)], inf).asStream; //It speeds up suddenly and randomly.
 
@@ -675,7 +676,7 @@ Routine({
 }).play
 )
 
-//Prand with a variable number of repetitions: the rrand needs the curly brackets to turn into a function:
+//Prand with a variable number of repetitionss (remember that rrand needs the curly brackets to operate as a function):
 (
 var pitches, durations;
 
@@ -687,7 +688,7 @@ pitches =  Pseq(
 	inf).asStream;
 
 
-durations = 1/8;
+durations = 1/8; //Stable duration.
 
 Routine({
 	inf.do({
@@ -700,7 +701,10 @@ Routine({
 }).play
 )
 
-//The alternative to the former code using only patterns (no functions) would be using a Plazy renovated by the Pn (all of these new patterns to be studied later on in the document):
+//############################################
+//Advanced option:
+
+//The alternative to the former code using only patterns (no functions) would need a Plazy renewed by a Pn (all these new patterns are to be studied later on in this document):
 
 (
 var pitches, durations;
@@ -709,8 +713,8 @@ pitches = Pn(
 	Plazy({
 		var pAmnt, pVals, pArray;
 
-		pAmnt = Prand([1, 2, 5], inf).asStream; //Random number of chosen values among 1, 2 or 5 (in the original one it was 1, 2 or 3, it is all the same).
-		//pVals = Pn(Prand((60..71), 1)).asStream; //Either of the two options work, I guess the second one is simpler.
+		pAmnt = Prand([1, 2, 5], inf).asStream; //Random number of chosen values among 1, 2 or 5, for instance.
+		//pVals = Pn(Prand((60..71), 1)).asStream; //Either of the two options works, I guess the second one is simpler:
 		pVals = Prand((60..71), inf).asStream; //Random values for the midi numbers between 60 and 71.
 		pArray = Array.fill(pAmnt.next, {pVals.next}) ++ [ 96, 97, 98, 99, 100]; //The number of values is applied as a size of Array.fill, containing the midi values in its function.
 
@@ -730,11 +734,12 @@ Routine({
 	})
 }).play
 )
+//############################################
 
 //PWRAND
-//Similar to Prand, but .wchoose version: the random values selected from the list have a specific probability. The second argument is "weights", the array of ratios we used in .wchoose (should be equal to 1 in total, or .normalizeSum should be used).
+//Similar to Prand, but .wchoose version: the random values selected from the list have a specific probability. The second argument is "weights", the array of ratios we used in .wchoose (should be equal to 1 in total, or .normalizeSum should be used for converting other ratios).
 
-//Example with numbers: 15 numbers according to the probability of the second array in Pwrand. The higher the number of chosen values (repetitions), the clearer the probability:
+//Example with numbers: 15 numbers are chosen according to the probability of the second array in Pwrand. The higher the number of chosen values (repetitions), the clearer the probability:
 (
 var stream;
 
@@ -761,19 +766,19 @@ Routine({
 }).play
 )
 
-//Arpeggiator choosing between four different chords. The chords are chosen randomly, but with a probability:
+//Our arpeggio code, choosing between four different chords. The chords are chosen randomly, but with a probability for each of them:
 (
 var pitches, durations;
 
 pitches = Pwrand(
 	[
-		//Three transpositions of a dominant seventh chord from the midi note added to each list. Four pitches from each Prand are chosen each time a Prand (chord) is chosen, but those are random, so they can ber unsorted and repeated:
+		//Three transpositions of a dominant seventh chord from the midi note added to each list. Four pitches from each Prand are chosen each time one of the Prand (chord) is chosen. The pitches are random, so they can be unsorted and repeated:
 		Prand(60 + [0, 4, 7, 10], 4),
 		Prand(63 + [0, 4, 7, 10], 4),
 		Prand(66 + [0, 4, 7, 10], 4),
 		Prand(69 + [0, 4, 7, 10], 4),
 	],
-	[1, 2, 3, 4].normalizeSum, //Using normalizeSum to normalize the values of the list to ratios from 0 to 1.
+	[1, 2, 3, 4].normalizeSum, //Using normalizeSum to normalize the values of the list to probability ratios from 0 to 1.
 	inf
 ).asStream;
 
@@ -791,9 +796,10 @@ Routine({
 )
 
 //PSHUF
-//It comes from "shuffle", but it has the function of .scramble indeed: it reads an array as Pseq, but it changes randomly the order of the elements of the array. This order is chosen just once, and then it is kept for all repetitions of the patterns.
+//It comes from "shuffle", but it works as a .scramble: Pshuf reads an array as Pseq, but it changes randomly the order of the elements of the array. This order is chosen just once, and then it is kept for all repetitions of the pattern.
 
-(//Two repetitions of the random order. If evaluated again, a different order (the same for both repetitions) is chosen.
+//Example with numbers: two repetitions of the random order. If evaluated again, a different order (the same for both repetitions) is chosen:
+(
 var stream;
 
 stream = Pshuf([0, 1, 2, 3, 4, 5], 2).asStream;
@@ -819,7 +825,7 @@ Routine({
 }).play
 )
 
-//Back to the arpeggiator: applying Pshuf to each chord instead of Prand so now we hear all pitches from each chord (although in a different order). The number of repetitions now is 1 because it is referred to the number of repetitions of the whole list and not to the number of chosen values. It seems that the order of the values is indeed changed here with each repetition of the Pwrand (as it re-evaluates the inner patterns again):
+//Back to the arpeggio code: applying Pshuf to each chord instead of Prand so now we hear all pitches from each chord (although in a random order). The number of repetitions now is 1 because it is referred to the number of repetitions of the whole list as in Pseq, and not to the number of chosen values as in Prand. It seems that the order of the values in Pshuf is indeed changed here with each repetition of the Pwrand (as it re-evaluates the inner patterns again):
 (
 var pitches, durations;
 
@@ -848,7 +854,7 @@ Routine({
 )
 
 //PN
-//Similar to the former solution for evaluating Pshuf with a different order with each iteration --> Random permutation with Pn. Pn gives back any kind of object a specific number of times. It is ideal for nested patterns (to give back patterns such as Pshuf with the possibility of random permutation). No need to use the last argument for now (see the help document, for boolean application of "key"):
+//Similar to the former solution for evaluating Pshuf with a different order with each iteration --> Random permutation with Pn. Pn gives back any kind of object a specific number of times. It is ideal for nested patterns (to provide patterns such as Pshuf with the possibility of random permutation). No need to use the last argument for now (see the help document, for boolean application of "key"):
 
 //Example with numbers: Pseq includes a single repetition, but as Pn includes 2 repetitions, the Pseq is re-evaluated:
 (
@@ -858,11 +864,11 @@ stream = Pn(Pseq([ 0, 1, 2, 4, 5 ], 1), 2).asStream;
 15.do({ stream.next.postln })
 )
 
-//Pshuf: random permutation, so the chosen order will change every two repetitions (as the Pshuf have two repetitions itself).
+//Pshuf: random permutation, so the chosen order will change every two repetitions (as the Pshuf have two repetitions itself):
 (
 var stream;
 
-stream = Pn(Pshuf([ 0, 1, 2, 4, 5 ], 2), 4).asStream; //Every 10 numbers, the order changes. The 10 numbers (2 repetitions of each order) are repeated (and randomly permutated) 4 times, so there are 40 values (as we can see in the .do).
+stream = Pn(Pshuf([ 0, 1, 2, 4, 5 ], 2), 4).asStream; //Every 10 numbers, the order changes. The 10 numbers (2 repetitions of each order) are repeated (and randomly permutated) 4 times, so there are 40 values (as set as number of iterations in .do).
 40.do({ stream.next.postln })
 )
 
@@ -904,7 +910,7 @@ Routine({
 }).play
 )
 
-//Same example, changing the order every 1 to 5 repetitions, being random the number of repetitions between 1 and 5 (using a function):
+//Same example, changing the order every 1 to 5 repetitions, being this number of repetitions random using the function of rrand:
 (
 var pitches, durations;
 
@@ -923,7 +929,7 @@ Routine({
 }).play
 )
 
-//Same example, using sixth-tones:
+//Same example, using sixth-tones (thanks to the Array.series):
 (
 var pitches, durations;
 
@@ -942,7 +948,10 @@ Routine({
 }).play
 )
 
-//Some last examples of algorithmic routines and patterns: an example of changing values each certain iterations of the routine, maintaining the new value until a new change comes. This code plays the melody of the Theme of the Goldberg variations by Bach, choosing a random factor of speed that affects the whole melody each time it is repeated (read the comments throughout the code):
+//###########################################################
+//Advance example of algorithmic routines and patterns:
+
+//Example of changing values each certain number of iterations of a routine, maintaining the new value until a new change comes. This code plays the melody of the Theme of the Goldberg variations by Bach, choosing a random factor of speed that affects the whole melody each time it is repeated (read the comments throughout the code):
 (
 SynthDef(
 	\bachExample,
@@ -966,9 +975,9 @@ SynthDef(
 (
 var pitches, durations;
 
-pitches = Pseq([ 7, 7, 9, 7, 9, 11, 9, 7, 6, 4, 2 ] + 72, inf).asStream; //Pitches for the Bach melody.
+pitches = Pseq([ 7, 7, 9, 7, 9, 11, 9, 7, 6, 4, 2 ] + 72, inf).asStream; //Pitches for Bach's melody.
 
-durations = Pseq([ 1, 1, 1/8, 1/8, 1/2, 1/4, 1/2, 1/4, 1/4, 1/2, 1.5 ], inf).asStream; //Ratios to be multiplied by the factor of speed.
+durations = Pseq([ 1, 1, 1/8, 1/8, 1/2, 1/4, 1/2, 1/4, 1/4, 1/2, 1.5 ], inf).asStream; //Ratios (duration of each note of the melody) to be multiplied by the factor of speed.
 
 Routine({ var thisDur, factor;
 
@@ -976,12 +985,12 @@ Routine({ var thisDur, factor;
 
 		if (i % 11 == 0, {factor = rrand(0.5, 2.5)}); //The conditional controls the operation which will affect the value that we need to change each certain time. The operation exists into a variable, which is reassigned to the new value only when the conditional's output is "true". It is important not to use this variable before the conditional within the loop because it would reassign its value again when the loop is reseted.
 
-		thisDur = durations.next * factor; //The value of the variable "factor" is the same during 11 iterations (thanks to the module in the conditional).
-		//The resultant value (of thisDur) is applied both to the waiting time and to the release time of the percussive envelope.
+		thisDur = durations.next * factor; //The value of the variable "factor" is the same during 11 iterations, which is the number of notes within the melody (and thanks to the module in the conditional).
 
+		//The resultant value (of thisDur) is applied both to the waiting time and to the release time of the percussive envelope:
 		Synth(\bachExample,
 			[
-				\freq, pitches.next.postln.midicps,
+				\freq, pitches.next.postln.midicps, //Both the pitch in MIDI and the duration are being printed just for testing.
 				\durEnv, thisDur
 			]
 		);
@@ -990,11 +999,12 @@ Routine({ var thisDur, factor;
 
 }).play
 )
+//###########################################################
 
 //PLAZY
-//Plazy evaluates a function, whose last line should be a pattern, which is going to be activated and whose content and output is going to be defined by the function:
+//Plazy evaluates a function, whose last line should be a pattern which is going to be activated and whose content and output is going to be defined by the function:
 
-//Useless example with numbers, just to understand the logic: using Pn in order to vary the result with each iteration, we can create flexible patterns. For instance, here the list of Pseq has a variable size, being normally uncommon or impossible to modify the list of the pattern:
+//Example with numbers, just to understand the logic: using Pn in order to vary the result in each iteration, we can create flexible patterns. For instance, here the list of Pseq has a variable size, being normally uncommon or impossible to modify the list of the pattern:
 (
 var stream;
 
@@ -1009,7 +1019,7 @@ stream = Pn(
 	}), inf
 ).asStream;
 
-50.do({ stream.next.postln}) //The number of repetitions of the Pseq is infinite due to the Plazy, so the number of values depends on the receiver of the .do.
+50.do({ stream.next.postln}) //The number of repetitions of the Pseq is infinite due to the Plazy, so the number of values depends on the receiver of the .do (number of iterations).
 )
 
 //In this Array.geom, the size and grow are randomly chosen, so the length and the pace of the modulation is variable:
@@ -1032,7 +1042,8 @@ stream = Pn(lazy).asStream; //The Pn could be applied directly to the Plazy, as 
 15.do({ stream.next.postln })
 )
 
-//SOUND EXAMPLES: Using a simple SynthDef again
+//Examples with sound:
+//Using a simple SynthDef again
 (
 SynthDef(
 	\sine,
@@ -1048,7 +1059,7 @@ SynthDef(
 }).add
 )
 
-//Same example as in later example with numbers: pay attention to what happens with the panning:
+//Taking the latter example with numbers as a point of departure: pay attention to what happens with the panning:
 (
 var durations, thisDur, newArray, pan;
 
@@ -1065,15 +1076,16 @@ durations = Pn(
 	inf
 ).asStream;
 
-pan = Pseq([-1, 1], inf).asStream; //Panning: a new pattern is applied here for the panning: it creates a series alternating between -1 and 1 (left and right). Then, within the Synth (arguments below), this value is multiplied by the duration value from the array (which is changing with each iteration) divided by the last value of the values of that array (which is also different each time) --> When the result of that division is smaller, it means that the duration is shorter, and the panning goes closer to 0 / When the result of the result of the division is higher (up to 1), the durations will be longer, and the panning will get to the extremes (1 or -1 alternating).
+pan = Pseq([-1, 1], inf).asStream; //Panning: a new pattern is applied here for the panning: it creates a series alternating between -1 and 1 (left and right). Then, within the Synth (arguments below), this value is multiplied by the duration value from the array (which is changing in each iteration) divided by the last value of the values of that array (which is also different each time) --> When the result of that division is smaller, it means that the duration is shorter, and the panning goes closer to 0 / When the result of the division is higher (up to 1), the durations will be longer, and the panning will get to the extremes (1 or -1, alternating).
 
 Routine({
 	inf.do({
-		thisDur = durations.next; //The former Plazy is applied to the waiting times (the durations, which is also connected to the duration of the envelope in the SynthDef). As we need the value of the pattern in several places, we need to put it into a variable.
+		thisDur = durations.next; //The former Plazy is applied to the waiting times (the durations, which is also connected to the duration of the envelope in the SynthDef). As we need the value of the pattern in several places, we need to put it into a variable, as commented earlier.
+
 		Synth(
 			\sine,
 			[
-				\freq, 4000, //Fixed frequency.
+				\freq, 4000, //Fixed frequency to focus on the durations and panning.
 				\durEnv, thisDur,
 				\pan, pan.next * (thisDur/newArray.last).postln,
 				\amp, 0.1
@@ -1084,7 +1096,7 @@ Routine({
 }).play
 )
 
-//One more example: choosing between two patterns in the last line of the function of Plazy. The chosen patterns is printed in the postwindow:
+//One more example: choosing between two patterns in the last line of the function of Plazy. The chosen pattern is printed in the postwindow:
 (
 var midinote;
 
@@ -1096,7 +1108,7 @@ midinote = Pn(
 		//array = ({ rrand(60, 84) } !3); //Three pitches between midi 60 and 84.
 		array = ({ [0, 2, 4, 5, 7, 9, 11].choose + [60, 72].choose } !3); //Three pitches from the C major scale chosen randomly and placed at the 4th or 5th octave, also randomly.
 
-		[ Pseq(array, 10), Prand(array, 30) ].wchoose([0.6, 0.4]).postln //Then, Pseq with 10 repetitions of those three notes and Prand with 30 random notes out of those as well --> Choice between both patterns with a probability for each, using .wchoose. It will choose between both patterns each 30 pitches.
+		[ Pseq(array, 10), Prand(array, 30) ].wchoose([0.6, 0.4]).postln //Then, Pseq with 10 repetitions of those three notes and Prand with 30 random notes out of those as well --> Choice between both patterns with a probability for each, using .wchoose. It will choose between both patterns each 30 pitches (that is to say, when the chosen pattern is played).
 	})
 ).asStream;
 
@@ -1119,7 +1131,7 @@ Routine({
 //OTHER PATTERNS (advanced):
 //PSWITCH and PSWITCH1: Pswitch receives a list of patterns or values (numbers) - or a combination of both -, and its second arguments is "which", which will choose, according to its index, a pattern or value from the list that will be used or evaluated. For example, if the list features two elements and the objective is to alternate between them, a Pseq can be placed in the "which" argument, with an infinite loop of [0, 1], so the first and second index of the list of Pswitch alternate indefinitely.
 
-//Pswitch1, if one or several of the elements of the Pswitch1 list is a patterns featuring several values at the same time, it will take only the first value, then the next, and so forth (one by one), unlike Pswitch, which will take all values within a patterns before jumping to its next element in the list.
+//Pswitch1, if one or several of the elements of the Pswitch1 list is a patterns featuring several values at the same time, it will take only the first value, then the next, and so forth (one by one), unlike Pswitch, which will take all values within a pattern before jumping to its next element in the list (if asked for it).
 //Next example uses Pswitch1 and a Pseq in the "which" argument: it takes the first (fixed) value of the list, then the first value of the list of the Pseq that occupies the second index of Pswitch1, then it goes back to the fixed value, then it takes two of the values of the Pseq, then fixed, then three of the Pseq, then fixed, then four of the Pseq, and so on:
 (
 a = Pswitch1([
@@ -1130,9 +1142,9 @@ Pseq([ 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0 ], inf)
 ).asStream
 )
 
-a.next
+a.next //Obtaining the values one by one.
 
-//This next trick implemented in the former code allows us to create the infinite series of the Pseq for the "which" argument without writing all the values: Pseries will create an arithmetic series (1, 2, 3, 4, 5, etc. in this case, because the step is = 1 by default), which will be applied to the number of 1 that the Pn creates within the Pseq of the "which" argument. It is still a mystery for me why the Pseries needs the .asStream in order to work as a nested pattern (when usually in nested patterns, only the outer one gets the .asStream method).
+//This next trick implemented in the former code allows us to create the infinite series of the Pseq for the "which" argument without writing all the values: Pseries will create an arithmetic series (1, 2, 3, 4, 5, etc. in this case, because the step is = 1 by default), which will be applied to the number of 1 that the Pn creates within the Pseq of the "which" argument. It is still a mystery for me why the Pseries needs the .asStream in order to work as a nested pattern (when usually in nested patterns, only the outer pattern gets the .asStream method), but otherwise, it doesn't work:
 (
 a = Pswitch1([
 	100,
