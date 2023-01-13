@@ -593,6 +593,7 @@ List[1, 2, 3, 4].sum; //Addition. Also allows a function:
 
 - .asInteger (or .asInt): turns a float into an integer (rounding it down).
 - .flat: unifies nested arrays into a single array containing all the elements of the nested arrays.
+- .flatten(1): unified a specific number of levels of nested arrays (the argument is the number of unified levels).
 - .asStream: sent to objects that are not streams to turn them into streams (patters, envelopes, etc.). Should be used in combination with .next.
 - .clump(n): opposite of .flat. Its argument indicates the number of elements (n) that are going to be clumped into nested arrays within a bigger array.
 - .stutter(n): its argument indicates the number of repetitions (n) of each element of a given collection.
