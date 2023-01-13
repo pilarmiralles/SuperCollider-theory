@@ -219,7 +219,7 @@ a = {
 )
 
 a.value([1, 2, 3, 3, 6, 7, 7], [5, 2, 1, 4, 6, 8, 1]) //--> The solution should be [3, 7, 5, 4, 8]. It works!
-//You could try to create a similar function in which the number of compared arrays is flexible.
+//You could try to create a similar function in which the number of compared arrays is flexible --> See "Symmetric difference algorithmic practice" in the folder of "Codes for specific tasks" for a solution.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //METHODS
