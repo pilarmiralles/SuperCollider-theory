@@ -80,7 +80,7 @@ CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as i
 
 //We can apply the former comb filter and impulse to a buffer with a percussive envelope:
 
-b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/Audio-for-granular-examples-2.wav")
+b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-2.wav")
 
 (
 {
