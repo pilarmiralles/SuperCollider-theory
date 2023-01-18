@@ -18,7 +18,25 @@
 (
 [\dog, \cat, \horse].do({|animal, index|
 
-	("the animal " ++ animal ++ " features the index " ++ index).postln //Is there some other more elegant way of adding the spaces in between the words?
+	("the animal " ++ animal ++ " features the index " ++ index).postln //There should be, though, a more efficient way to leave spaces in between:
+})
+)
+
+//According to the help file, ++ is used for concatenation with no spaces, and + is used for concatenation leaving a space, but this only works between two strings, and here we are combining symbols and strings:
+
+"hello" ++ "you" //No space.
+"hello" + "you" //Space in between.
+
+//A possible solution I have found is this: .scatArgs concatenates a string with the following args with spaces in between:
+"These are some args: ".scatArgs(\fish, SinOsc.ar, {4 + 3}).postln;
+
+//Applied to our function: it does work really well:
+(
+[\dog, \cat, \horse].do({|animal, index|
+
+
+	"the animal".scatArgs(animal, "features the index", index).postln;
+
 })
 )
 
