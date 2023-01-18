@@ -67,13 +67,32 @@ Delay.ar(in, maxdelaytime, delaytime, mul, add) //"in" (input signal to which th
 
 CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as in Delay, but including the argument "decaytime" (time for which the delays will still be heard).
 
-//Example: in this case, Comb is not working as a resonator due to the low frequency of the filter (that is to say, due to the long delay time).
+//Example: in this case, Comb is not working as a resonator due to the low frequency of the filter (that is to say, due to the long delay time):
 (
 {
 	var signal;
 
 	signal = Impulse.ar(1/2) !2; //There is an impulse every two seconds (which, in this case, is equal to the decay time of the filter) and the signal is mono-duplicated.
 	CombC.ar(signal, 0.5, 0.5, 2); //There is an "echo" every half a second, during 2 seconds (decaytime). The "echoes" lose their stength progressively as the decay is applied.
+
+}.play
+)
+
+//We can apply the former comb filter and impulse to a buffer with a percussive envelope:
+
+b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/Audio-for-granular-examples-2.wav")
+
+(
+{
+	var trigger, signal, envelope, delay;
+
+	trigger = Impulse.ar(1/2) !2; //Impulse is used as a trigger for the envelope.
+
+	signal = PlayBuf.ar(2, b.bufnum, 1.0, 1, 2.5 * 44100); //The audio follows its normal duration this way, but we only hear the pieces released by the envelope.
+
+	envelope = EnvGen.ar(Env.perc(0.01, 0.5), trigger);
+
+	delay = CombC.ar(signal * envelope, 0.5, 0.5, 2) * 0.7;
 
 }.play
 )
