@@ -565,6 +565,8 @@ Tdef(\test,
 }).play
 )
 
+//IMPORTANT NOTE AND RECENT QUESTION ABOUT Tdef: I realized I can't use Tdef with a SynthDef that is connected to another SynthDef in In and Out relationship (for example, a synth and a reverb applied through another SynthDef). The problem is that Tdef does not renew the values only, but it runs the synths again, so there is a superposition of both SynthDefs, as if they had just been evaluated twice. I still need to search for a solution to this (or a different possible cause).
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //NDEF (Also from the "Just In Time" library, JITLib (Ndef, Tdef, MIDIdef, Pdef...etc.)
