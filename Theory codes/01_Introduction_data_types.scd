@@ -6,7 +6,7 @@ s.recSampleFormat = "int24";
 s.options.memSize = 2 ** 16;
 s.options.numWireBufs = 256;
 
-Safety(s).enable; --> SafetyNet is a very useful limiter. It is an extension which can be downloaded from the site: https://github.com/adcxyz/SafetyNet
+Safety(s).enable; // --> SafetyNet is a very useful limiter. It is an extension which can be downloaded from the site: https://github.com/adcxyz/SafetyNet. When installed, this line will enable the extension and the postwindow will show the addition of the synth 'safeClip' whenever the server stops running a code.
 
 Server.local.latency = 0.05;
 */
