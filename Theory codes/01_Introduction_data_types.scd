@@ -6,7 +6,7 @@ s.recSampleFormat = "int24";
 s.options.memSize = 2 ** 16;
 s.options.numWireBufs = 256;
 
-Safety(s).enable;
+Safety(s).enable; --> SafetyNet is a very useful limiter. It is an extension which can be downloaded from the site: https://github.com/adcxyz/SafetyNet
 
 Server.local.latency = 0.05;
 */
