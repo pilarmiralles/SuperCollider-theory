@@ -112,9 +112,9 @@ f.value (topValue: 2) //Changing only the second argument thanks to the use of t
 (//This function calculates the Pythagorean theorem:
 {
 	arg sideA = 1, sideB = 1;
-	var calculation;
+	var hypotenuse;
 
-	calculation = (sideA.pow(2) + sideB.pow(2)).sqrt
+	hypotenuse = (sideA.pow(2) + sideB.pow(2)).sqrt
 
 }.value(5, 4) //Here the .value method is applied directly to the block of code of the function. The result is given right away.
 )
@@ -180,7 +180,7 @@ f = {
 
 		reverse = word.reverse;
 
-	original == reverse; // === (identity) could be used here as we are comparing the same string and not two different strings with the same content, but using == (equality) is clearer.
+	original == reverse;
 	}
 )
 
