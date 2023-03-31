@@ -157,7 +157,7 @@ HPF
 333.rand + 100 //For example for freqs: freqs from 100 to 432 Hzs.
 10.rand + 1 //To exclude 0.
 5.xrand;//excludes 0 by default.
-5.xrand(1);//exclude 1 (and 0, by default).
+5.xrand(1);//excludes 1.
 5.xrand2 //Includes negative values.
 10.rand2 //Includes negative values (-10 to 10, including 0)
 rrand(0.1, 4) //Random numbers within a range with uniform distribution (if both numbers are int, all random numbers will be int when evaluated; if at least one of them is float, all output numbers will be floats).
