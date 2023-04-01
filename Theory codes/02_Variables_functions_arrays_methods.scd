@@ -355,7 +355,7 @@ Array.fill(6, {arg i; [i, rrand(0, 11)]}) //Here creating separate arrays contai
 }.value(50, 8) //50 Hz for the root's freq, 8 overtones calculated (the first one being the root).
 )
 
-//Duplicating (n!) is equivalent to Array.fill:
+//Duplicating (!n) is equivalent to Array.fill:
 
 //Equal functions:
 ({arg i; [ i, rrand(0, 11) ]} !6) //and:
