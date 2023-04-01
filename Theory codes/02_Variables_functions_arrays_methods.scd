@@ -363,7 +363,7 @@ Array.fill(6, {arg i; [i, rrand(0, 11)]}) //Here creating separate arrays contai
 Array.fill(6, {arg i; [i, rrand(0, 11)]})
 
 //ARRAY.SERIES:
-//The second class method for arrays is Array.series(size, start, step): it creates an aritmetic series:
+//The second class method for arrays is Array.series(size, start, step): it creates an arithmetic series:
 
 Array.series(12, 0, 1) //Series from 0 to 11 (12 values, starting by 0, 1 step between each value).
 
@@ -376,7 +376,7 @@ x.plot(discrete:true) //Discontinuous points.
 x.plot(discrete: false) //Continuous line (although the content of the array is still a series of "points").
 
 //ARRAY.GEOM:
-//The third class method for arrays is Array.geom(size, start, grow): it creates a geometric series. The arguments are the same as in Array.series (size and start), but the third argument is grow, the product (multiplication) for the geometric series, as the step (sum) would be for the aritmetic series.
+//The third class method for arrays is Array.geom(size, start, grow): it creates a geometric series. The arguments are the same as in Array.series (size and start), but the third argument is grow, the product (multiplication) for the geometric series, as the step (sum) would be for the arithmetic series.
 
 //It is really useful to calculate frequencies based on a certain interval, using the ratios (numeral relationship between overtones within the overtone series) of each interval (for natural or Pitagoric tuning):
 Array.geom(5, 220, 2) //For example, grow = 2 will create octaves (regarding frequency in Hz) --> Five octaves from A3, counting the A3 itself.
@@ -413,7 +413,7 @@ e.plot(discrete: true) //Sort of triangle in the graph representing the mirror s
 [ 0, 1, 2, 3 ].wchoose([ 5, 8, 4, 2 ].normalizeSum) //NormalizeSum converts other values into ratios from 0 to 1, so probability can be calculated easier without summing 1.
 [ 0, 1, 2, 3 ].rotate(1) //Rotation of the elements to the right. If using a negative number, they rotate to the left. If using a different number other than 1, they rotate those many slots within the series.
 
-//When applaying aritmetic operations using arrays of different size, as commented before, the values of the small array rotate to be applied to the big array:
+//When applaying arithmetic operations using arrays of different size, as commented before, the values of the small array rotate to be applied to the big array:
 //Hence these operations are equal:
 
 [1, 2, 3, 4, 5] + [1, 2, 3]
