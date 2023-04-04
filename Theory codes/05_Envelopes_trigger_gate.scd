@@ -4,7 +4,7 @@
 //ENVELOPES:
 //Envelopes describe events that change over time. Two classes are needed to create an envelope: EnvGen, the Unit Generator of envelopes, and Env, which allows us to specify the characteristics of the envelope that EnvGen will create.
 
-Env.new(levels, times, cirve) //we will use these three first arguments in Env (it is not necessary to specify the method .new, as it happens with Mix.new and many other UGens). Imagining an envelope as a waveshape: "Levels": points at the "y" axis within an array (for example, [0, 1, 1, 0], which can define frequencies, amplitudes, etc./ "Times": how many time in seconds does it takes to go from one level point to the next, written within an array as well (if indicating multiple times) --> there will be always one less time value than level value , because the time points are "in between" the level points / "Curve": how do we move from one value to the next, the so-called "interpolation" (for instance, \linear (by default), \exponential, \sine, \step (no interpolation, so it goes from one value to the next directly)). The interpolation between two levels that are equal doesn't matter (it won't "sound"). The listed curves were premade curves, but in this argument, it is also possible to define a curve using positive or negative floats (value of the curve of the segments), or an array mixing any of the former options (for example, the curve [-4, 4] is quite close to an exponential). Let's study closely all those options:
+Env.new(levels, times, curve) //we will use these three first arguments in Env (it is not necessary to specify the method .new, as it happens with Mix.new and many other UGens). Imagining an envelope as a waveshape: "Levels": points at the "y" axis within an array (for example, [0, 1, 1, 0], which can define frequencies, amplitudes, etc./ "Times": how many time in seconds does it takes to go from one level point to the next, written within an array as well (if indicating multiple times) --> there will be always one less time value than level value , because the time points are "in between" the level points / "Curve": how do we move from one value to the next, the so-called "interpolation" (for instance, \linear (by default), \exponential, \sine, \step (no interpolation, so it goes from one value to the next directly)). The interpolation between two levels that are equal doesn't matter (it won't "sound"). The listed curves were premade curves, but in this argument, it is also possible to define a curve using positive or negative floats (value of the curve of the segments), or an array mixing any of the former options (for example, the curve [-4, 4] is quite close to an exponential). Let's study closely all those options:
 
 //LINEAR:
 
@@ -318,12 +318,12 @@ Env.perc(0.01, 0.25, 0.3, -4).plot
 
 	//The times of the envelope are randomly chosen inside the envelope, so the multichannel expansion brings about a different rrand for the times for each of the five envelopes, thus each envelope will change at its own pace.
 
-	signal = {Mix.ar(
+	signal = Mix.ar(
 		SinOsc.ar(
 			freq,
 			0,
 			0.1)
-	)}!2; //We'll obtain five different chords in each side.
+	) !2;
 
 	signal * 0.5
 
@@ -340,12 +340,12 @@ Env.perc(0.01, 0.25, 0.3, -4).plot
 		EnvGen.ar(Env(Array.fill(5, { exprand (60, 78).midicps}), times , \step), trigger)
 	});
 
-	signal = {Mix.ar(
+	signal = Mix.ar(
 		SinOsc.ar(
 			freq,
 			0,
 			0.1)
-	)}!2;
+	) !2;
 
 	signal * 0.5
 
