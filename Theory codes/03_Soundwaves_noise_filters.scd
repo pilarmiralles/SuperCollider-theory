@@ -283,9 +283,9 @@ FreqScope.new //Evaluate this to analize (visualize) the frequencies when trying
 //Amplitude modulations using noises also modulate the value 44100 times per second, producing a hybrid noise (it is an alternative way of performing ring modulation, but we'll study that later on).
 
 //Randomness and stereo sounds using the duplicator !2:
-{BrownNoise.ar(0.3) !2}.play //It copies the BrownNoise, with the same randomness (literal copy) on each side of the stereo = mono duplicated.
-{BrownNoise.ar(0.3 !2)}.play //It duplicates the entire function of the BrownNoise, thus the noise will be different (different randomness) on each side.
-{{BrownNoise.ar(0.3)} !2}.play //Equivalent of the former example, useful to duplicate Functions with UGens that do not feature the mul argument (Mix, for instance).
+{BrownNoise.ar(0.1) !2}.play //It copies the BrownNoise, with the same randomness (literal copy) on each side of the stereo = mono duplicated.
+{BrownNoise.ar(0.1 !2)}.play //It duplicates the entire function of the BrownNoise, thus the noise will be different (different randomness) on each side.
+{{BrownNoise.ar(0.1)} !2}.play //Equivalent of the former example, useful to duplicate Functions with UGens that do not feature the mul argument (Mix, for instance).
 //As Array.fill is equivalent to !n, we can now understand why the function of Array.fill is written between curly brackets, in order to duplicate the function with different results (if the function produces different results) instead of just duplicating or copying the literal content.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

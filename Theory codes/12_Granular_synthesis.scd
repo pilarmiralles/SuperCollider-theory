@@ -449,7 +449,7 @@ Routine({
 		position = (position + (waitTime/stretch)) % durBuffer;
 
 		s.bind({
-			Synth(\grain2,s
+			Synth(\grain2,
 				[
 					\bufnum, c.bufnum,
 					\dur, durGrain,
