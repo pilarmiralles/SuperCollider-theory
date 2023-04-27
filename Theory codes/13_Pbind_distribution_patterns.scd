@@ -410,7 +410,7 @@ SynthDef(
 	{ arg out, freq, amp, pan, gate = 1;
 		var signal, env;
 
-		signal = Mix(SinOsc.ar(freq * [ 1, 1.01 ], 0, 0.5)); //Two frequencies are produced with 0.01 deviation factor, then they are mixed producing this little detuning or beating.
+		signal = Mix(SinOsc.ar(freq * [ 1, 1.01 ], 0, 0.5)); //Two frequencies are produced with 0.01 deviation factor, then they are mixed producing this little detune or beating.
 
 		env = EnvGen.ar(
 			Env.asr(0.01, amp * 0.5, 0.3), //Envelope with attack, sustain and release, because Pbind needs to open and close the gate.
@@ -418,7 +418,7 @@ SynthDef(
 			doneAction: 2 //doneAction = 2 is essential to keep each Synth out of the server when it is done.
 		);
 
-		Out.ar(out,Pan2.ar(signal * env, pan)) //We apply Pan2, as the output of the Mix is a mono signal.
+		Out.ar(out, Pan2.ar(signal * env, pan)) //We apply Pan2, as the output of the Mix is a mono signal.
 }).add
 )
 
@@ -426,15 +426,15 @@ SynthDef(
 
 Pbind(\instrument, \newSine).play
 
-Pbind(\instrument, \newSine, \midinote, Pseq([ 72, 67, 68, 75 ], inf)).play //For example, \midinote is going to be placed automatically in the freq argument (and converted to Hz if I am not wrong).
+Pbind(\instrument, \newSine, \midinote, Pseq([ 72, 67, 68, 75 ], inf)).play //For example, \midinote is going to be placed automatically in the freq argument (and converted to Hz).
 
 //Another example using the same instrument:
 (
 Pbind(
 	\instrument, \newSine,
-	\midinote, Pn(Pshuf([ 40, 42, 43, 45, 46 ] + 24, 2), inf),
+	\midinote, Pn(Pshuf([ 40, 42, 43, 45, 46 ] + 24, 2), inf), //Two repetitions of each order.
 	\dur, 0.5 / (180/60), //Using 8th-notes considering the 180 quarter-notes per minute (180/60).
-	\legato, 0.5, //Each note is half the duration of the space between the notes (it sounds during have of the duration set in \dur).
+	\legato, 0.5, //Each note is half the duration of the space between the notes (the release of the envelope starts at half of the duration set in \dur).
 	\amp, Pwrand([ 0.1, 0.7 ], [ 0.8, 0.2 ], inf), //There are some sharper attacks.
 	\pan, Pseq([ -1, -0.5, 0, 0.5, 1 ], inf)
 ).play
@@ -447,21 +447,21 @@ Pbind(
 (
 SynthDef(
 	\klank,
-	{| gate = 1, freqscale, amp, pan | //the argument "freqscale" is not within Pbind's keys, but it can be defined within Pbind through the argument's name when using this SynthDef.
+	{ |gate = 1, freqscale = 1, amp, pan| //the argument "freqscale" is not within Pbind's keys, but it can be defined within Pbind through the argument's name when using this SynthDef.
 		var impulse, signal, env;
 
 		impulse = Impulse.ar(0); //Impulse with freq = 0: it will create a single impulse at the beginning, as input for the Klank.
 		signal = Klank.ar(
 			`[
-				[ 42, 5600, 11639 ],
-				1,
-				[ 10, 0.01, 2 ]
+				Array.fill(10, { ExpRand(200, 2000) }),
+				Array.fill(10, {Rand(0.2, 0.6) }),
+				Array.fill(10, { Rand(0.01, 2) })
 			],
 			impulse,
 			freqscale //Freqscale allows us to transpose the freqs of Klank (2 = octave up, 0.5 = octave down, 7/4 = minor 7th, etc. all overtone ratios).
 		);
 		env = EnvGen.ar(
-			Env.asr(0.001, amp, 0.001),
+			Env.asr(0.01, amp, 0.01),
 			gate,
 			doneAction: 2
 		);
@@ -472,18 +472,18 @@ SynthDef(
 (
 Pbind(
 	\instrument, \klank,
-	\dur, Pwrand([1, 0.05 ], [0.9, 0.1 ], inf) * (60/90), //The duration ratios are based on the 90 bpm applied as a factor at the end.
-	\freqscale, Pseq([ 1, 7/4 ], inf),
-	\amp, Pwrand([ 0.5, 0.1 ], [ 0.1, 0.9 ], inf),
+	\dur, Pwrand([ 1, 0.5, 0.05 ], [ 0.7, 0.2, 0.1 ], inf) * (60/90), //The duration ratios are based on the 90 bpm applied as a factor at the end.
+	\freqscale, Pseq([ 1, 2/3 ], inf),
+	\amp, Pwrand([ 0.5, 0.1 ], [ 0.2, 0.8 ], inf),
 	\pan, Prand([ -0.7, -0.3, 0, 0.3, 0.7 ], inf)
 ).play
 )
 
-//RESTS: \rest or just \ in any key related to the frequency is interpreted as a rest:
+//RESTS: \rest or just a backslash "\" in any key related to the frequency is interpreted as a rest:
 
 Pbind(\note, Pseq([ 0, 2, \rest, 5, 6, \rest, 10, 11, \rest ], inf)).play
 
-//Here is our newSine synth again:
+//Here is our newSine SynthDef again:
 (
 SynthDef(
 	\newSine,
@@ -492,7 +492,7 @@ SynthDef(
 
 		signal = Mix (SinOsc.ar(freq * [1, 1.01], 0, 0.5));
 		env = EnvGen.ar(
-			Env.asr(0.01, amp * 0.5,0.3),
+			Env.asr(0.01, amp * 0.5, 0.3),
 			gate,
 			doneAction: 2
 		);
@@ -500,7 +500,7 @@ SynthDef(
 }).add
 )
 
-//In this example, there is a random permutation each 5 repetitions of the Pshuf pattern: there are 5 different pitches and 3 rests to be sorted randomly. This will alternate the pitches and rests quite fast, giving a similar impression as with Ligeti's studio of blocked keys:
+//In this example, there is a random permutation each 5 repetitions of the Pshuf pattern: there are 5 different pitches and 3 rests to be sorted randomly. This will alternate the pitches and rests quite fast, giving a similar impression as in Ligeti's studio of blocked keys:
 
 (
 Pbind(
@@ -513,24 +513,24 @@ Pbind(
 ).play
 )
 
-//The rests can be also created using the class Rest() within any key: here in \amp:
+//The rests can be also created using the class Rest() in any key: here in \amp:
 
 (
 Pbind(
-	\note, Pseq([ 0, 2, 4, 5, 6, 7, 10, 12 ], inf), //As the Rest is in \amp, the flow of pitches is maintained here.
+	\note, Pseq([ 0, 2, 4, 5, 6, 7, 10, 12 ], inf), //As Rest is used in \amp, the flow of pitches is maintained here despite the silences.
 	\amp, Pseq(
 		[
-			Pseq([ 0.1, 0.1, Rest() ], 8), //We create the pattern note-note-rest. There are 8 pitches, so the pattern is displaced during 24 iterations (8 series of 3 pulses (note-note-rest)) and comes back to its initial phase only after that.
+			Pseq([ 0.1, 0.1, Rest() ], 8), //We create the pattern note-note-rest. There are 8 pitches, so the pattern is displaced during 24 iterations (8 series of 3 pulses (note-note-rest)), coming back to its initial phase only after that.
 			Pn(0.1, 8) //When the 24-note period is completed, the complete series of pitches appears (8 repetitions, because 8 pitches).
 		],
 		inf),
-	\pan, Pseq([ Pn(0, 3 * 8), Pseq([ -1, 1 ], 4) ], inf), //The period of the amps coincides with the pan: it maintaines a 0 during 3 * 8 iterations, then it alternates between -1 and 1 four times (for the last 8 iterations of the complete scale).
+	\pan, Pseq([ Pn(0, 3 * 8), Pseq([ -1, 1 ], 4) ], inf), //The period of the amps coincides with the pan values: it maintaines a 0 during 3 * 8 iterations, then it alternates between -1 and 1 four times (for the last 8 iterations of the complete scale).
 	\dur, 0.1,
 	\instrument, \newSine
 ).play
 )
 
-//In case Rest is used in any of the keys related to the duration (mainly in \dur), then we have to specify the duration of the Rest (in seconds):
+//In case the class Rest is used in any of the keys related to the duration (mainly in \dur), we have to specify the duration of the Rest (in seconds):
 
 (
 Pbind(
@@ -554,7 +554,7 @@ Pwhite(lo, hi, length) //Arguments.
 a = Pwhite(0.0, 1.0).asStream; //Numbers between 0 and 1 with uniform distribution (as in white noise): also called rectangular distribution.
 b = a.nextN(100000); //It creates an array asking "a" for values 100000 times.
 b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //This is just defining the pixels of the window that will display (plot) the values in discontinuous points (discrete: true).
-([ 0 ] ++ b.histo(1000)).plot("Graphic representation of values distribution", bounds: Rect(10, 10, 520, 380), discrete: true) //The initial 0 is for the initial space, then a histogram is created for the representation of the distributions.
+([ 0 ] ++ b.histo(1000)).plot("Distribution of the values", bounds: Rect(10, 10, 520, 380), discrete: true) //The initial 0 is for the initial space, then a histogram is created for the representation of the distributions.
 )
 
 //Using a simpler SynthDef for the sonic examples (without the detuning):
@@ -567,7 +567,7 @@ SynthDef(
 		signal = SinOsc.ar(freq);
 
 		env = EnvGen.ar(
-			Env.asr(0.01, amp * 0.5,0.1),
+			Env.asr(0.01, amp * 0.5, 0.1),
 			gate,
 			doneAction: 2
 		);
@@ -586,7 +586,7 @@ Pbind(
 ).play
 )
 
-//Small fragments of six pitches: when the 6 iterations are done, the pattern receives "nil", so the Pbind stops there. Then, you can evaluate it again (sometimes when composing algorithmic music, it is better to obtain smaller amounts of output):
+//Small fragments of six pitches: when the 6 iterations are done, the pattern receives "nil", so the Pbind stops there. Then, you can evaluate it again (sometimes when composing algorithmic music, it is better to obtain smaller outputs):
 (
 Pbind(
 	\midinote, Pwhite(24, 108, 6),
@@ -635,13 +635,13 @@ Pexprand(lo, hi, length) //Arguments.
 
 //Graphical representation:
 (
-a = Pexprand(0.001, 1.0).asStream; //The only change here is that the range does not start by 0, as the distribution is exponential (0 can't be touched, nor crossed).
+a = Pexprand(0.001, 1.0).asStream; //The only change here is that the range does not start at 0, as the distribution is exponential (0 can't be touched, nor crossed).
 b = a.nextN(100000);
 b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //The values are accumulated in the lower part of the range.
-([ 0 ] ++ b.histo(1000)).plot("Graphic representation of values distribution", bounds: Rect(10, 10, 520, 380), discrete: true) //And here we can see the exponential graph.
+([ 0 ] ++ b.histo(1000)).plot("Distribution of values", bounds: Rect(10, 10, 520, 380), discrete: true) //Higher probability for lower values.
 )
 
-//Here we can hear the exponential distribution, with a bigger presence of lower tones:
+//Here we can hear the exponential distribution, with a bigger presence of lower tones (applied to freq in Hz, the distribution would result much more uniform):
 (
 Pbind(
 	\midinote, Pexprand(24, 108, inf),
@@ -661,7 +661,7 @@ Pbind(
 ).play
 )
 
-//The first line of the following example gives us the random seed of the evaluation of the code, printed in the postwindow. Then, we can replace its value with that number in order to obtain the same exact random progression of pitches and durations:
+//The first line of the following example gives us the random seed of the evaluation of the code, printed in the postwindow. Then, we can replace its value with that number in order to obtain the same exact random progression of pitches and durations (any random value):
 (
 thisThread.randSeed = Date.seed.postln; //The random seed is named using the date and time, thereby avoiding any repetition of seed numbers.
 Pbind(
@@ -683,7 +683,7 @@ Pbind(
 ).play
 )
 
-//Control of the octaves and pitches within a specific mode (Messiaen's?)
+//Last example changing the octave and obtaining a short sentence:
 (
 thisThread.randSeed = Date.seed.postln;
 Pbind(
@@ -698,31 +698,31 @@ Pbind(
 
 //NORMAL OR GAUSSIAN DISTRIBUTION: priority given to the central values within a range.
 
-Pgauss(mean, dev, length) //Arguments (mean is the center, dev is the maximum deviation from that center to left and right (the width of the "gaussian bell", how fast or slow the values grow or decrease), length is the number of values.
+Pgauss(mean, dev, length) //Arguments ("mean" is the center, "dev" is the maximum deviation from that center to left and right (the width of the "gaussian bell", how fast or slow the values grow or decrease), "length" is the number of values, as always.
 
 //Graphical representation:
 (
-a = Pgauss(1.0, 0.25).asStream; //Center = 1, 0.25 = deviation (is the width of the gaussian bell).
+a = Pgauss(1.0, 0.25).asStream; //Center = 1, deviation = 0.25(width of the gaussian bell).
 b = a.nextN(100000);
-b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //Values are accumulated around 1.
-([ 0 ] ++ b.histo(1000)).plot("Graphic representation of values distribution", bounds: Rect(10, 10, 520, 380), discrete: true) //Central values are more probable than extreme values.
+b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //Values are accumulated around the center (= 1) or "mean".
+([ 0 ] ++ b.histo(1000)).plot("Distribution of values", bounds: Rect(10, 10, 520, 380), discrete: true) //Central values are more probable than extreme values.
 )
 
-//Here the sonic example: the gaussian distribution is applied to midi notes: the pitch can be deviated within a range (it does not mean that it goes from 82 to 86, and furthermore we obtain microtones in the form of float numbers):
+//Here the sonic example: the gaussian distribution is applied to midi notes: the pitch will stay around the mean value (84), deviating according to the veliation value (2), but this doesn't mean that the range of the pitch is 82-86 as the deviation is just a measurement of the width of the gauss bell, affecting the probability of the extreme values. In addition to this, as the resulting values are float numbers, microtones are brough about:
 (
 Pbind(
-	\midinote, Pgauss(84, 2).trace, //Observe that the values are not integers.
+	\midinote, Pgauss(84, 2).trace, //Observe that the resulting values are not integers.
 	\dur, 0.1,
 	\amp, 0.2,
 	\instrument, \simpleSine
 ).play
 )
 
-//Using the former synthDef \newSine (if too far in the code, you can use ctrl + F in order to search for the name and find it within the code). It sounds granular because of the short duration of the synths:
+//Using the former synthDef \newSine (if too far in the code, you can use ctrl + F in order to search for the name and find it throughout the code). It sounds granular because of the short duration of the synths:
 
 (
 Pbind(
-	\freq, Pgauss(5000, 1250),
+	\freq, Pgauss(5000, 1250), //The few lower values are really highlighted because they are not common.
 	\pan, Pgauss(0, 0.3),
 	\dur, 0.01,
 	\amp, 0.05,
@@ -730,7 +730,7 @@ Pbind(
 ).play
 )
 
-//Normal distribution applied to rhythms: dev = 0 would be a regular pulse. The wider the deviation, the greater the difference between the pulses. Observe that dev = 1 is already a relatively big deviation (also in the case of frequency):
+//Normal distribution applied to rhythms: dev = 0 would bring about a regular pulse. The wider the deviation, the greater the difference between the pulses:
 (
 Pbind(
 	\midinote, Pgauss(90, 1),
@@ -739,20 +739,20 @@ Pbind(
 ).play
 )
 
-//Creating chords: Ptuple separates each freq created by Pgauss, then a different octave is added to each of those freqs:
+//Creating chords: Ptuple separates each freq created by the three Pgauss, then a different octave is added to each of those freqs:
 (
 Pbind(
 	\midinote, Ptuple({ Pgauss(67, 1) } !3) + [ 0, 14, 24 ], //Three frequencies, three octaves.
-	\dur, Pgauss(3, 0.5), //Smaller deviation.
+	\dur, Pgauss(0.5, 0.1),
 	\instrument, \simpleSine //Try with other synths or without \instrument (default piano).
 ).play
 )
 
-//PSEG: the pattern for creating segments --> envelopes: thus, we can draw the behavior of Pbind in time.
+//PSEG: the pattern for creating segments --> envelopes: thus, we can draw the behavior of Pbind over time.
 
 Pseg(levels, durs, curves) //Arguments as in a simple envelope.
 
-//Example with sound: envelope from 60 to 67 midi, in 5 seconds, and going to back down in 0.2: it actually performs the envelope in loop, so there is no need for one less value of durations because we need that value for coming back to the first value and close the circle.
+//Example with sound: envelope from 60 to 67 midi, in 5 seconds, and going to back down in 0.2: it actually performs the envelope in loop (as patterns are prepared for iterations), so there is no need for one less value of durations because we need that value for coming back to the first value and close the circle:
 (
 Pbind(
 	\instrument, \simpleSine,
@@ -763,8 +763,8 @@ Pbind(
 
 //TENCENDY MASK (well, this term was made up by my professor, so I wouldn't use it over there):
 
-//We choose random values within two limits and these two limits (low and high) change in time. It is difficult to perceive the "drawing" that the limits describe in time, so the paths need to be simple enough (one example of not being perfectly able to perceive the drawings is Xenakis' Pithoprakta alongside its graphical representation. Perceptible examples are a range that opens and closes in a specific direction (upwards or downwards), etc.
-//This is especially useful when applied to granular synthesis, controlling the positions within the buffer, the grain durations, the separation (wait time) between grains, etc.
+//We choose random values within two limits and these two limits (low and high) change over time. It is difficult to perceive the "drawing" that the limits describe over time, so the paths need to be simple enough (one example of not being perfectly able to perceive the drawings is Xenakis' Pithoprakta alongside its graphical representation). Perceptible examples are a range that opens and closes in a specific direction (upwards or downwards), etc.
+//This is especially useful when applied to granular synthesis, controlling the positions within the buffer, the grain durations, the separation (waiting time) between grains, etc.
 
 //Using a new SynthDef for the sonic examples: a simple sawtooth wave with a sine envelope:
 (
@@ -775,14 +775,15 @@ SynthDef(
 		OffsetOut.ar(0,
 			Saw.ar(freq)
 			*
-			EnvGen.ar(Env.sine(0.3, 0.05),
+			EnvGen.ar(
+				Env.sine(0.3, 0.05),
 				doneAction: 2
 			)
 		)
 }).add
 )
 
-//First of all, defining the lines (limits), then implementing in the Pbind: notice that the range of freqs is narrower up to 100 midi ("unison") and then it descends reaching the widest range from 10 to 70 midi:
+//First of all, defining the lines (range limits), then implementing in the Pbind: notice that the range of freqs is narrower up to 100 midi ("unison") and then it descends reaching the widest range from 10 to 70 midi:
 (
 var lineA, lineB;
 
@@ -831,11 +832,11 @@ p = [ ~arrayA, ~arrayB ].plot //Now it displays both lines with the values and p
 //BROWNIAN MOTION: there is a continuous addition or subtraction of a number within a range to the original output:
 
 a = 1
-a = (a + rrand(-1.0, 1.0)).fold(0.0, 10.0) //"a" is originally = 1, then it is reassigned and with each evaluation, a random number between -1 and 1 is added. Fold is just keeping the range from 0 to 10.
+a = (a + rrand(-1.0, 1.0)).fold(0.0, 10.0) //"a" is originally = 1, then it is reassigned and with each evaluation, a random number between -1 and 1 is added. Fold is just keeping the range from 0 to 10. This is what brownian motion looks like.
 
-//Pbrown is the pattern for brownian movement:
+//Pbrown is the pattern for brownian motion:
 
-Pbrown(lo, hi, step, length) //Arguments: low and high boundaries of values (as with fold earlier), step (max deviation) and number of values (length).
+Pbrown(lo, hi, step, length) //Arguments: "low" and "high" boundaries of values (as with fold earlier), "step" (max deviation) and number of values ("length").
 
 //Graph of the tendency applied to 100000 values: observe that there are not many great jumps between random values:
 (
@@ -860,17 +861,17 @@ Pbind(
 (
 SynthDef(
 	\saw2,
-	{ arg freq = 60, amp = 0.051, gate = 1;
+	{ arg freq = 60, amp = 0.1, gate = 1;
 		var env, signal;
 
-		signal = LPF.ar(LFSaw.ar(freq), 440);
+		signal = LPF.ar(Saw.ar(freq), 440); //LPF will cut the higher overtones of Saw.
 		env = EnvGen.ar(Env.adsr(0, 0, 1, 1), gate, doneAction: 2);
 
 		Out.ar(0, Pan2.ar(signal, 0, amp * env))
 }).add
 )
 
-//Here the two Pbind displaced: this could be done within the same Pbind, creating two patterns in the key \dur (maybe Ptupple is not necessary because the freqs are shared and not independent?):
+//Here the two Pbind displaced and here we find out the limitation of Ptuple: we can't apply Ptuple to the durations because two parallel Pbind need to be coordinated in time. Duplicating the Pbind would allow different times using randomness, but we wouldn't be able to set specific patterns for each. Therefore, in order to create events with different duration, we need to set two different Pbind:
 (
 Pbind(
 	\instrument, \saw2,
@@ -882,7 +883,7 @@ Pbind(
 	\instrument, \saw2,
 	\midinote, Pseq([48, 46, 44, 42], inf),
 	\amp, 0.1,
-	\dur, Pseq([0.5, 0.5, 0.75, 1], inf),
+	\dur, Pseq([Pseq([0.5, 0.5, 1, 1], 1), Pseq([0.5, 0.5, 0.75, 1], 3)], inf), //After certain number of iterations, it synchronizes again.
 ).play
 )
 
