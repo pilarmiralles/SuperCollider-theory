@@ -304,6 +304,34 @@ FreqScope.new //Evaluate this to analize (visualize) the frequencies when trying
 
 {Blip.ar(1, 500, 0.1)}.play //The first argument is the frequency of the impulses (the speed), and the second argument is the number of harmonics (from 0 = sine wave, to as many harmonics as we want = the higher, the more "squared" the timbre), which gives the frequency (the pitch) of each impulse. Last, but not least, the mul.
 
+//Advanced note://///////
+//I just found a tutorial with the equivalent of Blip in SynthDef version, just to understand how it works, could be useful to copy it over here:
+
+(
+SynthDef(\blip, {
+	|freq = 200|
+	var temp, sum;
+
+	sum = 0; //Initial value for sum (so the later addition does not lead to an error because sum is not nil).
+
+	10.do{ |i|
+		temp = SinOsc.ar(
+			freq * (i + 1) //Fundamental freq and 9 more overtones, using the argument "i" (iteration) to get the multiples of the fundamental (i + 1 so it does not multiply the first time by 0).
+		);
+
+		sum = sum + temp; //Each iteration adds one more sine wave up to a sum of ten signals (this occurs all at once though).
+	};
+
+	sum = sum * 0.05; //Balancing the amplitude.
+
+	Out.ar(0, sum)
+}).add
+)
+
+Synth(\blip)
+
+{ Blip.ar(200, 10, 0.5) }.play //Same exact thing, using Blip with 10 harmonics and fundamental freq of 200.
+
 /////////////////////////////////////////////////////////////////////////////////////
 //BUTTERWORTH FILTERS: HPF, LPF, BPF y BRF: when filtering a signal, the amplitude of its frequencies falls at a specific pace from a cut-off frequency onwards. It is not an abrupt cut, but a gradual one: in SuperCollider, these are 2nd order filters, which means that the freqs from the cut-off point are going to fall 12 dB per octave.
 
