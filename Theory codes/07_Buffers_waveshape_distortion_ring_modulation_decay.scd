@@ -388,6 +388,8 @@ p.entries.do{ //It will repeat the function as many times as elements are in the
 
 //As an example, if using a routine where the samples are chosen randomly, this line could be implemented within the loop of the routine if working with the previous code for loading a library of samples: ~folder[ rrand(rangeof the indexes of the folder = 0 - (size of the folder - 1)) ].
 
+//For an alternative method of loading libraries of samples, see the end of theory file 13 ("Pbind and distribution patterns").
+
 //IGNORE THIS:
 //Bonus code (so GitHub doesn't turn my file into markdown:
 

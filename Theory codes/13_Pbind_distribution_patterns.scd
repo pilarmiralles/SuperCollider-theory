@@ -47,7 +47,7 @@ Event[].play
 
 //In here we can see all the default keys and values of Event:
 
-Event.default.parent.associationsDo(_.postln);"" //The empty string "" at the end provokes that the last element to be returned and printed is an empty string, avoiding lots of extra lines. For example, we can see that the default value for the key "pan" is 0.0 (and indeed we already have an estereo signal).
+Event.default.parent.associationsDo(_.postln);"" //The empty string "" at the end provokes that the last element to be returned and printed is an empty string, avoiding lots of extra lines, and the underscore before .postln is just a shortcut meaning "apply to all items" (and thus all the list is printed). For example, we can see that the default value for the key "pan" is 0.0 (and indeed we already have an estereo signal).
 
 //For instance, there are several ways of writing the pitch (this happens to many other parameters, as we'll se later on):
 
@@ -108,6 +108,8 @@ p.next(Event[])
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //KEYS
+//Keys listed in the Pbind help file show a certain hierarchy worth of following by using the same key names in our Pbind (and as our arguments later on when using our own SynthDefs: for example, using the argument "freq" for the frequency allows us to use other keys such as "midinote" or "scale" without specifying those arguments in the SynthDef. A single level of hierarchy should be chosen nevertheless, without mixing with others: for example, "freq" can be combined with the key "detune", and "scale" will be combined with "degree" or "octave", but "freq" and "midinote" will never be combined as they are two different ways of specifying pitch).
+
 //KEY DUR: it is 1 by default (in seconds).
 //Also by default, the note occupies an 80% of the duration we set (0.8 seconds if dur = 1), including a slight fade out (we will be able to change this later on):
 
@@ -433,7 +435,8 @@ Pbind(\instrument, \newSine, \midinote, Pseq([ 72, 67, 68, 75 ], inf)).play //Fo
 Pbind(
 	\instrument, \newSine,
 	\midinote, Pn(Pshuf([ 40, 42, 43, 45, 46 ] + 24, 2), inf), //Two repetitions of each order.
-	\dur, 0.5 / (180/60), //Using 8th-notes considering the 180 quarter-notes per minute (180/60).
+	\dur, 0.5 * (60/180), //Using 8th-notes considering the 180 quarter-notes per minute.
+	//\dur, 0.5 / (180/60) //Equivalent operation.
 	\legato, 0.5, //Each note is half the duration of the space between the notes (the release of the envelope starts at half of the duration set in \dur).
 	\amp, Pwrand([ 0.1, 0.7 ], [ 0.8, 0.2 ], inf), //There are some sharper attacks.
 	\pan, Pseq([ -1, -0.5, 0, 0.5, 1 ], inf)
@@ -472,7 +475,7 @@ SynthDef(
 (
 Pbind(
 	\instrument, \klank,
-	\dur, Pwrand([ 1, 0.5, 0.05 ], [ 0.7, 0.2, 0.1 ], inf) * (60/90), //The duration ratios are based on the 90 bpm applied as a factor at the end.
+	\dur, Pwrand([ 1, 0.5, 0.08 ], [ 0.7, 0.2, 0.1 ], inf) * (60/90), //The duration ratios are based on the 90 bpm applied as a factor at the end.
 	\freqscale, Pseq([ 1, 2/3 ], inf),
 	\amp, Pwrand([ 0.5, 0.1 ], [ 0.2, 0.8 ], inf),
 	\pan, Prand([ -0.7, -0.3, 0, 0.3, 0.7 ], inf)
@@ -561,13 +564,13 @@ b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //This is
 (
 SynthDef(
 	\simpleSine,
-	{|out, freq, amp, pan, gate = 1|
+	{|out, freq, atk = 0.01, amp, rel = 0.1, pan, gate = 1|
 		var signal, env;
 
 		signal = SinOsc.ar(freq);
 
 		env = EnvGen.ar(
-			Env.asr(0.01, amp * 0.5, 0.1),
+			Env.asr(atk, amp * 0.5, rel),
 			gate,
 			doneAction: 2
 		);
@@ -692,6 +695,35 @@ Pbind(
 	\octave, Prand([ 5, 6, 7 ], inf), //The difference between Pwhite and Prand is that Prand receives a specific list of values while Pwhite receives a range.
 	\dur, Pexprand(1/16, 2.0),
 	\amp, 0.2,
+	\instrument, \simpleSine
+).play
+)
+
+//Example of mixed uniform and exponential distributions, now changing the attack and release values:
+(
+Pbind(
+	//\freq, Pexprand(60, 5000, inf), //Pexrand always outputs floats, even when the inputs are integer.
+	\freq, Pexprand(60, 5000, inf).round(65).trace, //I've seen this method used to stick to a specific overtone series.
+	\dur, Pwhite(0.05, 0.5, inf),
+	\atk, Pwhite(0.5, 3.0, inf),
+	\rel, Pwhite(2.0, 8.0, inf), //Pwhite needs at least on float input to output floats, otherwise it will output integers.
+	\amp, Pexprand(0.01, 0.1, inf),
+	\pan, Pwhite(-0.8, 0.8, inf),
+	\instrument, \simpleSine
+).play
+)
+
+//PKEY: DEPENDABLE KEYS:
+//When we need the values of a specific key to rely on the values of an earlier stated key, we use Pkey. Pkey copies patterns from an earlier key so that we can apply other methods or operations to those values (outside the pattern, though).
+//Let's take the previous example as starting point and make the amplitude dependable on the frequency:
+(
+Pbind(
+	\freq, Pexprand(60, 5000, inf).round(65).trace,
+	\dur, Pwhite(0.05, 0.5, inf),
+	\atk, Pwhite(0.5, 3.0, inf),
+	\rel, Pwhite(2.0, 8.0, inf),
+	\amp, Pkey(\freq).reciprocal * 100, //Remember x.reciprocal = 1/x: lower freqs will be louder than higher freqs. Seems to work.
+	\pan, Pwhite(-0.8, 0.8, inf),
 	\instrument, \simpleSine
 ).play
 )
@@ -887,6 +919,7 @@ Pbind(
 ).play
 )
 
+///////////////////////////
 //PDEF: There is the possibility of changing the parameters without stopping the server using Pdef (as in Routines using Tdef):
 (
 Pdef(
@@ -896,9 +929,10 @@ Pdef(
 		\amp, 0.1,
 		\dur, Pseq([0.5, 0.5, 1, 1], inf),
 	)
-).play
+).play //.stop is also used to stop all synths.
 )
 
+///////////////////////////
 //Applying the Fibonacci series to Pbind:
 
 Array.fib(100, 0, 1); //Within a series of 100 numbers from the Fibonacci series, the 32bits of the integers already reach the limit of SC so there are negative values.
@@ -917,4 +951,66 @@ Pdef(
 		\amp, 0.1
 	)
 ).play
+)
+
+///////////////////////////
+//Using a library of samples and loading it into a Pbind:
+(
+d = Dictionary.new; //Creating a dictionary.
+//Loading the path of a folder with samples (replace with a path of your own by dragging the folder to PathName's argument). Associating that path with the key \d:
+d.add(\folder1 -> PathName("F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/ugly_percussion_library/group1").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }) //For each sample of the collection, the full path is read.
+);
+d.add(\folder2 -> PathName("F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/ugly_percussion_library/group2").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }) //We can even load more than one folder easily by creating more keys to be added to the dictionary "d".
+);
+)
+
+d[\folder1].choose.play //Now we can easily play random samples from the \folder1 key within the dictionary "d".
+d[\folder2].choose.play //Same with the other key.
+
+//Let's create a SynthDef to control those samples:
+(
+SynthDef(\library, {
+	|buf = 0, rate = 1, amp = 0.1|
+	var signal;
+
+	signal = PlayBuf.ar(2, buf, BufRateScale.ir(buf) * rate, doneAction: 2); //BufRateScale was used to compensate a possible difference of sampling rate, but it is not needed).
+	signal = signal * amp;
+
+	Out.ar(0, signal)
+}).add
+)
+
+Synth(\library, [\buf, d[\folder1].choose.bufnum]) //So, just to check it works, the buf is the bufnum, so we calculate the bufnam of a randomly chosen sample from libray1, for instance.
+
+//And now we can build the Pbind to play this SynthDef:
+(
+Pdef(
+	\heyhey,
+	Pbind(
+		\instrument, \library,
+		\dur, 0.25 * (60/120), //Using 16th notes within a tempo of 120 bpm. The duration here does not cut the sample duration though (they will overlap if longer than this value). Thus, it is good to try with a library of short percussive sounds, for instance.
+		//\stretch, 60/120 * 4, //This could be used instead of the * 60/120 in dur, so that we get a tempo of 120 bpm in a 4/4 time signature (see quantization at the end of the Pdef.
+		//\buf, Pxrand(d[\folder1] ++ d[\folder2], inf), //Creating an array with all the samples by concatenating both folders (both keys from the dictionary). Pxrand chooses random samples without repeating the same value twice in a row. We could use here Pwrand, Pshuf, Pn combined with Pshuf, or a specific sequence with Pseq, use nested patterns, etc., in order to create more interested and organized, yet still random, combinations, including also different combinations of the keys of the dictionary.
+		\buf, Pseq(
+			[
+				Pxrand(d[\folder2], 8),
+				Pxrand(d[\folder1] ++ d[\folder2], 8)
+			], inf
+		), //For instance, combining both libraries in this other way.
+		\rate, Pexprand(0.8, 2.0, inf), //The rate could also be randomized.
+		\amp, 0.2
+	)
+).play //.quant_(1.875) instead of .play if using .stretch to make bars so the changes in real time in Pdef are not made until next "bar". This is called quantization and, if using two Pdef (different Pbind) at the same time, sharing duration values and same quantization, they will be synchronized.
+)
+
+//REMEMBER: These two calculations of 8th notes at 180 bpm are equivalent:
+0.5 * (60/180)
+0.5 / (180/60)
+
+//Compare to your old method for loading a library: more or less the same, but loading the libraries into a dictionary instead of an empty array (from theory file 7, "Buffers, waveshape distortion and ring modulation"):
+(
+~folder = [];
+~path = PathName.new("F:/DOCUMENTOS/1 SIBELIUS 2021-22/Media and Sonic Arts/Old definitive work/Factory sounds library"); //Random path (drag your folder of samples here)
+~path.entries.do({arg path, i; ~folder = ~folder.add(Buffer.readChannel(s, path.fullPath, bufnum: i));});
+//~folder.size //Testing the size of the folder (number of samples).
 )

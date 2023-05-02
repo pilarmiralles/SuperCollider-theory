@@ -736,6 +736,14 @@ Routine({
 )
 //############################################
 
+//There is also Pxrand, which will never choose the same value twice in a row:
+(
+var stream;
+
+stream = Pxrand([0, 1, 2, 3, 4], 5).asStream;
+15.do({ stream.next.postln })
+)
+
 //PWRAND
 //Similar to Prand, but .wchoose version: the random values selected from the list have a specific probability. The second argument is "weights", the array of ratios we used in .wchoose (should be equal to 1 in total, or .normalizeSum should be used for converting other ratios).
 
