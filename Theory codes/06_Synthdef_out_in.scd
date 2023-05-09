@@ -4,7 +4,7 @@
 /*The SynthDef class creates synthesis instruments. It defines:
 1 - An interconnection between signals (UGens).
 2 - The in and out audio (or control) signals (a metasignal).
-3 - The arguments that allow the instrument (interconnection of signals) to be controlled from outside the instrument.
+3 - The arguments that allow the instrument (interconnection of signals) to be controlled from outside the instrument (from the client-side).
 4 - Its two fundamental parts (arguments) are: a name, and a function:
 */
 
@@ -56,7 +56,7 @@ SynthDef(
 Synth(\sineWaveRand, [\out, 0, \phase, 0, \amp, 0.1]) //Now the frequency will be different each time the Synth is evaluated.
 //The Synth is already part of the client and not of the server. Therefore, if a method such as exprand or rrand needs to be used in the Synth, it does not need to run in the server as a UGen.
 
-//IMPORTANT: it is not possible to change the size of any kind of array within the SynthDef once it is compiled (for example, sending it as an argument from the Synth). Therefore, it is not possible to apply any kind of operation through an argument to the size on an array.
+//IMPORTANT: it is not possible to change the size of any kind of array within the SynthDef once it is compiled (for example, sending it as an argument from the Synth). Therefore, it is not possible to apply any kind of operation through an argument to the size of an array.
 //The arguments are most usually fed with numbers.
 
 //Another example of SynthDef and Synth ("instrument" and "score"):
@@ -89,11 +89,10 @@ Out.ar(0, SinOsc.ar !2) //This way, the signal will be stereo (it creates an arr
 Out.ar(0, SinOsc.ar !8) //Eight channels (if not using 8 loudspeakers, we will only be able to hear the two first channels).
 Out.kr(100, SinOsc.kr) //Using control channels (not so usual now).
 
-//UGens and Synths: we can see the number of UGens and Synthesizers that are currently running in the server in the status bar below the postwindow (0u and 0s, respectively).
 
-//DONEACTION: doneAction may appear in all UGens that, despite they can might stop sounding they still run in the server (for instance, an Envelope adsr). The argument doneAction has different values (see help document): the one explained here is doneAction: 2 (using the keyword assignment for this argument because it might be the last one out of a long list of argument in a UGen). When doneAction = 2, if a zero is sent to the gate of the envelope, the envelope will stop running in the server (the synth will be killed). This will prevent the accumulation of nodes (events running in the server) at the same time, reduce the CPU percentage, for instance. It will be quite important when creating algorithmic routines (see document 10).
+//DONEACTION: doneAction may appear in all UGens that, despite they might stop sounding they still run in the server (for instance, any envelope). The argument doneAction has different values (see help document): the one explained here is doneAction: 2 (using the keyword assignment for this argument because it might be the last one out of a long list of arguments in a UGen). When doneAction = 2, if a zero is sent to the gate of the envelope, for instance, the envelope will stop running in the server (the synth will be killed). This will prevent the accumulation of nodes (events running in the server) at the same time and reduce the CPU percentage. It will be quite important when creating algorithmic routines (see document 10).
 
-//Example: when the envelope disappears, the synthesizer stops running in the server (you can check the node tree in the Server menu).
+//Example: when the envelope disappears, the synthesizer stops running in the server (you can check the status bar below: s = number of synths running in the server, when interpreting out Synth, it will increase and then, when closing the gate, it will decrease --> If doneAction: 0, then the synth will stay there until we press ctrl + .).
 (
 SynthDef(
 	\sineGate,
@@ -116,7 +115,6 @@ a = Synth(\sineGate, [\out, 0, \freq, 500, \amp, 0.3, \gate, 1]) //Open the gate
 a.set(\gate, 0) //Close the gate, killing the Synth due to doneAction = 2.
 
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //ARCHITECTURE OF THE AUDIO SERVER:
@@ -127,17 +125,17 @@ See the document in help about the Buffers, nodeIDs, Groups, etc.
 /* MAIN CONCEPTS (partly from the help document, where there are more details):
 NODE: A Node is an addressable point in a tree of nodes run by the synth engine. There are two types, Synths and Groups. The tree defines the order of execution of all nodes. All nodes have an integer ID (nodeID), which allows the communication with the node in order, for instance, to change the value of its arguments, shut it down, ask about its state, etc.
 
-GROUP: A Group is a collection of Nodes represented as a linked list. A new Node may be added to the head or tail of the group. The Nodes within a Group may be controlled together. The Nodes in a Group may be both Synths and other Groups. There is a top level group with an ID of zero that defines the root of the tree. When the server is booted from within SCLang, a 'default group' with an ID of 1 which is the default target for all new Nodes, is created. See RootNode and Default Group for more info.
+GROUP: A Group is a collection of Nodes represented as a linked list. A new Node may be added to the head or tail of the group. The Nodes within a Group may be controlled together. The Nodes in a Group may be both Synths and other Groups. There is a top level group with an ID of zero that defines the root of the tree. When the server is booted from within sclang, a 'default group' with an ID of 1, which is the default target for all new Nodes, is created. See RootNode and Default Group for more info.
 
 SYNTH: A Synth is a collection of unit generators that run together (an instrument = an interconnection between signals or UGens). They can be addressed and controlled by commands to the synthesis engine. They read input and write output to global audio and control buses. Their structure is defined by a SynthDef.
 
-NODE TREE: all nodes are placed within the node tree, which defines the order in which they run in the server (from top to bottom: what is heard goes on top of what hears and transforms what is heard). When booting up the server, two groups are automatically created: the root of the tree, RootNode (nodeID = 0), where all the nodes are created within the server / and the default group (nodeID = 1), within the root group where all the groups are created by default unless otherwise indicated. Processes like recording, or playing, which affect the entire default group, are created outside the default group, within the root group.
+NODE TREE: all nodes are placed within the node tree, which defines the order in which they run in the server (from top to bottom: what is heard goes on top of what hears and transforms what is heard). When booting up the server, two groups are automatically created: the root of the tree, RootNode (nodeID = 0), where all the nodes are created within the server / and the default group (nodeID = 1), within the root group where all the new nodes are created by default unless otherwise indicated. Processes like recording, or playing, which affect the entire default group, are created outside the default group, within the root group.
 
-AUDIO BUSES: Synths send audio signals to each other via a single global array of audio buses. Audio buses are indexed by integers beginning with zero. Using buses rather than connecting synths to each other directly allows synths to connect themselves to the community of other synths without having to know anything about them specifically. The lowest numbered buses get written to the audio hardware outputs (0 and 1). Immediately following the output buses are the input buses, read from the audio hardware inputs (2 and 3). The number of bus channels defined as inputs and outputs do not have to match that of the hardware.
+AUDIO BUSES: Synths send audio signals to each other via a single global array of audio buses. Audio buses are indexed by integers beginning by zero. Using buses rather than connecting synths to each other directly allows synths to connect themselves to the community of other synths without having to know anything about them specifically. The lowest numbered buses get written to the audio hardware outputs (0 and 1). Immediately following the output buses are the input buses, read from the audio hardware inputs (2 and 3). The number of bus channels defined as inputs and outputs do not have to match that of the hardware.
 
-CONTROL BUSES: Synths can send control signals to each other via a single global array of control buses. Buses are indexed by integers beginning with zero.
+CONTROL BUSES: Synths can send control signals to each other via a single global array of control buses. Buses are indexed by integers beginning by zero.
 
-BUFFERS: Buffers are arrays of 32 bit floating point values with a small descriptive header. Buffers are stored in a single global array indexed by integers beginning with zero. Buffers may be safely allocated, loaded and freed while synthesis is running, even while unit generators are using them. Buffers are used for wave tables, sample buffers, delay lines, envelopes, or for any other need which can use an array of floating point values. Sound files may be loaded into or written from buffers.
+BUFFERS: Buffers are arrays of 32 bit floating point values with a small descriptive header. Buffers are stored in a single global array indexed by integers beginning by zero. Buffers may be safely allocated, loaded and freed while synthesis is running, even while unit generators are using them. Buffers are used for wave tables, sample buffers, delay lines, envelopes, or for any other need which can use an array of floating point values. Sound files may be loaded into or written from buffers.
 
 UNIT GENERATOR DEFINITIONS: Unit Generator Definitions are plug-ins loaded automatically when the program starts. They are binary code libraries that are used as building blocks by Synths to build synthesis algorithms. Unit Generator Definitions have names that match the names of SuperCollider language classes used in building Synth Definitions.
 */
@@ -155,11 +153,11 @@ In.ar(40, 10) //From channel 40, it will read 10 channels (40 to 49).
 
 (//Example of SynthDef using In and Out: producing a noise and filtering:
 SynthDef(\noise,
-	{| out |
+	{ |out|
 		Out.ar(out, BrownNoise.ar)
 }).add;
 SynthDef(\filter,
-	{| out, in, freq |
+	{ |out, in, freq|
 		var input, signal;
 
 		input = In.ar(in, 1);
@@ -194,7 +192,7 @@ b = Synth(\filter, [\out, 0, \in, 4, \freq, 600], s, \addToTail)
 (
 SynthDef(
 	\sine,
-	{| in, amp |
+	{| in, amp = 0.1 |
 		var input, signal;
 
 		input = In.kr(in, 1);
@@ -227,22 +225,22 @@ SynthDef(
 }).add;
 )
 
-a = Synth(\sine, [\in, 0, \amp, 0.3]) //This runs the sine wave, and listens to the channel 0, but there is nothing there yet.
+a = Synth(\sine, [\in, 0, \amp, 0.1]) //This runs the sine wave, and listens to the control channel 0, but there is nothing there yet.
 
-b = Synth(\controlSine, [\out, 0, \freq, 1]) //Now we hear the sine wave being controlled by the control sine wave (the sine wave listens to 0 (in), and control sine wave goes out through 0, thus we don't hear the static sine way, but its modulation. Now, if we stop the modulation and evaluate "a" again, the last value where we stopped the modulation will be still there, sounding as a static sine wave, as that is the signal of that SynthDef.
+b = Synth(\controlSine, [\out, 0, \freq, 1]) //Now we hear the sine wave being controlled by the control sine wave (the sine wave listens to control 0 (in), and control sine wave goes out through control 0, thus we don't hear the static sine way, but its modulation. Now, if we stop the modulation and evaluate "a" again, the last value where we stopped the modulation will be still there, sounding as a static sine wave, as that is the signal of that SynthDef.
 
 c = Synth(\controlSaw, [\out, 1, \freq, 1]) //We can evaluate "a" and "c", then set in = 1 to "a" in order to hear the modulation of the Saw wave (out = 1).
 a.set(\in, 1)
-a = Synth(\sine, [\in, 1, \amp, 0.3]) //When stopping the modulation, the new frequency from channel 1 is tracked (in = 1).
+a = Synth(\sine, [\in, 1, \amp, 0.1]) //When stopping the modulation, the new frequency from channel 1 is tracked (in = 1).
 
 d = Synth(\controlNoise, [\out, 2, \freq, 1]) //We can evaluate "a" and "d", then set in = 2 to "a" in order to hear the LFDNoise modulation (out = 2).
 a.set(\in, 2)
-a = Synth(\sine, [\in, 2, \amp, 0.3]) //When stopping the modulation, the new frequency from channel 2 is tracked (in = 2).
+a = Synth(\sine, [\in, 2, \amp, 0.1]) //When stopping the modulation, the new frequency from channel 2 is tracked (in = 2).
 
 //With .choose it is possible to choose between the three modulation options (we need to evaluate b, c and d before):
 
 (
-a = Synth(\sine, [\in, [0, 1, 2].choose, \amp, 0.3]);
+a = Synth(\sine, [\in, [0, 1, 2].choose, \amp, 0.1]);
 b = Synth(\controlSine, [\out, 0, \freq, 1]);
 c = Synth(\controlSaw, [\out, 1, \freq, 1]);
 d = Synth(\controlNoise, [\out, 2, \freq, 1])
@@ -251,12 +249,11 @@ d = Synth(\controlNoise, [\out, 2, \freq, 1])
 a.set(\in, [0, 1, 2].choose) //Once the previous block is evaluated, the modulation can be randomly changed setting a different "in" to "a").
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//SENDING ARRAYS AS ARGUMENTS: in a SynthDef, but the number of elements within the array is fixed, as commented before:
-
+//SENDING ARRAYS AS ARGUMENTS: we can send an array to the argument of a SynthDef by using an array of literals. This kind of array is preceded by a #. It is created at compile time and can't be altered at run time. This is, once again, why we can't modify its size once the SynthDef is compiled (more information can be found in the "Arrays" chapter of this link: https://doc.sccode.org/Reference/Literals.html):
 (
 SynthDef(
 	\bank,
-	{ arg freq = #[ 0, 0 ]; //We write an array as the argument using # and a fixed number of elements (their value here is not meaningful, they are dummy values):
+	{ arg freq = #[0, 0]; //We write an array as the argument using # and a fixed number of elements (their value here is not meaningful, they are dummy values):
 
 		var signal;
 
@@ -272,7 +269,7 @@ s.scope //You can see them here.
 (
 SynthDef(
 	\bank,
-	{ arg freq = #[ 0, 0, 0, 0 ];
+	{ arg freq = #[0, 0, 0, 0];
 
 		var signal;
 
@@ -281,7 +278,7 @@ SynthDef(
 }).add
 )
 
-Synth(\bank, [\freq, {exprand(500, 4000)} !4]) //Now we have four different pitches (different ones each time the Synth is run).
+Synth(\bank, [\freq, { exprand(500, 4000) } !4]) //Now we have four different pitches (different ones each time the Synth is run).
 
 /////////////////////////////////////////////////////////////////////////////////////
 //RANDOMNESS AND CHOICE WITHIN A SYNTHDEF:
