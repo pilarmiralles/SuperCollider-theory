@@ -1,14 +1,15 @@
 //6 - SYNTHDEF, OUT.AR, IN.AR
 ////////////////////////////////
+//The primary and more flexible procedure for producing sound consists of creating a SynthDef and then executing it by calling a specific instance of it (a synth). If SynthDef is the recipe, Synth is its execution. For instance, Function.play creates a SynthDef automatically, which is only convenient for shorter examples and quick testing.
 
-/*The SynthDef class creates synthesis instruments. It defines:
+/* The SynthDef class creates synthesis instruments. It defines:
 1 - An interconnection between signals (UGens).
 2 - The in and out audio (or control) signals (a metasignal).
 3 - The arguments that allow the instrument (interconnection of signals) to be controlled from outside the instrument (from the client-side).
 4 - Its two fundamental parts (arguments) are: a name, and a function:
 */
 
-SynthDef(name, ugenGraphFunc) //This is a SynthDef: "name" should be defined as a \symbol (or 'symbol'), which will allow us to call the SynthDef from any part of the code thanks to the identity properties of symbols / "ugenGraphFunc" is a function that will be evaluated just once, when the SynthDef is compiled. Once the graph is built (the SynthDef is compiled), the architecture of the graph (the interconnections between the signals or UGens) is fixed. The SynthDef is compiled sending the message .add to it, which compiles the SynthDef.
+SynthDef(name, ugenGraphFunc) //This is a SynthDef: "name" should be defined as a \symbol (or 'symbol'), which will allow us to call the SynthDef from any part of the code thanks to the identity properties of symbols / "ugenGraphFunc" is a function that will be evaluated just once, when the SynthDef is compiled. Once the graph is built (the SynthDef is compiled), the architecture of the graph (the interconnections between the signals or UGens) is fixed. The SynthDef is compiled sending the message .add to it, which compiles the SynthDef (or, according to the help file, it adds the SynthDef to the SynthDescLib, and sends it to the library's servers. No defFile is writtem, all operations take place in memory).
 //Structure of the SynthDef (.new can be omitted). Function.play represents a similar process automatically (it also builds a synth in the audio server):
 
 (//When evaluated, we obtain "a SynthDef".
@@ -20,7 +21,7 @@ SynthDef.new(
 ).add
 )
 
-//Example featuring a name, arguments, variables, a signal and the UGen Out.ar: its areguments are "bus", the out channel, which should be between 0 and 3 in order not to use the private channels (and being an out channel, preferably 0 or 1), and "channelsArray", which is the signal out (or array of signals out) - See everything about the UGen Out down below. It includes the message .add, but it does not sound: this is just the compiled instrument. Later on, we need to "play" the instrument using a Synth:
+//Example featuring a name, arguments, variables, a signal and the UGen Out.ar. If we want the SynthDef to output a signal, then we need an output UGen, for which the most simple one is Out: its areguments are "bus", the out channel, which should be between 0 and 3 in order not to use the private channels (and being an out channel, preferably 0 or 1), and "channelsArray", which is the signal out (or array of signals out) - See everything about the UGen Out down below. It includes the message .add, but it does not sound: this is just the compiled instrument. Later on, we need to "play" the instrument using a Synth:
 
 (
 SynthDef(
@@ -34,10 +35,12 @@ SynthDef(
 ).add
 )
 
-//In order to play the instrument and obtain sound, we need to create a synthesizer (Synth.new), which calls the SynthDef through its name and modifies its arguments, which are called using symbols as well. Notice that it is not possible to evaluate the SynthDef and the Synth at the same time because it takes a certain time for the server to decode the text into its own language (our writing --> Byte-code: we can apply the method .asBytes.asCompileString at the end of a SynthDef to see in the postwindow these numbers that the server understands. The Byte-code is something in between our language and the binary code).
+//In order to play the instrument and obtain sound, we need to create a Synth (Synth.new), the client-side representation of a single sound producing object (synth), which calls the SynthDef through its name and modifies its arguments, which are called using symbols as well. Notice that it is not possible to evaluate the SynthDef and the Synth at the same time because it takes a certain time for the server to decode the text into its own language (our writing --> Byte-code: we can apply the method .asBytes.asCompileString at the end of a SynthDef to see in the postwindow these numbers that the server understands. The Byte-code is something in between our language and the binary code).
 
 Synth(\sineWave, [\out, 0, \freq, 1000, \phase, 0, \amp, 0.1]) //Out = 0 goes to the left side by default / Out = 1 goes to right side by default.
 Synth(\sineWave, [\out, 0, \freq, Array.fill(50, {exprand(100, 3000)}).choose, \phase, 0, \amp, 0.1]) //The order of the arguments is not important because we are calling them by their names (similar to using keyword assignment). Here using a random frequency.
+
+//In summary, according to the Help file of Synth: "A Synth is the client-side representation of a synth node on the server. A Synth represents a single sound producing unit. What it does is defined in a SynthDef, which specifies what UGens are used and how they are patched together. It also specifies what inputs and outputs the Synth will have. A SynthDef is thus a kind of fixed pattern, upon which Synths are be based".
 
 //Due to the fact that the UGen graph is fixed, once we compile the SynthDef with .add, randomness and other changeable methods need their UGen version in order to variate their output values once the SynthDef is running in the server. For instance, if working with rrand or exprand (lower-case letters), the random values will be the same as in the previous evaluation everytime we run the synth (we would need to run - compile - the entire SynthDef again in order to obtain new values). As an alternative, we can use the classes Rand and ExpRand (see at the end of this document a more complete explanation of randomness and choice when using SynthDefs):
 
@@ -123,25 +126,26 @@ See the diagram about the Sclang in language wrapping, including -> Function (.p
 See the document in help about the Buffers, nodeIDs, Groups, etc.
 
 /* MAIN CONCEPTS (partly from the help document, where there are more details):
-NODE: A Node is an addressable point in a tree of nodes run by the synth engine. There are two types, Synths and Groups. The tree defines the order of execution of all nodes. All nodes have an integer ID (nodeID), which allows the communication with the node in order, for instance, to change the value of its arguments, shut it down, ask about its state, etc.
+NODE: A Node is an addressable point in a tree of nodes run by the synth engine. There are two types, Synths and Groups (they are subclasses of Node, and in the node tree, Synths are represented by a white rectangle, and groups are represented by a grey rectangle). The tree defines the order of execution of all nodes. All nodes have an integer ID (nodeID), which allows the communication with the node in order, for instance, to change the value of its arguments, shut it down, ask about its state, etc.
 
-GROUP: A Group is a collection of Nodes represented as a linked list. A new Node may be added to the head or tail of the group. The Nodes within a Group may be controlled together. The Nodes in a Group may be both Synths and other Groups. There is a top level group with an ID of zero that defines the root of the tree. When the server is booted from within sclang, a 'default group' with an ID of 1, which is the default target for all new Nodes, is created. See RootNode and Default Group for more info.
+GROUP: A Group is a collection of Nodes represented as a linked list (that is to say, set in a specific order). A new Node may be added to the head or tail of the group. The Nodes within a Group may be controlled together. The Nodes in a Group may be both Synths and other Groups. There is a top level group with an ID of zero that defines the root of the tree. When the server is booted from within sclang, a 'default group' with an ID of 1, which is the default target for all new Nodes, is created. See RootNode and Default Group for more info.
 
-SYNTH: A Synth is a collection of unit generators that run together (an instrument = an interconnection between signals or UGens). They can be addressed and controlled by commands to the synthesis engine. They read input and write output to global audio and control buses. Their structure is defined by a SynthDef.
+SYNTH: A Synth is a collection of unit generators that run together (an instrument = an interconnection between signals or UGens). They can be addressed and controlled by commands to the synthesis engine. They read input and write output to global audio and control busses. Their structure is defined by a SynthDef.
 
 NODE TREE: all nodes are placed within the node tree, which defines the order in which they run in the server (from top to bottom: what is heard goes on top of what hears and transforms what is heard). When booting up the server, two groups are automatically created: the root of the tree, RootNode (nodeID = 0), where all the nodes are created within the server / and the default group (nodeID = 1), within the root group where all the new nodes are created by default unless otherwise indicated. Processes like recording, or playing, which affect the entire default group, are created outside the default group, within the root group.
 
-AUDIO BUSES: Synths send audio signals to each other via a single global array of audio buses. Audio buses are indexed by integers beginning by zero. Using buses rather than connecting synths to each other directly allows synths to connect themselves to the community of other synths without having to know anything about them specifically. The lowest numbered buses get written to the audio hardware outputs (0 and 1). Immediately following the output buses are the input buses, read from the audio hardware inputs (2 and 3). The number of bus channels defined as inputs and outputs do not have to match that of the hardware.
+AUDIO BUSSES: Synths send audio signals to each other via a single global array of audio busses (a signal can be sent to a bus, and then that signal can be used as an input to another synth by reading from that bus). Audio busses are indexed by integers beginning by zero. Using busses rather than connecting synths to each other directly allows synths to connect themselves to the community of other synths without having to know anything about them specifically. The lowest numbered busses get written to the audio hardware outputs (0 and 1). Immediately following the output busses are the input busses, read from the audio hardware inputs (2 and 3). The number of bus channels defined as inputs and outputs do not have to match that of the hardware. When the audio server boots, there is a fixed number of audio busses available (s.options.numAudioBusChannels, which gives 128, from which 0-1 are hardware output busses (s.numOutputBusChannels, which is 2), 2-3 are input busses (s.options.numInputChannels, which is 2), 4-127 are "private busses", commonly for internally routing audio signals between synths). The methods for the number of output and input channels reserved by SC can be changed: s.options.numOutputBusChannels = 4, in case, for instance, of using four output channels; but the audio server needs a reboot so these changes take effect. s.meter will change the number of channels shown in consequence.
 
-CONTROL BUSES: Synths can send control signals to each other via a single global array of control buses. Buses are indexed by integers beginning by zero.
+CONTROL BUSSES: Synths can send control signals to each other via a single global array of control busses. Busses are indexed by integers beginning by zero.
 
 BUFFERS: Buffers are arrays of 32 bit floating point values with a small descriptive header. Buffers are stored in a single global array indexed by integers beginning by zero. Buffers may be safely allocated, loaded and freed while synthesis is running, even while unit generators are using them. Buffers are used for wave tables, sample buffers, delay lines, envelopes, or for any other need which can use an array of floating point values. Sound files may be loaded into or written from buffers.
 
 UNIT GENERATOR DEFINITIONS: Unit Generator Definitions are plug-ins loaded automatically when the program starts. They are binary code libraries that are used as building blocks by Synths to build synthesis algorithms. Unit Generator Definitions have names that match the names of SuperCollider language classes used in building Synth Definitions.
 */
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//IN.AR: In is the UGen that reads the signals located in the audio and control channels. These signals are produced by synths or by the hardware inputs.
+//IN.AR: In is the UGen that reads the signals located in the audio and control channels. These signals are produced by synths or by the hardware inputs. In and Out UGens will allow us to route signals between several SynthDefs. Separating synthesis and processing procedures into different SynthDefs can allow us to control all links of the synthesis chain.
 
 In.ar(bus, numChannels) //For audio channels.
 In.kr(bus, numChannels) //For control channels.
@@ -183,6 +187,17 @@ s.scope //Visualize the signal now.
 a = Synth(\noise, [\out, 4], s, \addToHead);
 b = Synth(\filter, [\out, 0, \in, 4, \freq, 600], s, \addToTail)
 )
+
+//At the end of this document, an alternative to this is given based on the creation of different groups in the node tree (one for systhesis or \noise, the other for processing or \filter, in the previous case).
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//When mixing different audio interfaces that might not share the same number of inputs and outputs, indicating the busses with integers (in In/Out relationships when using private channels to share signals) might be problematic because of the necessity of adjusting numbers. The class Bus allows SC to handle the allocation of busses for you:
+~reverbBus = Bus.audio(s, 1) //Creating a reference to an audio bus (local server "s", and 1 channel) and storing the result in a global variable. You can see the bus index when evaluating the expression: SC will always choose the lowest available bus that does not conflict with hardware busses. Here, by default, we have 2 output channels and 2 input channels, to the next available spot is index 4.
+~reverbBus.index //Returns the bus index.
+
+//Now in any system with In/Out connections (having assigned the Bus class to a variable before the SynthDef), ~reverbBus can replace the integer assigned to In/Out without thinking about which bus to use (the method .index is not necessary since Synth will interpret any Bus UGen as an index automatically). Remember that this bus number correspond to the private channel we use to communicate two or more SynthDefs through In/Out classes, but the sound needs to come out through one of the hardware outputs (normally 0, 1).
+//When receiving a multichannel signal (stereo onwards), Bus will reserve as many adjacent bus indexes as needed instead of creating a "multichannel bus", which in SC does not exist.
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //POSSIBLE APPLICATIONS OF IN.KR: we can track values that are constantly changing and keep a specific one to use later on: for example, it is useful to fix values from amplitude or frequency trackers and save them in a control channel.
@@ -286,7 +301,7 @@ Synth(\bank, [\freq, { exprand(500, 4000) } !4]) //Now we have four different pi
 //Apart from ExpRand and Rand instead of their "method" version, other methods for randomness and choice cannot be used within a SynthDef unless they can be run like a UGen.
 //Some of those methods we need an alternative for are: .scramble and .choose:
 
-//TCHOOSE ( = .choose): it chooses a value each time it receives a trigger. It is placed within the parameter whose values we want to choose randomly between. Arguments: trigger (an impulse is commonly used), and the array of values between which we want to choose. It is used at control rate (.kr), both TChoose and the UGen used for its trigger argument.
+//TCHOOSE ( = .choose): it chooses a value each time it receives a trigger. It is placed within the parameter whose values we want to choose randomly among. Arguments: trigger (an impulse is commonly used), and the array of values between which we want to choose. It is used at control rate (.kr), both TChoose and the UGen used for its trigger argument.
 //In the following example, it is applied to the frequency of a sine wave:
 (
 {
@@ -315,7 +330,7 @@ a = (
 )
 )
 
-//The sound by default is index 1, then without stopping the synth, we can change the index, and hence the signal:
+//The sound by default is index 0, then without stopping the synth, we can change the index, and hence the signal:
 a.set(\which, 1) //Here, the argument "which" can be changed without stopping the server.
 a.set(\which, 2) //Next signal.
 a.set(\which, 0) //Back to the original.
@@ -332,8 +347,19 @@ a.set(\which, {rrand(0, 2)}) //Random choice.
 
 s.sendMsg(\s_new, \synthDefName, s.nextNodeID, 1, 1, \listOfArgs, values); //Message style: new synth's name, identifier (nextNodeID), group (1 = default), position in the group (1 = addToTail). Thus, the entire message style grammar is WHAT (\synthDefName), WHERE (nextNodeID, 1, 1002, for example), and HOW (list of all arguments and their values).
 
-Synth(\synthDefName, [\listOfArgs, values], target, action); //Object style as studied before: the target is the name of the group (s = default group, 0 = root group, etc.), and action could be 'addToTail' or 'addToHead' (remember, on the top what is listened, on the bottom, what affects what is listened).
+Synth(\synthDefName, [\listOfArgs, values], target, action); //Object style as studied before: the target is the name of the group (s = default group, 0 = root group, etc.), and action could be 'addToTail' or 'addToHead' (remember, on the top what is heard, on the bottom, what affects what is heard).
 
 Group.new(s, 'addToTail') //to create a new group. Execute it and get the node (if getting 1001, for example, we would need to write 1001 instead of 1 in the message style).
+//In fact, when using In/Out relationships between SynthDefs (for example, one for synthesis, one for processing), you can create different groups for each procedure instead of adding the action 'addToTail' / 'addToHead' directly to each Synth.
+//For example (from our first In/Out SynthDef relationship in this file):
+a = Synth(\noise, [\out, 4], ~noiseGroup)
+b = Synth(\filter, [\out, 0, \in, 4, \freq, 600], ~filterGroup)
 
-//STRUCTURE OF THE SERVER TREE SUMMARY: GROUP, NODE, BUS: the architecture is organized in groups of nodes (points in the server: a node can be a synth or a group of synths). The first node is the Root Group (nodeID = 0): recording or analysis work will be inside that group; then the second one is the default group (nodeID = 1), is the user group, inside which the nodes are created; then third is all the other groups you can create (from 2 to inf), and so on. The synths and processes need to be organized (from the bottom to the top, which is the one that is heard).
+~noiseGroup = Group.new
+~filterGroup = Group.after(~noiseGroup) //Equivalent to 'addToTail': putting filter group after the noise group in the node tree.
+//As long as the synths are added to the correct group, there is no need to worry about the order of the synths.
+//This is beneficial when, for example, using iteration on a Synth, creating several instances of a Synth in a same group: then, messages can be sent to all synths within the group at the same time like this (for instance):
+~noiseGroup.set(\amp, 0.1)
+~noiseGroup.freeAll //And turning off all synths within a group at the same time.
+
+//STRUCTURE OF THE SERVER TREE SUMMARY: GROUP, NODE, BUS: the architecture is organized in groups of nodes (points in the server: a node can be a synth or a group of synths). The first node is the Root Group (nodeID = 0): recording or analysis work will be inside that group; then the second one is the default group (nodeID = 1), is the user group, inside which the new snodes are created; then third level comprises all the other groups you can create (from 2 to inf), and so on. The synths and processes need to be organized (from the bottom to the top, which is the one that is heard).
