@@ -1,5 +1,7 @@
 //6 - SYNTHDEF, OUT.AR, IN.AR
 ////////////////////////////////
+//This tutorial might be super helpful to get started with this: https://doc.sccode.org/Tutorials/Getting-Started/10-SynthDefs-and-Synths.html
+
 //The primary and more flexible procedure for producing sound consists of creating a SynthDef and then executing it by calling a specific instance of it (a synth). If SynthDef is the recipe, Synth is its execution. For instance, Function.play creates a SynthDef automatically, which is only convenient for shorter examples and quick testing.
 
 /* The SynthDef class creates synthesis instruments. It defines:
