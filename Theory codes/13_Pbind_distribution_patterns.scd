@@ -957,7 +957,7 @@ Pdef(
 //Using a library of samples and loading it into a Pbind:
 (
 d = Dictionary.new; //Creating a dictionary.
-//Loading the path of a folder with samples (replace with a path of your own by dragging the folder to PathName's argument). Associating that path with the key \d:
+//Loading the path of a folder with samples (replace with a path of your own by dragging the folder to PathName's argument). Associating that path with the key \folder1:
 d.add(\folder1 -> PathName("F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/ugly_percussion_library/group1").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }) //For each sample of the collection, the full path is read.
 );
 d.add(\folder2 -> PathName("F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/ugly_percussion_library/group2").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }) //We can even load more than one folder easily by creating more keys to be added to the dictionary "d".

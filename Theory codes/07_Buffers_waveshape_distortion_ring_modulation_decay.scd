@@ -2,34 +2,35 @@
 ///////////////////////////////////////////////////////////////////
 
 //BUFFERS:
-//Something very basic, but important, to bear in mind is that SuperCollider does not read MP3 files. Use .aiff or .wav or, for compressed audio (lossless), .flac. Now, regarding Buffer: a buffer is usually used to contain sampled audio (audio files), but it can be used to contain other types of data (for example, they are very useful for wavetable synthesis). It is an array of floats running in the audio server. We need to boot the Buffer in order to create the space in the memory, then the audio is copied in that space so it can be read. Each buffer is identified with a number, "bufnum", which is automatically assigned by the server when using the UGen Buffer.
+//Something very basic, but important, to bear in mind is that SuperCollider does not read MP3 files. Use .aiff or .wav or, for compressed audio (lossless), .flac. Now, regarding Buffer: a buffer is usually used to contain sampled audio (audio files), but it can be used to contain other types of data (for example, they are very useful for wavetable synthesis). It is an array of floats running in the audio server. We need to allocate the Buffer in order to create the space in the memory, then the audio is copied in that space so it can be read. Each buffer is identified with a number, "bufnum", which is automatically assigned by the server when using a Buffer object.
 
-//Buffer.read reads a sound file from disk into memory: regarding the arguments, the first one is the server in use, which in SC can be reached through the variable "s". Then, we need to copy the path of the audio file as a string (dragging the file into the space of the second argument), the "startFrame" is the frame (see equivalences below) from which the audio will be read, and the "numFrames", the number of frames that will be read (by default it will read the entire audio and this argument is only useful when the file is really long), "action" can include a function to be evaluated when the file has been read, and bufnum is the identifier of the buffer (which is better set by default the servers).
+//Buffer.read reads a sound file from disk into memory: regarding the arguments, the first one is the server in use, which in SC can be reached through the variable "s". Then, we need to copy the path of the audio file as a string (dragging the file into the space of the second argument), the "startFrame" is the frame (see equivalences below) from which the audio will be read, and the "numFrames", the number of frames that will be read (by default it will read the entire audio and this argument is only useful when the file is really long), "action" can include a function to be evaluated when the file has been read, and bufnum is the identifier of the buffer (which is better set by default).
 
-//We normally assign the buffer to a variable, so that we can ask that variable some information about the buffer (about the file contained in the buffer):
+//We normally assign the buffer to a variable, so that we can ask that variable some information about the data read from the buffer:
 a = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") //This is a SC default sound (it might have a different path in each computer).
 a.numChannels //Asking its number of channels.
 a.bufnum //Asking its bufnum.
-a.query //All information about the buffer will be printed in the postwindow (bufnum, numFrames, numChannels and sampleRate).
+a.query //Several parameters of the audio file will be printed in the postwindow (bufnum, numFrames, numChannels and sampleRate).
 a.play //To simply play the audio.
-{PlayBuf.ar(a.numChannels, a.bufnum)}.play //Playing the buffer (this UGen will be studied later on) and modifying parameters.
+{ PlayBuf.ar(a.numChannels, a.bufnum) }.play //Plays the sample contained in the buffer back and allows to adjust some parameters.
 
 //There is an alternative way to indicate the path of the audio files, but it only works if the audios are located in the same drive (in C, in case of using PC). This technique is called "standardizePath" and it is useful to work on the same project from different computers. This following line searches in the SC resources folder, which contain the SC default audios (really ugly, but useful to work with the same audio with all students in the class). This is the equivalent to the path written above:
 
 p = Platform.resourceDir +/+ "sounds/a11wlk01.wav" //Path.
 b = Buffer.read(s, p) //Reading the file.
-{PlayBuf.ar(b.num.Channels, b.bufnum)}.play //Playing the file from the buffer.
+{PlayBuf.ar(b.numChannels, b.bufnum)}.play //Playing the file from the buffer.
 
-//Regarding the frame and the equivalence to duration in seconds:
+//Regarding the relationship between number of frames, duration in seconds, and sampling rate:
+120 * b.sampleRate //The number of frames is equal to the duration in seconds multiplied by the sampling rate.
 b.numFrames / b.sampleRate //The duration in seconds is equal to the number of frames divided by the sample rate.
-b.duration //There is already a method which executes that operation and gives the number of seconds directly (though it is good to bear in mind where this value is coming from, how it is calculated).
+b.duration //There is already a method which executes the former operation and gives the number of seconds directly (though it is good to bear in mind where this value is coming from, how it is calculated).
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //PLAYBUF
-//PlayBuf is used for reading audio files located into buffers (using, for example, Buffer.read before). As Buffer.read can't be located inside a SynthDef, but we can use PlayBuf to read it from inside the SynthDef. The arguments:
+//PlayBuf is used for reading audio files located into buffers (using, for example, Buffer.read before). The arguments:
 
-PlayBuf.ar(numChannels, bufnum, rate, trigger, startPos, loop, doneAction) //numChannels (number of channels, which is important to know because within a SynthDef the number of channels has to be fixed as the size of the arrays cannot be modified), bufnum (it is advisable to ask the buffer about it rather than giving a number ourselves. That way, it is guaranteed that the number won't repeat in other bufnums), rate (1 = original, 0.5 = half of the original and an octave lower, 2 = doubled the original and an octave higher, -1 = original rate, but inverted reading, and everything in between and beyond), trigger (triggers the following argument), startPos (when the previous argument causes a trigger, the audio will come back to the position set as starting position --> startPos is calculated in frames --> to calculate it in seconds, the number of seconds should be multiplied by the sampling rate, 44100), loop (loops to audio file: 1 = loop on, 0 = loop off), doneAction (normally using doneAction = 2 to kill the synth when the audio file is done).
+PlayBuf.ar(numChannels, bufnum, rate, trigger, startPos, loop, doneAction) //numChannels (number of channels, which is important to know because within a SynthDef the number of channels has to be fixed as the size of the arrays cannot be modified), bufnum (it is advisable to ask the buffer about it rather than giving a number ourselves. That way, it is guaranteed that the number won't repeat if reading from other buffers), rate (1 = original, 0.5 = half pace and an octave lower, 2 = double pace and an octave higher, -1 = original rate, but inverted reading, and everything in between and beyond), trigger (triggers the following argument), startPos (when the previous argument provides with a trigger, the audio will come back to the position set as starting position --> startPos is calculated in frames --> to calculate it in seconds, the number of seconds should be multiplied by the sampling rate, 44100 by default), loop (loops to audio file: 1 = loop on, 0 = loop off), doneAction (see options in "Done" help file --> "Actions": https://doc.sccode.org/Classes/Done.html).
 
 //When the sampling rate of the audio is different than the sampling rate of the buffer (which is 44100 by default), the rate read by PlayBuf can be misleading. The following UGen can be used in the rate argument in order to compensate different sampling rates (but this is normally not needed):
 
@@ -52,7 +53,7 @@ c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") 
 }.play
 )
 
-//CHANGING THE RATE: When lowering the rate, the higher frequencies are lost (if the maximum was 22050 Hz, half of the sampling rate, now the maximum is 11025 Hz) --> The solution for this would be increasing the sampling rate (it is one of the reasons for doing so: reproducing sounds at a lower rate while keeping all the spectrum of audible frequencies). When increasing the rate, on the contrary, we may obtain aliasing because frequencies over 22050 will fold back to the audible spectrum (rate = 2, double speed and 8ve higher, 4 = two 8ves higher, etc.). Lastly, negative rates reproduce the audio file backwards keeping the same behavior as positive rates:
+//CHANGING THE RATE: When lowering the rate, the higher frequencies are lost (if the maximum was 22050 Hz, half of the sampling rate, now the maximum is 11025 Hz) --> The solution for this would be increasing the sampling rate (it is one of the reasons for doing so: reproducing sounds at a lower rate while keeping all the spectrum of audible frequencies). When increasing the rate, on the contrary, we may obtain aliasing because frequencies over 22050 will fold back to the audible spectrum (rate = 2, double speed and 8ve higher, 4 = two 8ves higher, etc.). Lastly, negative rates reproduce the audio file backwards keeping the same behavior as positive rates otherwise:
 (
 {
 	var numChannels, bufnum, rate;
@@ -80,7 +81,7 @@ c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") 
 }.play
 )
 
-//Controlling the trigger and startPos: remember that the starting position is the number of seconds (in the audio file) * 44100 (sampling rate) = number of frames. For calculating the mid point of the audio, we can use "c.numFrames / 2" in the startPos argument. Be aware of the clicks, a sudden amplitude change: see next example for the use of an envelope to avoid them:
+//Controlling the trigger and startPos: remember that the starting position is the number of seconds (within the audio file) * 44100 (sampling rate) = number of frames. For calculating the mid point of the audio, we can use "c.numFrames / 2" in the startPos argument. Be aware of the clicks due to sudden amplitude changes: see next example for the use of an envelope to avoid them:
 (
 {
 	var numChannels, bufnum, rate, trigger, startPos;
@@ -96,7 +97,7 @@ c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") 
 }.play
 )
 
-//Using an envelope to avoid clicks: multiplying PlayBuf by an envelope. The envelope shares the trigger with PlayBuf, and the duration of the envelope is equal to the inversion of the frequency of the trigger (1/freq = seconds of duration, although here is 1/1 = 1). Then the 1-second duration of the envelope is multiplied by [0.01, 0.98, 0.01], giving three times, a 1% of fade in, a 98% of sustain, and a 1% of fade out:
+//Using an envelope to avoid clicks: multiplying PlayBuf by an envelope. The envelope shares the trigger with PlayBuf, and the duration of the envelope is equal to the inversion of the frequency of the trigger (1/freq = seconds of duration, although here is 1/1 = 1). Then the second of duration of the envelope is multiplied by [0.01, 0.98, 0.01], giving three times, a 1% of fade in, a 98% of sustain, and a 1% of fade out:
 (
 {
 	var numChannels, bufnum, rate, trigger, startPos, freq;
@@ -122,25 +123,25 @@ c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //WAVESHAPE DISTORTION
 //The timbre of a sound depends greatly on its waveshape. Distortion is the alteration of the waveshape of a signal, and it is usually nonlinear. In non-linear distortion, the relationship between the input and output is nonlinear: the amplitude of the output is not strictly proportional to the input's, bringing about new frequency components in the output signal. Linear distortion is an alteration of amplitude or phase that doesn't produce new frequency components, but what we understand as "distortion" refers mainly to non-linear distortion, that is to say, to the alteration of not only the waveshape but also the spectrum of a signal.
-//Distortion can be complemented by other processes so it does not have to be, for example, noisy (it can work alongside a filter, for example). It is very useful for expanding the spectrum of a sound.
+//Distortion can be complemented by other processes so it does not have to be, for example, noisy (it can work alongside a filter, for instance). It is very useful for expanding the spectrum of a sound.
 
-//We can use methods such as clip2, wrap2 and fold2: they accept an argument which indicates the amplitude value from which the signal will be affected by the distortion (the smaller this value, the sooner the signal will be affected while increasing its amplitude from 0). They basically modify the amplitude limit from which the distortion will be produced:
+//We can use methods such as clip2, wrap2 and fold2: they accept an argument which indicates the amplitude value from which the signal will be affected by the distortion (the smaller this value, the sooner the signal will be affected while increasing its amplitude from 0). They basically modify the amplitude limit from which the distortion will be produced and specify what happens to that excess of amplitude:
 
 //Clip2: this one is the smoothest (and most used) out of these methods:
 
-{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).clip2(0.5)}.scope //It will cut information from the SinOsc waveshap from 0.5 amplitude value.
+{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).clip2(0.5)}.scope //It will cut information from the SinOsc waveshape from 0.5 amplitude value.
 
 b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav"); //Using again the default sound from SC library.
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(0.01, 10, \exponential).poll).clip2(0.5) }.scope //Observe the distortion, now applied to the buffer.
 
 //Fold2: what is beyond the limit imposed by the method (here 0.5) is folded or "bounced" within the limits:
 
-{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5)}.scope //Same example. It is much harsher than clip2:
+{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5)}.scope //Same example. It is more aggressive than clip2:
 
 b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav")
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5) }.scope
 
-//Wrap2: the harshest. What exceds the limit of the distortion is copied below the spectrum. The jump is too big a too sudden:
+//Wrap2: the harshest. What exceds the limit of the distortion is folded and inverted. The jump is too big a too sudden:
 
 { SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).wrap2(0.5)}.scope
 
@@ -151,7 +152,7 @@ b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
 
 1.1.clip2(1.0) //Clip2 simply cuts the number within the limit (1.0)
 1.1.fold2(1.0) //Fold2 cuts the exceding amount and substracts it to the limit (0.9)
-1.1.wrap2(1.0) //Wrap2 cuts the amount beyond the limit, substracts it and inverts it to the negative spectrum (-0.9)
+1.1.wrap2(1.0) //Wrap2 cuts the amount beyond the limit, substracts it and inverts it (-0.9)
 
 //ROUND:
 //Another alternative to distort a signal is to round its amplitude values, creating little steps in the waveshape as if it was losing definition. This is, therefore, closer to digital distortion (because of the loss of continuity in the waveshape or decrease of the number of bits):
@@ -160,7 +161,7 @@ b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
 
 
 //.tanh, .softclip, .distort:
-//From the harshest to the softest, these methods add different types of distortion to a signal. In order to use them, the amplitude of the signal has to be risen beyond 1 (for example, to 10), and then the method will modify the waveshape maintaining the signal between -1 and 1 (it is recommendable to lower the distorted signal a bit more using a factor, such as the 0.5 at the end of the functions in the following examples):
+//From the harshest to the softest, these methods add different types of distortion to a signal. In order to use them, the amplitude of the signal has to be risen beyond 1 (for example, to 10), and then the method will modify the waveshape maintaining the signal between -1 and 1 (it is advisable to lower the distorted signal a bit more using a factor, such as the 0.5 at the end of these functions in the following examples):
 
 b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
 
@@ -199,28 +200,29 @@ Latch.ar //This UGen is used for oversampling distortion.
 }.play
 )
 
-//Let's try with an actual sample:
+//Let's try with an actual audio sample:
 b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav")
+b.sampleRate
 
 (
 {
 	Latch.ar(
-		PlayBuf.ar(b.numChannels, b.bufnum, loop: 1),
-		Impulse.ar(14000) //Here we take 16000 frames out of its 44100 by default. The smaller the number, the harsher the distortion. Test it with lower numbers such as 12000, 8000, 2000, etc.
+		PlayBuf.ar(b.numChannels, b.bufnum, loop: 1), //The input is an audio signal read at 44100 Hz of sampling rate.
+		Impulse.ar(16000) //Here we take 16000 frames out of its 44100 by default. The smaller the number, the harsher the distortion. Test it with lower numbers such as 12000, 8000, 2000, etc.
 	)
 }.play
 )
 
 //This is an example suggested in the help browser (be aware of Blip, it can be really loud, BEHOLD BLIP):
-//Latch is being applied to the frequency of Blip to generate random patterns (this example is the same as our first example of Latch applied to a noise, but this is now being used as a modulating signal for the frequency of Blip):
+//Latch is being applied to the frequency of Blip to generate random patterns (this example is the same as our first example of Latch applied to a noise within the freq of a SinOsc: it is being used as a modulating signal for the frequency of Blip):
 (
 {
 	Blip.ar(
 		Latch.ar(
 			WhiteNoise.ar,
-			Impulse.ar(9) //Nine values per second: random freqs from the WhiteNoise spectrum (which is the entire spectrum).
+			Impulse.ar(9) //Nine values per second (the range is applied by hand to Lacth: multiplying by 400 and setting the center at + 500, so 100-900 Hz).
 		) * 400 + 500, //These are basically the mul and add values to keep the frequency between 100 and 900 Hz. The Latch modulation for the freq of Blip could have being performed easily as shown below this function (could be clearer to look at such example, but it does not involve Latch).
-		4, //This is the number of harmonics (1 = sine wave, and it keeps adding up to the desired timbre): the higher this value, the narrower, thin and "squared" the sound.
+		4, //This is the number of harmonics of Blip (1 = sine wave, and it keeps adding up to the desired timbre): the higher this value, the narrower, thin and "squared" the sound.
 		0.2)
 }.play
 )
@@ -364,13 +366,13 @@ p = PathName.new("folder path"); //Folder with multiple sound files.
 
 (
 p.entries.do{ //It will repeat the function as many times as elements are in the folder whose path is assigned to "p".
-	arg path, i; //arg path is each sample of the folder (each element), and "i" is the number of the iteration.
+	arg path, i; //arg path is each sample of the folder (each element), and "i" is the number of the iteration (index).
 
-	a = a.add( //The array in "a" is filled up with the samples.
+	a = a.add( //The array in "a" is filled up with each sample.
 		Buffer.readChannel(
 			s,
-			path.fullPath, //All audio samples (elements of the collection, in the folder).
-			bufnum: i, //Different bufnum for each sample using the number of the iteration.
+			path.fullPath, //Path of each audio file.
+			bufnum: i, //Different bufnum for each sample using the index argument.
 			channels: 0
 
 		)
@@ -386,7 +388,7 @@ p.entries.do{ //It will repeat the function as many times as elements are in the
 //~folder.size //Testing the size of the folder (number of samples).
 )
 
-//As an example, if using a routine where the samples are chosen randomly, this line could be implemented within the loop of the routine if working with the previous code for loading a library of samples: ~folder[ rrand(rangeof the indexes of the folder = 0 - (size of the folder - 1)) ].
+//As an example, if using a routine where the samples are chosen randomly, this line could be implemented within the loop of the routine if working with the previous code for loading a library of samples: ~folder[ rrand(range of the indexes of the folder = 0 - (size of the folder - 1)) ].
 
 //For an alternative method of loading libraries of samples, see the end of theory file 13 ("Pbind and distribution patterns").
 
