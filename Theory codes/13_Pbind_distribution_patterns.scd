@@ -980,7 +980,7 @@ SynthDef(\library, {
 }).add
 )
 
-Synth(\library, [\buf, d[\folder1].choose.bufnum]) //So, just to check it works, the buf is the bufnum, so we calculate the bufnam of a randomly chosen sample from libray1, for instance.
+Synth(\library, [\buf, d[\folder1].choose.bufnum]) //So, just to check it works, the buf is the bufnum, so we calculate the bufnum of a randomly chosen sample from libray1, for instance.
 
 //And now we can build the Pbind to play this SynthDef:
 (
@@ -988,9 +988,10 @@ Pdef(
 	\heyhey,
 	Pbind(
 		\instrument, \library,
-		\dur, 0.25 * (60/120), //Using 16th notes within a tempo of 120 bpm. The duration here does not cut the sample duration though (they will overlap if longer than this value). Thus, it is good to try with a library of short percussive sounds, for instance.
-		//\stretch, 60/120 * 4, //This could be used instead of the * 60/120 in dur, so that we get a tempo of 120 bpm in a 4/4 time signature (see quantization at the end of the Pdef.
-		//\buf, Pxrand(d[\folder1] ++ d[\folder2], inf), //Creating an array with all the samples by concatenating both folders (both keys from the dictionary). Pxrand chooses random samples without repeating the same value twice in a row. We could use here Pwrand, Pshuf, Pn combined with Pshuf, or a specific sequence with Pseq, use nested patterns, etc., in order to create more interested and organized, yet still random, combinations, including also different combinations of the keys of the dictionary.
+		//\dur, 0.25 * (60/120), //Using 16th notes within a tempo of 120 bpm. The duration here does not cut the sample duration though (they will overlap if longer than this value). Thus, it is good to try with a library of short percussive sounds, for instance.
+		\dur, 1/16, //As an alternative, we can use \dur in combination to \stretch in order to work with "bars" and use quantization later on. Here, for instance, we have 1/16 of the 4/4 bar, which gives us 16th notes (four notes for each of the four beats).
+		\stretch, 60/120 * 4, //Stretch will be multiplied by \dur, so we need the time in seconds corresponding to the whole 4/4, which will be devided by 16 in \dur to obtain the 16th notes of duration. For that, we devided the tempo we want (120 bpm, for instance) by 60, to get beats per second: if we invert this value, 120/60 to 60/120 we get seconds per beat, and we multiply by 4 because there are four beats in a 4/4 time. This last 2 seconds (it would be more efficient to write 2, but I will leave the operation to make it clearer).
+		//\buf, Pxrand(d[\folder1] ++ d[\folder2], inf), //Creating an array with all the samples by concatenating both folders (both keys from the dictionary). Pxrand chooses random samples without repeating the same value twice in a row. We could use here Pwrand, Pshuf, Pn combined with Pshuf, or a specific sequence with Pseq, use nested patterns, etc., in order to create more interested and organized, yet still random, combinations, including also different combinations of the keys of the dictionary. For example:
 		\buf, Pseq(
 			[
 				Pxrand(d[\folder2], 8),
@@ -1000,12 +1001,15 @@ Pdef(
 		\rate, Pexprand(0.8, 2.0, inf), //The rate could also be randomized.
 		\amp, 0.2
 	)
-).play //.quant_(1.875) instead of .play if using .stretch to make bars so the changes in real time in Pdef are not made until next "bar". This is called quantization and, if using two Pdef (different Pbind) at the same time, sharing duration values and same quantization, they will be synchronized.
+).play(quant: 2) //If we want Pdef to wait until next downbeat to apply any changes made to Pbind, we can use quantization (to schedule those changes according to bar durations). One of the ways to do this is applying the quant argument for the event stream player and we set the duration value of the whole bar (2 seconds in this case). Once it is playing, if we want to evaluate some changes in Pdef, we can replace the .play by .quant_(2). Now, I was confused with that syntax: I looked up the meaning of the underscore in SC and found this: https://doc.sccode.org/Reference/Partial-Application.html, but I don't really understand what it is replacing in this example. Anyway, this is very useful when using two or more Pdefs at the same time: if they share durations and stretch, and they are applied the same quantization. We will be able to, for instance, evaluate one and some time later evaluate the other and so on, and getting all of them synchronized (the Pdefs can also be later on located into a same block code to change values at the same time).
 )
 
-//REMEMBER: These two calculations of 8th notes at 180 bpm are equivalent:
-0.5 * (60/180)
-0.5 / (180/60)
+Pdef(\heyhey).stop //We can stop each Pdef (if having several) separately.
+
+//REMEMBER: These two calculations of 8th notes at 180 bpm are equivalent (in case we want to avoid using both \dur and \stretch):
+0.5 * (60/180) //The number of seconds per beat is multiplied by 0.5 so that we get half of that duration and thus the 8th notes (which is 2 notes per beat).
+0.5 / (180/60) //We devided 0.5 (the duration of the note in an ideal 1 beat per second bar) by the number beats per second.
+
 
 //Compare to your old method for loading a library: more or less the same, but loading the libraries into a dictionary instead of an empty array (from theory file 7, "Buffers, waveshape distortion and ring modulation"):
 (
