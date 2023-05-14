@@ -1,13 +1,13 @@
 //9 - DELAY, COMB FILTERS, REVERBERATORS AND IN/OUT SYNTHS
 ///////////////////////////////////////////////////////////////
 
-//DELAY LINES
+//DELAY LINES: produce simple echoes with no feedback.
 //DelayN, DelayL and DelayC create delay lines with different types of interpolation (the way in which the values are connected between them, determined by the final letter of the UGen) --> N = no interpolation / L = linear interpolation / C = cubic interpolation (but this difference is only perceptible when using the UGen in specific ways, for example, when modulating it).
 //Arguments of Delay:
 
 Delay.ar(in, maxdelaytime, delaytime, mul, add) //"in" (input signal to which the delay will be applied), "maxdelaytime" (is the maximum time of delay that the memory saves for this use, it has to be higher or equal to the next argument, delaytime), "delaytime" (time that will pass before the input signal is repeated), "mul" and "add" as in any other UGen.
 
-//First example (take into consideration that the delay with such a small delaytime - so the frequency resonates because of the audio rate - is not usually used to filter noise), similar to a flanger: when creating a constant delay repeated each milisecond a new frequency is created due to this new periodicity:
+//First example (take into consideration that the delay with such a small delaytime - so the frequency resonates because of the audio spectrum - is not usually used to filter noise), similar to a flanger: when creating a constant delay repeated each milisecond a new frequency is created due to this new periodicity:
 
 (
 {
@@ -62,12 +62,12 @@ Delay.ar(in, maxdelaytime, delaytime, mul, add) //"in" (input signal to which th
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//COMB FILTERS
+//COMB FILTERS: produce delays with feedback.
 //Comb filters are normally used as resonators when, as earlier shown using delay, the frequency of the filter is so small that it produces its own spectrum: CombN, CombL, CombC, feature the same interpolations types as in Delay.
 
 CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as in Delay, but including the argument "decaytime" (time for which the delays will still be heard).
 
-//Example: in this case, Comb is not working as a resonator due to the low frequency of the filter (that is to say, due to the long delay time):
+//Example: in this case, Comb is not working as a resonator due to the low frequency of the filter (that is to say, due to the long delay time).
 (
 {
 	var signal;
@@ -80,7 +80,7 @@ CombC.ar(in, maxdelaytime, delaytime, decaytime, mul, add) //Same arguments as i
 
 //We can apply the former comb filter and impulse to a buffer with a percussive envelope:
 
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-2.wav")
+b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/Audio-for-granular-examples-2.wav")
 
 (
 {
@@ -103,9 +103,9 @@ b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperColli
 {
 	var signal;
 
-	signal = Impulse.ar(1/2) !2; //One impulse every two seconds and mono-duplicated.
-	CombC.ar(signal, 1/440, 1/440, 2); //The delaytime is so fast that it becomes part of the spectrum and not a noticeable echo anymore.
-
+	signal = Impulse.ar(0.5) !2; //One impulse every two seconds and mono-duplicated.
+	signal = CombC.ar(signal, 1/440, 1/440, 2); //The delaytime is so fast that it becomes part of the spectrum and not a noticeable echo anymore.
+	signal = LeakDC.ar(signal) //LeakDC is a filter commonly used when working with comb filters. It is a high pass filter which avoids the DC offset, produced when the signal is too separated from the center (0) in the waveform graph (in Reaper, for example, applying a HPF of 20 Hz to the sound sample is enough to fix this problem).
 }.play
 )
 
@@ -119,7 +119,7 @@ b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperColli
 
 	resonators = Mix(CombC.ar(signal, 1/freqs, 1/freqs, 0.4, 1/freqs.size)); //.size adapts the compensation of the amplitude according to the number of frequencies in the array of freqs, as this is the amount of comb filters that will be mixed into a single channel.
 
-	LeakDC.ar(resonators) !2 //LeakDC is a filter commonly used when working with comb filters. It is a high pass filter which avoids the DC offset, produced when the signal is too separated from the center (0) in the waveform graph (in Reaper, for example, applying a HPF of 20 Hz to the sound sample is enough to fix this problem).
+	LeakDC.ar(resonators) !2
 
 }.play
 )
@@ -210,7 +210,7 @@ Routine({
 
 //REVERBERATORS
 //There are digital reverberators, such as the Schroeder filter, FFT or convolution reverberators (applying the recorded reverberation of a space to a sound by convolution (they usually record a noise or a gliss of a SinOsc touring all the audible spectrum). We are going to build a Schroeder filter whose parameters can be controlled by ourselves in detail. We'll see other reverberators such as FreeVerb and GVerb, but those are already built-in and less flexible (yet convenient in many cases).
-//Schroeder filter, coming from Manfred Schroeder, from Bell Telephone Laboratories: it is a combination of comb filters (usually with cubic interpolation) and allpass filters (usually with no interpolation). The allpass filter loses energy faster than the comb filter if comparing both using the same parameters. The difference between the interpolations in each filter is almost inperceptible (but is a historical practice to keep them that way):
+//Schroeder filter, coming from Manfred Schroeder, from Bell Telephone Laboratories: it is a combination of comb filters (usually with cubic interpolation) and allpass filters (usually with no interpolation). The allpass filter loses energy faster than the comb filter if comparing both using the same parameters. The difference between the interpolations in each filter is almost inperceptible (but it is a historical practice to keep them that way):
 
 //Compare the loss of energy:
 {CombC.ar(Impulse.ar(1/5), 0.1, 0.1, 1)}.play
@@ -223,14 +223,14 @@ Routine({
 
 {AllpassN.ar(Impulse.ar(1/5), 0.1, 0.1, 5)}.play
 
-//Sound test: radar spund (try out an allpass filter instead of the comb filter to compare):
+//Sound test: radar sound (try out an allpass filter instead of the comb filter to compare):
 
 (
 {
 	var trigger, env, signal, echoes;
 
 	trigger = Impulse.ar(1/5); //One impulse every 5 seconds (in this case, working as a trigger).
-	env = EnvGen.ar(Env.perc(0.01, 0.09), trigger);
+	env = EnvGen.ar(Env.perc(0.01, 0.1), trigger);
 	signal = SinOsc.ar * env; //Sine wave with default values.
 	echoes = CombC.ar(signal, 0.1, 0.1, 5) //The frequency is not fast enough in order to blend with the input as a reverberation.
 	//echoes = AllpassN.ar(signal, 0.1, 0.1, 5) //Try this line INSTEAD of the previous one.
@@ -313,7 +313,7 @@ Signal --> Comb filter (comb filters in parallel) --> all pass filter - all pass
 
 	4.do({signal = AllpassN.ar(signal, 0.05, { rrand(0.005, 0.05)} !2, 1)});
 
-	signal //Last line = what goes out of the function.
+	signal //Last line = what is returned.
 
 }.play
 )
@@ -355,7 +355,7 @@ Signal --> Comb filter (comb filters in parallel) --> all pass filter - all pass
 (0..12).nthPrime //This method gives back prime numbers in order: the numbers the method is applied to represent the position of the prime numberss in the infinite series of prime numbers (here, prime numbers from the first one to the 13th within the series).
 100.nthPrime //100th prime number of the series of prime numbers.
 
-1/rrand(100, 400).nthPrime //Random prime numbers between the 100th and the 400th numbers in the series of prime numbers, then inverted in order to use them as the resonance frequencies of the comb filters.
+1/rrand(100, 400).nthPrime //Random prime numbers between the 100th and the 400th numbers in the series of prime numbers, then inverted in order to use them as the resonance frequencies of the comb filters (the range goes from 547 to 2749).
 
 //Implementation of the prime numbers into the Schroeder filter in order to avoid highlighting certain freqs (for some reason it sounds much more "harmonic" to me):
 

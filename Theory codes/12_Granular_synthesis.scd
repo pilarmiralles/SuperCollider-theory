@@ -185,7 +185,7 @@ Routine ({
 }).play
 )
 
-//Applying operations on top of our original signal (after granulating it) --> For instance, reverb (other options are filters, distortion, any modulation that would affect all grains at the same time, etc.): we have to connect the out of our original signal to a private channel, which will be taken by the second SeynthDef (which will apply the process). Here also using two different buffers randomly chosen:
+//Applying operations on top of our original signal (after granulating it) --> For instance, reverb (other options are filters, distortion, any modulation that would affect all grains at the same time, etc.): we have to connect the out of our original signal to a private channel, which will be taken by the second SeynthDef (and which will apply the process). Here also using two different buffers randomly chosen:
 (
 b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-1.wav");
 c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-2.wav")
@@ -194,7 +194,7 @@ c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperColli
 ( //Info:
 [b.duration, b.numChannels].postln;
 [c.duration, c.numChannels].postln;
-[] //The empty array avoid repeating the last line of the code as it is being already printed.
+[] //The empty array avoids repeating the second line twice.
 )
 
 (
@@ -440,7 +440,7 @@ Routine({
 
 	durBuffer = c.duration;
 	waitTime = 0.02;
-	superposition = 3;
+	superposition = 4;
 	durGrain = waitTime * superposition;
 	stretch = 1; //stretch = 1: no time-stretch.
 	speed = 2; //0.5 = octave down, 2 = octave up, and so on. You can use the interval relationships with .midiratio.
@@ -463,7 +463,7 @@ Routine({
 }).play
 )
 
-//One last experiment adding several synths featuring different rates at the same time to create a chord (it works pretty well applying a different delay to each synth too): each synth features a different pitch-shifting (one featuring the original tuning, for example, the rest using the interval relationships with .midiratio. The amplitudes could be also adjusted to create a balance depending on the pitch (be aware of the addition of Synths):
+//One last experiment adding several synths featuring different rates at the same time to create a chord (it works pretty well applying a different delay to each synth too): each synth features a different pitch-shifting (one featuring the original tuning, for example, the rest using the interval relationships with .midiratio. The amplitudes could be also adjusted to create a balance depending on the pitch (be aware of the addition of amplitudes as the principle is that, when multiple Synths write to the same bus, their output is summed (i.e. mixed).):
 (
 Routine({
 	var durBuffer, durGrain, position = 1, speed, waitTime, superposition, stretch;
