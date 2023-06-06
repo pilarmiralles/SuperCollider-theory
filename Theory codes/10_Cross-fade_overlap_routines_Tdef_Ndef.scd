@@ -490,7 +490,7 @@ Routine({
 )
 ////////////////////////////////////////////////////////////////////////////////////
 
-//TDEF (from the JITLib library, mainly for live coding)
+//TDEF (from the JITLib library, mainly for live coding):
 //In order to test routines without having to kill the Synth and evaluate it again when changing parameters, we can use Tdef instead of Routine (T = task, "def" = defined by a name, as in SynthDef: it is called through a \symbol).
 
 //Simple example with no sound: routine that changes randomly the order of the letters of "hello" and prints the result:
@@ -569,33 +569,141 @@ Tdef(\test,
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//NDEF (Also from the "Just In Time" library, JITLib (Ndef, Tdef, MIDIdef, Pdef...etc.)
-//Continuing with the "live coding" tools, there is an alternative to creating SynthDefs (which cannot be modified once they are compiled: size of the arrays cannot be changed (for example, for the number of channels) and lists need to be sent using dummy arrays such as #[0, 0, 0]). Once a SynthDef is compiled (.add) it is a program from which you can create different instances modifying the value of its arguments.
-//Ndef is the alternative for live coding: instead of a compiled synth, it creates an empty synth which can be changed and which is directly playble:
+//NDEF and more about the "Just In Time" library (JITLib, including Ndef, Tdef, Pdef, OSCdef...etc.):
+//The JIT library was created to change the architecture of a running program through the creation of a proxy node (an empty container of, for instance, synthesis, in the case of Ndef, or a Task in the case of Tdef, or a pattern in the case of Pdef, etc.). These classes (and let's focus now on Ndef) carry out the task of replacing the architecture while running, so that they are tools mainly intended for live coding, although sometimes they are also very useful for testing (just like we saw previously with Tdef).
+//Ndef is sort of an alternative to SynthDefs, which cannot be modified once they are compiled. Instead of a compiled synth, Ndef creates an empty synth which can be modified and which is directly playable.
 
-Ndef(\x, { Mix.ar(SinOsc.ar(Array.rand(2, 333, 666), 0, 0.1)) }).play //Creates a Synth as SynthDef would do.
+//Two main differences with respect to SynthDefs: Ndef receives the method .play in order to create an empty synth (or one with content already), and there is no Out object, as its use would overwrite the proxy node:
+Ndef(\x, { Mix.ar(SinOsc.ar(Array.rand(2, 333, 666), 0, 0.1)) }).play //Creates a synth and can directly play it.
 
+//Flexibility of Ndef:
 Ndef(\y).play //Creates an empty array.
-Ndef(\y).source = {WhiteNoise.ar(0.03)} //.source indicates what is inside the synth (here, a WhiteNoise). As \y was played before (although empty), it sounds right away (because something that sounds was placed into it).
-Ndef(\y).source = {SinOsc.ar(440, 0, 0.1)} //Changing the source (the content of the Synth): if the WhiteNoise is evaluated again, it will reassign the content of the Synth.
-Ndef(\y).pause //For pausing the synth.
-Ndef(\y).resume //For resuming the synth.
-Ndef(\y).fadeTime = 2; //To set a fade time (right now is working as fade-in: you can pause the Synth and resume it, or change the source of the Synth in order to test it).
+Ndef(\y).fadeTime = 2; //Assigning a fade time (works as fade in / cross fade / out).
+Ndef(\y).source = {WhiteNoise.ar(0.03)} //Fills up the array with a WhiteNoise. It will sound right away if \y received .play before (as something that sounds was placed into it). Also, if .fadeTime was sent before, it will apply a fade in time to the noise.
+Ndef(\y).source = {SinOsc.ar(440, 0, 0.1)} //Changing the sound source by a SinOsc (.fadeTime will cause a cross fading).
+Ndef(\y).pause //We can pause the synth.
+Ndef(\y).resume //We can resume the synth.
+Ndef(\y).release(2) //Fading out (though still runnin).
+Ndef(\y).clear //When sending the .clear message, there is no fade out, but the proxy node will be emptied.
 
-//Each time this Synth is evaluated, it gives a different value (try to quickly evaluate it successively). Then, go to the next line of code and open the graphical interface (.gui), where some arguments (those within the Dictionary "ControlSpec") can be changed:
+//If any change is performed in any of the possible parameters, Ndef can be executed while running and will replace the new values (it does not create new instances, but modify the current one):
+Ndef(\x, { LFSaw.ar(90 + LFPar.ar(100, 0, 100)).dup(2) * 0.1; }).play
+Ndef(\x).fadeTime = 2 //Again, .fadeTime will be applied as a cross fade time when modifying the synth.
+Ndef(\x).clear
+
+//Ndef can receive arguments as well:
 (
-	Ndef(
-	\ssaw, {
-	| out = 0, gate = 1, freq = 440, inBus, ffreq = 880 | //ffreq is the freq of the ressonant low pass filter.
-		var myEnv, signal, flt;
+Ndef(\z, {
+	arg freq = 100, amp = 0.1;
 
-		myEnv = EnvGen.ar(Env.perc(0, 0.8), gate, doneAction: 2); //Percussive envelope with gate = 1 by default and doneAction = 2: essentials.
-		signal = Mix(Saw.ar(freq * (Array.rand(10, 0.1, 1)), 0.1)); //Creating 10 sawtooth waves with different detunings of the fundamental frequency and mixing them in a single channel.
-		flt = RLPF.ar(signal, ffreq, 0.1);
+	LFSaw.ar(freq).dup(2) * amp;
 
-		Out.ar(out, Pan2.ar(flt, 0, 0.7 * myEnv)); //A pan = 0 is used here to send the signals by both channels of the stereo (mono-duplicated). Then, the envelope is applied to the amplitude of the Pan2 (it could have been applied before).
-
-	}).add;
+}).play
 )
 
-Ndef(\ssaw).gui //Freq = 1200 ca. and Ffreq = 1600 ca., cool.
+Ndef(\z).fadeTime = 2
+Ndef(\z).set(\amp, 0.001) //Changing parameters.
+Ndef(\z).gui //We can create a graphical interface to control certain parameters (for example, here the keys "freq" and "amp" are recognized by the graphical user interface. There is kind of a list at the end of this documentation: https://doc.sccode.org/Classes/Spec.html (those keys contained within the Dictionary of ControlSpecs). I don't really know if there are more apart from those (like the ones recognized by the GUI in the last example of this document, line 660), but the important thing of ControlSpec is that it determines the lo and hi limits of each parameter (which values does the fader go throughout).
+
+Ndef(\z).clear
+
+//It might be good to try a bunch of different synthesis options to be changed on the go. No new UGens can be written (Ndef needs to be cleared after implementing new UGens), the only option is to replace the ones that were used:
+(
+Ndef(\m, {
+	arg freq = 100, amp = 0.1;
+
+	LFSaw.ar(freq).dup(2) * amp;
+	//LFPulse.ar(freq).dup(2) * amp;
+	//SinOsc.ar(freq).dup(2) * amp;
+	//LFTri.ar(freq).dup(2) * amp;
+
+}).play
+)
+
+Ndef(\m).fadeTime = 2 //And changing around in the code or by using the graphical interface, etc.
+Ndef(\m).gui
+Ndef(\m).clear
+
+//There are, nontheless, some limitations still. The number of channels cannot be changed (the proxy would need to be cleared before changing it) because there is still a certain compilation of its architecture. Though we can change, for example, the channel of the node:
+(
+Ndef(\c, {
+	arg freq = 100, amp = 0.1;
+
+	LFSaw.ar(freq) * amp;
+
+}).playN(1) //Playing the node through the right channel (try changing to 0 while running, it will directly go through the left channel instead). This method would accept an array of non-adjacent channels such as .playN([2, 4, 7]) if playing through a multichannel system.
+)
+
+Ndef(\c).clear
+
+//Looking at the node tree, it seems that some new group is created for the proxy nodes.
+//Anyway, take a further look into the documentation of Ndef (https://doc.sccode.org/Classes/Ndef.html) and the JIT lib overall (https://doc.sccode.org/Overviews/JITLib.html).
+
+//As the Help file shows, an Ndef can play a Pbind (here, default intrument):
+Ndef(\a, Pbind(\dur, 0.03, \freq, Pbrown(0, 1, 0.1, inf).linexp(0, 1, 200, 350))).play //This is why Ndef is between the client and server sides.
+
+//More examples:
+(
+Ndef(\x, {
+	arg freq = 120, amp = 0.1, speed = 8;
+
+	LFTri.ar(LFDNoise0.ar(speed, 500, 1000)).dup(2) * amp;
+
+}).play
+)
+
+Ndef(\n).fadeTime = 2;
+Ndef(\n).set(\speed, 10) //Changing parameters.
+Ndef(\n).release(1) //Turning off with a fade out time.
+Ndef(\n).clear
+
+//Last example: execute it successively (could a Tdef be connected to an Ndef to automatize it? Anyway, same limitations as with SynthDef: if using a trigger for the envelope, the deviation value will not be refreshed with each impulse):
+(
+Ndef(\saw, { //They can have, of course, more descriptive names.
+	arg freq = 440, inBus, gate = 1, ffreq = 880; //"ffreq" = freq of the RLPF. Also gate 1 so when executing again, the env can be retriggered.
+	var trigger, env, signal, filter;
+
+	env = EnvGen.ar(Env.perc(0, 0.8), gate, doneAction: 2);
+	signal = Mix(Saw.ar(freq * Array.rand(10, 0.1, 1), 0.1)); //Ten sawtooth waves with a freq deviation from a fundamental freq.
+	filter = RLPF.ar(signal, ffreq, 0.1);
+
+	Pan2.ar(filter, 0, 0.7 * env) //The envelope could have been applied to the filter instead.
+
+}).play
+)
+
+Ndef(\saw).gui //freq = 1200 ca. and Ffreq = 1600 ca., cool.
+
+//Extra examples:
+//Using Splay on a multichannel signal:
+(
+Ndef(\x, {
+	arg freq = 440, amp = 0.1;
+
+	Splay.ar(
+		LFSaw.ar(freq * (1..7) * rrand(1, 1.5), //Again, an array of 7 sawtooth wave overtones, wach one with a random deviation.
+			pi.rand, //Random initial phase.
+			0.1
+		),
+		LFTri.kr(0.2, 0, 0.5, 0.5), //Spread (moving between 0 and 1 in five seconds).
+		amp
+	)
+
+}).play
+)
+
+Ndef(\x).fadeTime = 2;
+Ndef(\x).gui //I don't really know where the "speed" fader is coming from.
+Ndef(\x).release(1)
+Ndef(\x).clear
+
+//BEWARE THE VOLUME! Example of feedback: a sound modulating itself.
+(
+Ndef(\x, {
+	SinOsc.ar(
+		BrownNoise.ar(30!2, 200), //This is creating two different random signals, but how do they move through the stereo?
+		Ndef(\x).ar * LFNoise1.kr(1 !2, 1, 1), //The proxy node is modulating itself (its phase). How does the phase modulation work here?
+		1 //It does not work when lowering the amplitude (it sounds much more muffled). But even if I change the amplitude by multiplying the entire signal, it affects the feedback.
+	)
+}).play;
+)
