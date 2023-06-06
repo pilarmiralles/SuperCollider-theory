@@ -338,6 +338,29 @@ a.set(\which, 2) //Next signal.
 a.set(\which, 0) //Back to the original.
 a.set(\which, {rrand(0, 2)}) //Random choice.
 
+//It is necessary to reflect on which processes should be carried out within the SynthDef and which are to be done on the client side. Regarding randomness, a solution might be to carry out the random choice within the Synth (client) in order not to fix the randomness:
+
+SynthDef(\chance, { [1, 2, 3, 4].choose.poll; Out.ar(0, DC.ar) }).add //Silent SynthDef, just to test (DC.ar's argument "in" is a constant amplitude signal: by default is 0, so it will output silence): .choose is an operation happening only in the language, so there is only an initial choice when the language is interpreted, and that choice is compiled (all instances of the SynthDef will carry the same value).
+Synth(\chance) //All instances feature the same value unless the SynthDef is compiled again.
+
+//The solution in this case is to carry out the random choice in the language (through an argument):
+SynthDef(\chance, { arg chance; chance.poll(5); Out.ar(0, DC.ar) }).add
+x = Synth(\chance, [\chance, 2]) //Get the synth running.
+x.set(\chance, [1, 2, 3, 4].choose) //Set a different value for the created SynthDef instance "x" (execute several times while running).
+
+y = Synth(\chance, [\chance, 1]) //Other instances can be created (in different variables).
+y.set(\chance, [5, 6, 7, 8].choose)
+
+x.free //Different instances can be freed separately
+y.free
+
+//Message style might be easier to use over object syle for addressing nodes in real time:
+s.sendMsg(\s_new, \chance, 1011, 1, 1) //Addressing a specific node with \s_new, "new synth" (if evaluated twice, an error will be returned about not being able to overwrite the already-existing node).
+s.sendMsg(\n_set, 1011, \chance, 1) //New values can be assigned at running time with \n_set, "set node".
+s.sendMsg(\n_free, 1011) //Free the synth with \n_free, "free node".
+
+//Let's study the message style in more detail:
+
 /////////////////////////////////////////////////
 //MESSAGE STYLE VS OBJECT STYLE (SYNTHDEFS):
 //This is only useful when planning to use the server from a different machine, or in case the synthesis is performed in SC, and then a different software is going to play around with whatever is created throuhg SC.
@@ -347,11 +370,12 @@ a.set(\which, {rrand(0, 2)}) //Random choice.
 
 //These are the two grammars for the Synth, in message and object style, respectively:
 
-s.sendMsg(\s_new, \synthDefName, s.nextNodeID, 1, 1, \listOfArgs, values); //Message style: new synth's name, identifier (nextNodeID), group (1 = default), position in the group (1 = addToTail). Thus, the entire message style grammar is WHAT (\synthDefName), WHERE (nextNodeID, 1, 1002, for example), and HOW (list of all arguments and their values).
+s.sendMsg //This method sends OSC messages to the server.
+s.sendMsg(\s_new, \synthDefName, s.nextNodeID, 1, 1, \listOfArgs, values); //Message style: new synth's name, identifier (nextNodeID), position in the group (1 = addToTail), and group (1 = default). Thus, the entire message style syntax is WHAT (what is created and from which SynthDef), WHERE (nodeID, position, group), and HOW (argument-value pairs).
 
 Synth(\synthDefName, [\listOfArgs, values], target, action); //Object style as studied before: the target is the name of the group (s = default group, 0 = root group, etc.), and action could be 'addToTail' or 'addToHead' (remember, on the top what is heard, on the bottom, what affects what is heard).
 
-Group.new(s, 'addToTail') //to create a new group. Execute it and get the node (if getting 1001, for example, we would need to write 1001 instead of 1 in the message style).
+Group.new(s, 'addToTail') //to create a new group. Execute it and get the node (if getting 1001, for example, we would need to write 1001 instead of 1 in the message style). NodeIDs over 1000 for synths are kind of a historical convention.
 //In fact, when using In/Out relationships between SynthDefs (for example, one for synthesis, one for processing), you can create different groups for each procedure instead of adding the action 'addToTail' / 'addToHead' directly to each Synth.
 //For example (from our first In/Out SynthDef relationship in this file):
 a = Synth(\noise, [\out, 4], ~noiseGroup)
@@ -364,6 +388,17 @@ b = Synth(\filter, [\out, 0, \in, 4, \freq, 600], ~filterGroup)
 ~noiseGroup.set(\amp, 0.1)
 ~noiseGroup.freeAll //And turning off all synths within a group at the same time.
 
-//More on this topic here: https://doc.sccode.org/Tutorials/Getting-Started/12-Groups.html
+//New groups can be also created in message style:
+s.sendMsg(\g_new, 2, 1, 1) //Creating a new group through message style (message (create new group), nodeID (don't overwrite 0 or 1), position (1 = tail), location (1 = default group): create a new group with nodeID of 2, at the tail of the group 1. All new groups should be inside group 1 (or inside a group that in inside group 1 eventually) so that all primitive functions in group 0 can apply to them).
+s.queryAllNodes //This method allow us to print the node tree in the post-window (also with ctrl + T). See the new architecture of the server after creating the previous group.
+s.plotTree //The node tree has a graphical representation too.
+//Eventually, we should be able to create different groups for signals and FX or processing, in order to ease the order of execution: https://doc.sccode.org/Guides/Order-of-execution.html.
+s.sendMsg(\n_set, 2, \amp, 0) //Messages can be set to the whole group so that all nodes and inner groups receive a new value, for example, here an amplitude value. It is also advisable, for this reason, to keep a certain cosistency regarding the name of certain common arguments (freq, amp, masterVolume, pan, etc.), so that SynthDefs within a group are addressed at the same time.
+s.sendMsg(\n_free, 2) //Synths and groups need to be freed by sending the message \n_free instead of using ctrl + period!! (which would clean all nodes at the same time and mess up the architecture of the server).
 
-//STRUCTURE OF THE SERVER TREE SUMMARY: GROUP, NODE, BUS: the architecture is organized in groups of nodes (points in the server: a node can be a synth or a group of synths). The first node is the Root Group (nodeID = 0): recording or analysis work will be inside that group; then the second one is the default group (nodeID = 1), is the user group, inside which the new snodes are created; then third level comprises all the other groups you can create (from 2 to inf), and so on. The synths and processes need to be organized (from the bottom to the top, which is the one that is heard).
+//More on this topic in the following links:
+//https://doc.sccode.org/Tutorials/Getting-Started/12-Groups.html (about groups - tutorial).
+//https://doc.sccode.org/Classes/Group.html (about groups - help file).
+//https://doc.sccode.org/Reference/Server-Command-Reference.html (all information about message style commands).
+
+//STRUCTURE OF THE SERVER TREE SUMMARY: GROUP, NODE, BUS: the architecture is organized in groups of nodes (points in the server: a node can be a synth or a group of synths). The first node is the Root Group (nodeID = 0): recording, monitoring, and other primitive functions; then the second one is the default group (nodeID = 1), is the user group, inside which the new nodes (synths and groups) are created; then third level comprises all the other groups you can create (from 2 to inf), and so on. The synths and processes need to be organized (from the bottom to the top, which is the one that is heard).
