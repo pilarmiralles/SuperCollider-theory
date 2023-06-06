@@ -348,7 +348,8 @@ Pbind(
 
 //Both keys \scale and \tuning are used to make scales, you can press ctrl + i over the class Scale in order to see all the implemented scales by default (and you can use their names instead of writing the numbers, but it is always good to think about your own scales too):
 
-Scale.scaleName //This is how this class would work: it can be put into the \scale key directly. See all the possibilities using ctrl + i.
+Scale.scaleName //This is how this class would work: it can be put into the \scale key directly. See all the possibilities using ctrl + i (double click on "Scale" on the list and approx. from line 339).
+Scale.directory //Here it is easier to take a look at all available scales (although it does not show the degrees, only visible when looking at the implementations).
 
 //Example of implementation of the class Scale (same code as the former one, just changing the scale):
 (
