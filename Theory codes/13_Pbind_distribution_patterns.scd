@@ -264,7 +264,7 @@ Pbind(
 	\dur, 0.2
 ).play
 )
-
+Ppar
 //Imitating Boulez's Structures for piano (but without the series): maximum level of randomness applied to pitch, duration, amplitude, octaves, etc.
 (
 Pbind(
@@ -295,12 +295,12 @@ Pbind(
 ).play
 )
 
-//This is an interesting example in which we use new methods: there is a melody from Bach's Invention no. 2 sequenced by the Pseq for the pitches. There are 18 notes in the melody, thus in stepsPerOctave we use a Pstutter, which is a pattern that will repeat a certain number of times each value produced by the pattern in its second argument, which in this case is augmenting by 1 the number of divisions of the octave using Pseries (functions as Array.series). This will provoke that the intervals of the melody are smaller each time it is repeated (this takes some time). The duration of each note of the melody is also sequenced in the key dur (Pn is used just to avoid repeating the same value in the Pseq's list many times) and then it is multiplied by a Pgeom (which is the equivalent of Array.geom in a pattern): this will speed up the progression every time more (the speed will increase exponentially, so the process of speeding up will reach a point when it becomes much faster in very little time):
+//This is an interesting example in which we use new methods: there is a melody from Bach's Invention no. 2 sequenced by the Pseq for the pitches. There are 18 notes in the melody, thus in stepsPerOctave we use a Pdup, which is a pattern that will repeat a certain number of times each value produced by the pattern in its second argument, which in this case is augmenting by 1 the number of divisions of the octave using Pseries (functions as Array.series). This will provoke that the intervals of the melody are smaller each time it is repeated (this takes some time). The duration of each note of the melody is also sequenced in the key dur (Pn is used just to avoid repeating the same value in the Pseq's list many times) and then it is multiplied by a Pgeom (which is the equivalent of Array.geom in a pattern): this will speed up the progression every time more (the speed will increase exponentially, so the process of speeding up will reach a point when it becomes much faster in very little time):
 
 //VERY IMPORTANT: STOP THE SYNTH WHEN A CERTAIN EXTREME IS REACHED (around the 80th iteration), OTHERWISE, THE SERVER WILL COLLAPSE BECAUSE OF THE INFINITE LOOP!!! (If this happens, be patient to find the option "quit interpreter" in the Language menu).
 (
 Pbind(
-	\stepsPerOctave, Pstutter(18, Pseries(12, 1, inf)).trace, //The more steps per octaves, the narrower the distances between the pitches of the melody.
+	\stepsPerOctave, Pdup(18, Pseries(12, 1, inf)).trace, //The more steps per octaves, the narrower the distances between the pitches of the melody.
 	\note, Pseq([ 2, 4, 5, 7, 9, 10, 1, 10, 9, 7, 5, 4, 5, 9, 14, 7, 13, 16 ],
 		inf),
 	\dur, Pseq([ Pn(0.25, 12), Pn(0.5, 6) ], inf)
@@ -903,7 +903,7 @@ SynthDef(
 }).add
 )
 
-//Here the two Pbind displaced and here we find out the limitation of Ptuple: we can't apply Ptuple to the durations because two parallel Pbind need to be coordinated in time. Duplicating the Pbind would allow different times using randomness, but we wouldn't be able to set specific patterns for each. Therefore, in order to create events with different duration, we need to set two different Pbind:
+//Here the two Pbind displaced and here we find out the limitation of Ptuple (though see the new alternative in the next code): we can't apply Ptuple to the durations because two parallel Pbind need to be coordinated in time. Duplicating the Pbind would allow different times using randomness, but we wouldn't be able to set specific patterns for each. Therefore, in order to create events with different duration, we need to set two different Pbind:
 (
 Pbind(
 	\instrument, \saw2,
@@ -917,6 +917,31 @@ Pbind(
 	\amp, 0.1,
 	\dur, Pseq([Pseq([0.5, 0.5, 1, 1], 1), Pseq([0.5, 0.5, 0.75, 1], 3)], inf), //After certain number of iterations, it synchronizes again.
 ).play
+)
+
+//There is another pattern which could replace the use of Ptuple and improve the efficiency of the previous code: according to the Help file, Ppar "embeds several event streams so that they form a single output stream with all their events in temporal order (in parallel). When one stream ends, the other streams are further embedded until all have ended":
+(
+Ppar( //Arguments are list (array of Pbinds) and repeats.
+	[
+		Pbind(
+			\scale,Scale.minor, //Minor scale
+			\degree, Pseq([ 0, 4, 5, 7], inf),
+			\octave, 6,
+			\amp, 0.2,
+			\dur, 0.25,
+			\instrument, \saw2
+		).play,
+
+		Pbind(
+			\scale,Scale.minor,
+			\degree, Pseq([ 0, 4, 5, 7], inf),
+			\octave, 6,
+			\amp, 0.2,
+			\dur, 0.26,
+			\instrument, \saw2
+		).play
+	]
+)
 )
 
 ///////////////////////////
@@ -967,7 +992,7 @@ d.add(\folder2 -> PathName("F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY 
 d[\folder1].choose.play //Now we can easily play random samples from the \folder1 key within the dictionary "d".
 d[\folder2].choose.play //Same with the other key.
 
-//Let's create a SynthDef to control those samples:
+//Let's create a SynthDef to control those samples (though this does not have any envelope, SO CAREFUL WITH THAT):
 (
 SynthDef(\library, {
 	|buf = 0, rate = 1, amp = 0.1|
