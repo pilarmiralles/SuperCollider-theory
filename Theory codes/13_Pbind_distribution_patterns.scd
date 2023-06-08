@@ -384,9 +384,9 @@ Pbind(\dur, 1, \midinote, Pseq((60..66), inf)).play //The pitches are separated 
 
 Pbind(\dur, 1, \legato, 5, \midinote, Prand((36..84), inf)).play //Random pitches (wider range) overlapped between them as the legato is 5.
 
-\stretch //Then, \stretch is a factor for the duration: it lengthens or shortens the durations proportionally.
+\stretch //Then, \stretch is a factor for the duration: it lengthens or shortens the durations proportionally. It sets the length of the time unit.
 
-//For example, here we use our own numbers for duration (number of units), then the \stretch sets the note value (the unit) as 8th-notes:
+//For example, here we use our own numbers for duration (number of units), then the \stretch sets the note value (the length of the new time unit) as 8th-notes:
 (
 Pbind(
 	\dur, Prand([3, 5, 7, 11], inf),
