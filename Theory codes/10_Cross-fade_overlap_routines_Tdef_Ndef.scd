@@ -40,7 +40,7 @@ SynthDef(
 )
 
 (
-Routine({ //Fixed values for the transition and sustain times:
+r = Routine({ //Fixed values for the transition and sustain times:
 
 	inf.do({
 		Synth(\filters, [
@@ -56,6 +56,8 @@ Routine({ //Fixed values for the transition and sustain times:
 
 }).play
 )
+
+r.stop
 
 //Introducing arrays as arguments, for example, to replace the multiple choice of three frequencies in the former code. This is especially useful when working with a larger number of frequencies. Remember that the size of the array cannot be changed once the SynthDef has been compiled:
 (
@@ -88,7 +90,7 @@ SynthDef(
 )
 
 (
-Routine({
+r = Routine({
 
 	inf.do({
 		Synth(\filters, [
@@ -102,6 +104,8 @@ Routine({
 
 }).play
 )
+
+r.stop
 
 //Variation of the former code using frequencies from the natural overtone series:
 (
@@ -134,7 +138,7 @@ SynthDef(
 )
 
 (
-Routine({
+r = Routine({
 	var freqs;
 
 	freqs = (27.5 * Array.series(120, 1)); //The fundamental freq is 27.5 Hz. Array.series create a series of 120 harmonics from the harmonic 1 of the series (the overtone 1 is the fundamental freq), up to roughly 3200 Hz (remember that the freq of an overtone is = to the fundamental freq * number of the overtone in the series). This is how this line of code works.
@@ -151,6 +155,8 @@ Routine({
 
 }).play
 )
+
+r.stop
 
 //Now we will variate the transition and sustain time of each synth, so the routine won't be periodic, but flexible. We need to distinguish the crossTime1 and crossTime2. The synth in fade-out has to pass its fade-out duration to the next synth so it can be used as the new fade-in. Then, the new fade-out will be randomly chosen, for instance:
 (
@@ -183,7 +189,7 @@ SynthDef( //Same exact synth, just adding the two different crossTimes:
 )
 
 (
-Routine({
+r = Routine({
 	var crossTime1, sustTime, crossTime2;
 
 	crossTime1 = rrand(1.0, 8); //The first crossTime (fade-in) is chosen here, outside the loop, during the first iteration of the routine. After the first iteration, the next fade-in will always depend on the previous fade-out. It is placed out of the loop to allow the variable to reassign with each iteration of the routine:
@@ -210,22 +216,24 @@ Routine({
 }).play
 )
 
+r.stop
+
 //Another example using Klank:
 (
 SynthDef(
 \klanks,
 	{ var freqs, times, signal, env;
 
-		//These two variables will define Klank's references array:
-		freqs = Array.fill(50, { LinRand(30, 14000) }); //Rand would highlight the high freqs and ExpRand would balance low and high freqs. LinRand is in the mid way of both distributions (linear distribution).
+		//These two variables will define Klank's specifications array ref:
+		freqs = Array.fill(50, { LinRand(30, 14000) }); //Rand would highlight the high freqs and ExpRand would balance low and high freqs. LinRand is in the mid way of both distributions (linear distribution), but you can try out the others.
 		times = Array.fill(50, { Rand(0.01, 0.1) }); //Uniform distribution for the decay times.
 
 		//Our synth here: the input of Klank is a Resonz filter, filtering a Dust and modulating its freq with an exponential line:
 		signal = Klank.ar(
 			`[ freqs, 1, times],
 			Resonz.ar(
-				Dust.ar(35 !2, 0.075), //The function is duplicated here, provoking the stereo sound.
-				XLine.ar(14000, 30, 15), //The freqs are not decided in the routine (which could be) but directly here. The line is fixed, but the timbre changes due to the random freqs in Klank with each iteration of the Synth.
+				Dust.ar(35 !2, 0.075), //The function is duplicated here, provoking the stereo sound (35 different bits of dust on each channel).
+				XLine.ar(14000, 30, 15), //The freqs are not decided in the routine (which could be) but directly here. The line is fixed, but the timbre changes due to the random freqs in Klank with each iteration of the Synth. This freq is controlling the filter frequency, then the freq of the bits of dust is still random (within the filtering freq) due to the array of freqs in Klank.
 				0.2
 		));
 
@@ -239,13 +247,16 @@ SynthDef(
 )
 
 ( //No arguments are being choosen in the Routine: it just activate one synth after another.
-Routine({
+r = Routine({
 	inf.do({
 		Synth(\klanks);
-		(5 + 5).wait
+		(5 + 5).wait //The Xline is 15 seconds long, thus there will be an overlapping of 5 seconds.
 	})
 }).play
 )
+
+r.stop
+
 
 //////////////////////////////////////////////////////////////
 
@@ -281,7 +292,7 @@ SynthDef(
 )
 
 (
-Routine({
+r = Routine({
 	var density, crossTime, sustTime, freqs;
 
 	density = 5; //Change the density (the number of freqs created by the Array.geom does not matter because they are chosen randomly, and therefore they can be repeated, for instance). Density = 1: the routine wait until the synth is done, so there is only one layer.
@@ -303,10 +314,12 @@ Routine({
 }).play
 )
 
+r.stop
+
 //ALL OF THIS CAN BE DONE WITH PATTERNS, which will be studied in documents 11 and 13.
 //Using the same SynthDef as before (\filtering):
 (
-Routine({
+r = Routine({
 	var density, crossTime, sustTime, freqs, line;
 
 	density = 100;
@@ -328,9 +341,11 @@ Routine({
 }).play
 )
 
+r.stop
+
 //Here is same routine, but the process (sort of glissando) is 3 seconds long (the crossTimes and sustTime are equal to 1 so everything fits in 3 seconds):
 (
-Routine({
+r = Routine({
 	var density, crossTime, sustTime, freqs, line;
 
 	density = 100;
@@ -352,9 +367,11 @@ Routine({
 }).play
 )
 
+r.stop
+
 //Contrary direction for the glissando (from high to low): just changing the order of the values in the Envelope (line). You can try out different times for the envelope (adapting the cross and sust times, so their total sum is the time of the envelope). At the end, all freqs are available to be chosen because the array of freqs opens intead of closing (and of course, the freqs keep changing due to the overlap routine random choices):
 (
-Routine({
+r = Routine({
 	var density, crossTime, sustTime, freqs, line;
 
 	density = 100;
@@ -376,11 +393,13 @@ Routine({
 }).play
 )
 
+r.stop
+
 //Here is the same, but remaining only with the lowest freq at the end: changing the syntax of the freqs array [..last value wanted], so the array includes all the values up to the one we choose (so if the first one is 199, and we reduce the possibilities from 199 to 0, then at the end the only possibility will be 0):
 
 
 (
-Routine({
+r = Routine({
 	var density, crossTime, sustTime, freqs, line;
 
 	density = 100;
@@ -402,6 +421,8 @@ Routine({
 }).play
 )
 
+r.stop
+
 /*REMINDER OF THE ARRAYS SHORTCUTS:
 
 [..this] --> From the beginning of the array up to the value we want it to end at.
@@ -412,7 +433,7 @@ Routine({
 //SOLUTIONS TO PROBLEMS POSED BY DONEACTION 2:
 //DoneAction = 2 can provoke that processes such as envelopes, delays or reverbs do not conclude before the Synth is removed from the server. There are different solutions to this problem: using DetectSilence, a dissengaged Line or an overall envelope:
 
-//Here we have out sawtooth SynthDef and routine (from heory file 9, see details in original code), now with Delay applied to it. Three different solutions to the problem mentioned before are explained at the end of the first SynthDef, after applying the Delay:
+//Here we have our sawtooth SynthDef and routine (from heory file 9, see details in original code), now with Delay applied to it. Three different solutions to the problem mentioned before are explained at the end of the first SynthDef, after applying the Delay:
 
 (
 SynthDef(
@@ -469,14 +490,14 @@ SynthDef(
 
 //Try out the routine:
 (
-Routine({
+r = Routine({
 
-	Synth(\resonator, [\in, 4], s, \addToTail);
+	g = Synth(\resonator, [\in, 4], s, \addToTail);
 
 	inf.do({
 
 		Synth(\sawtooth, [
-			\out, 4,
+			\out, 4, //Try listening to the sawtooth wave alone with out = 0.
 			\freq, exprand(3000, 6000),
 			\dur, exprand(0.001, 0.125),
 			\amp, exprand(0.05, 0.3)
@@ -488,6 +509,10 @@ Routine({
 
 }).play
 )
+
+r.stop
+g.free //When using a second synth for reverb (with no doneAction 2), it is necessary to free it as well, so that it doesn't remain running in the server.
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 //TDEF (from the JITLib library, mainly for live coding):
@@ -519,6 +544,8 @@ Tdef(\tdef, {
 }).play
 )
 
+Tdef(\tdef).clear; //Proper way to stop the Tdef.
+
 //Last example applied to our SynthDef \klanks, shown earlier (see details in the original code): try to replace the value of the different arguments while running the Synth:
 (
 SynthDef(
@@ -547,7 +574,7 @@ SynthDef(
 )
 
 (
-Tdef(\test,
+t = Tdef(\test,
 	{ var waitTime;
 
 		waitTime = 2; //Vary also the waitTime in relation to timesEnv.
@@ -564,6 +591,8 @@ Tdef(\test,
 		})
 }).play
 )
+
+t.clear //Remember that it will only stop when the last synth ends: the method won't cut the sound suddenly, it just stops the routine of Tdef.
 
 //IMPORTANT NOTE AND RECENT QUESTION ABOUT Tdef: I realized I can't use Tdef with a SynthDef that is connected to another SynthDef in In and Out relationship (for example, a synth and a reverb applied through another SynthDef). The problem is that Tdef does not renew the values only, but it runs the synths again, so there is a superposition of both SynthDefs, as if they had just been evaluated twice. I still need to search for a solution to this (or a different possible cause).
 
@@ -644,7 +673,7 @@ Ndef(\a, Pbind(\dur, 0.03, \freq, Pbrown(0, 1, 0.1, inf).linexp(0, 1, 200, 350))
 
 //More examples:
 (
-Ndef(\x, {
+Ndef(\n, {
 	arg freq = 120, amp = 0.1, speed = 8;
 
 	LFTri.ar(LFDNoise0.ar(speed, 500, 1000)).dup(2) * amp;
@@ -673,6 +702,7 @@ Ndef(\saw, { //They can have, of course, more descriptive names.
 )
 
 Ndef(\saw).gui //freq = 1200 ca. and Ffreq = 1600 ca., cool.
+Ndef(\saw).clear
 
 //Extra examples:
 //Using Splay on a multichannel signal:
@@ -707,3 +737,5 @@ Ndef(\x, {
 	)
 }).play;
 )
+
+Ndef(\x).clear

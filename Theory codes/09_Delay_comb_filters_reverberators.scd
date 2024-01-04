@@ -3,7 +3,7 @@
 
 //DELAY LINES: produce simple echoes with no feedback.
 //DelayN, DelayL and DelayC create delay lines with different types of interpolation (the way in which the values are connected between them, determined by the final letter of the UGen) --> N = no interpolation / L = linear interpolation / C = cubic interpolation (but this difference is only perceptible when using the UGen in specific ways, for example, when modulating it).
-//Arguments of Delay:
+//Arguments of Delay:b
 
 Delay.ar(in, maxdelaytime, delaytime, mul, add) //"in" (input signal to which the delay will be applied), "maxdelaytime" (is the maximum time of delay that the memory saves for this use, it has to be higher or equal to the next argument, delaytime), "delaytime" (time that will pass before the input signal is repeated), "mul" and "add" as in any other UGen.
 
@@ -20,7 +20,6 @@ Delay.ar(in, maxdelaytime, delaytime, mul, add) //"in" (input signal to which th
 
 }.play
 )
-
 
 //This is an example where we can hear the differences brought about by different types of interpolation: the delay is moving between values (it is been modulated). Try the different types of interpolation here:
 
@@ -125,8 +124,7 @@ b = Buffer.read(s, "F:/DOCUMENTOS/1 Year 2022-2023/SUPERCOLLIDER/THEORY CODES/Au
 )
 
 //Here is a more complex example of how to use the comb filter as a resonator before studying reverberators: the routine creates sounds in private channels and the comb filter takes those frequescies through the out channel. Remember to apply LeakDC to avoid DC offset when using comb filters, for instance.
-//The first SynthDef contains a sawtooth wave with panning and percussive envelope (remember to use doneAction = 2 in order to kill the envelopes whenever they are done). The comb filters in the second SynthDef are applied within a Mix because they receive ten random delay frequencies.
-
+//The first SynthDef contains a sawtooth wave with panning and percussive envelope (remember to use doneAction = 2 in order to kill the envelopes whenever they are done). The comb filters in the second SynthDef are applied within a Mix because they receive ten random delay frequencies. Take a look also at the use of .clump(2) in the multichannel expansion (resonator SynthDef):
 (
 SynthDef(
 	\sawtooth,
@@ -155,9 +153,9 @@ SynthDef(
 				CombC.ar(
 					input * 0.1, //Lowering the amplitude beforehand.
 					1/2900, //The maxdelaytime here features the lowest freq value because of the inversion of the time to calculate the frequency in Hz (1/2900 is bigger than 1/3100).
-					1/({ LFDNoise3.ar(0.1, 100, 3000) } !10), //New delaytime value each 10 seconds between 2900 and 3100 Hz of resonant freq. This function is duplicated 10 times, bringing about the multichannel expansion.
-					-1 //Decaytime =  -1 --> only the odd overtones an octave below will resonate (try out the positive and negative value to see which timbre suits you better).
-				).clump(2) //TRICK: The Mix of the comb filters here would kill the Pan2 used above for the sawtooth waves. Clump(2) will divide the union of the 10 comb filters into a single channel provoked by the Mix (a single array) into arrays of two elements within the bigger array. This will bring about a two-channel signal adding odd with odd and even with even, hence keeping the panning above as if the Mix was not there.
+					1/({ LFDNoise3.ar(0.1, 100, 3000) } !10), //New delaytime value each 10 seconds between 2900 and 3100 Hz of resonant freq. This function is duplicated 10 times, bringing about the multichannel expansion. The variation in the resonant freq is rather small (try mul = 500, add = 3000 for a wider range / try mul = 100, add = 800 for a lower resonance: more like little bells). The freq of the raw sawtooth wave can be also changed in the routine below, alongside the duration of the release of the perc envelope and the range of amplitudes.
+					-1 //Decaytime =  -1 --> only the odd overtones an octave below will resonate (try out the positive and negative value to see which timbre suits you better): it changes the timbre quite a bit.
+				).clump(2) //TRICK: The Mix of the comb filters here would kill the Pan2 used above for the sawtooth waves (because it would mix everything into one channel). Clump(2) will divide the union of the 10 comb filters into a single channel provoked by the Mix (a single array) into arrays of two elements within the bigger array. This will bring about a two-channel signal adding odd with odd and even with even, hence keeping the panning above because Mix is receiving an array of arrays (be aware that .clump is applied to the Comb filter, not to Mix, so that Mix receives already the array of arrays, otherwise it wouldn't make any sense).
 		));
 
 		Out.ar(0, signal)
@@ -174,7 +172,7 @@ Routine({
 	inf.do({
 
 		Synth(\sawtooth, [
-			\out, 4,
+			\out, 4, //Try out the sawtooth wave alone by sending the out to 0.
 			\freq, exprand(3000, 6000),
 			\dur, exprand(0.001, 0.125),
 			\amp, exprand(0.05, 0.3)

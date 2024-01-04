@@ -35,7 +35,7 @@ Synth(\grain, [\bufnum, b.bufnum, \position, 1 * 44100, \rate, 1, \dur, 0.1, \pa
 //Now we need to create a routine in order to produce Synths successively (one after another or overlapped). Observe what happens to the number of synths in the CPU menu below the postwindow. Take into consideration that all arguments and parameters can be modified according to your taste and necessities. This is just one example. Also, observe where each argument is being sent within the SynthDef above:
 
 (
-Routine ({
+r = Routine({
 	var durBuffer, durGrain, position, rate = 1;
 
 	durBuffer = b.duration; //The total duration of the audio file is asked in here in seconds. Then it will be used in the loop.
@@ -63,9 +63,11 @@ Routine ({
 }).play
 )
 
+r.stop
+
 //Example with a fixed position: try out the routine with no s.bind, then try out changing the OffsetOut by Out.ar to see how it changes:
 (
-Routine ({
+r = Routine({
 	var durBuffer, durGrain, position, rate = 1;
 
 	durBuffer = b.duration;
@@ -93,13 +95,15 @@ Routine ({
 }).play
 )
 
+r.stop
+
 //When the audio file within the buffer is already stereo, using Pan.ar is not necessary to obtain sound through both channels. On the other hand, if the panning needs to be applied to a stereo signal, we have to take only one of the signals of the array. Using signal = signal[0] (taking just the left channel of the signal) after the Playbuf is enough to obtain a mono signal to be distributed using Pan2.
 
 //Other variants include using several buffers and creating a variable which randomly chooses among them (remember that all arguments dependant on the buffer should be now dependant on that variable, for example, the bufnum).
 
 //Next example includes superposition and its objective is to play the grains in chronological order:
 (
-Routine ({
+r = Routine({
 	var durBuffer, durGrain, position, rate = 1, superposition;
 
 	durBuffer = b.duration;
@@ -132,6 +136,10 @@ Routine ({
 }).play
 )
 
+r.stop
+
+b.free //Don't forget to free the buffers.
+
 //////////////////////////////////////////////////////////////////////////////////////
 
 //SOLUTIONS TO DIFFERENT ISSUES (GRANULAR SYNTHESIS):
@@ -159,7 +167,7 @@ SynthDef(
 )
 
 (
-Routine ({
+r = Routine({
 	var durBuffer, durGrain, position, rate = 1;
 
 	durBuffer = b.duration;
@@ -184,6 +192,9 @@ Routine ({
 	});
 }).play
 )
+
+r.stop
+b.free
 
 //Applying operations on top of our original signal (after granulating it) --> For instance, reverb (other options are filters, distortion, any modulation that would affect all grains at the same time, etc.): we have to connect the out of our original signal to a private channel, which will be taken by the second SeynthDef (and which will apply the process). Here also using two different buffers randomly chosen:
 (
@@ -223,13 +234,13 @@ SynthDef(
 )
 
 (
-Routine ({
+r = Routine({
 	var durBuffer, durGrain, position, rate = 1, buffer;
 
 
 	position = 0;
 
-	Synth(\reverb, [ \in, 4 ], s, 'addToTail'); //Implementing the reverb.
+	g = Synth(\reverb, [ \in, 4 ], s, 'addToTail'); //Implementing the reverb.
 
 	inf.do({
 
@@ -259,6 +270,10 @@ Routine ({
 	});
 }).play
 )
+
+r.stop
+g.free //Remember that the reverb synth (with no doneAction 2) needs to be freed too.
+b.free; c.free
 
 //Model of granular routine which follows the chronological development of the audio file:
 
@@ -309,13 +324,13 @@ SynthDef(
 )
 
 (
-Routine ({
+r = Routine({
 	var durBuffer, durGrain, position, speed = 1;
 
 
 	position = 0;
 
-	Synth(\reverb, [ \in, 4, \time, 0.5, \masterVolume, 1.2 ], s, 'addToTail');
+	g = Synth(\reverb, [ \in, 4, \time, 0.5, \masterVolume, 1.2 ], s, 'addToTail');
 
 	position = Pseg((0, 1..(260 - 9)), 1.5, 'lin', inf).asStream.trace; //This is an envelope for the position so it is just going straight instead of jumping randomly within the duration of the buffer (I calculated the buf duration and substracted the maximum duration of the grain - which is random -). See Pseg in the theory file 13.
 
@@ -348,6 +363,10 @@ Routine ({
 }).play
 )
 
+r.stop
+g.free
+b.free
+
 ////////////////////////////////////////////////////////////////////////////
 
 //PITCH-SHIFTING AND TIME-STRETCHING (USING GRANULAR SYNTHESIS):
@@ -371,7 +390,7 @@ SynthDef(
 
 //Here we create 50 grains per second instead of the continuous sound of the audio file: the different superposition values will affect the accuracy of this "fake continuity":
 (
-Routine({
+r = Routine({
 	var durBuffer, durGrain, position = 1, rate, waitTime, superposition;
 
 	durBuffer = c.duration;
@@ -397,11 +416,13 @@ Routine({
 }).play
 )
 
+r.stop
+
 //TIME-STRETCHING
 //Consists of speeding up or slowing down the audio without altering the pitch (use the same granulator and buffer as above in this section):
 
 (
-Routine({
+r = Routine({
 	var durBuffer, durGrain, position = 1, rate, waitTime, superposition, stretch;
 
 	durBuffer = c.duration;
@@ -430,12 +451,14 @@ Routine({
 }).play
 )
 
+r.stop
+
 //PITCH-SHIFTING
 //On the other hand, changing the pitch (the rate) of the audio without speeding it up or slowering it down: now that the speed depends on the stretch variable, the rate will be applied without altering the speed (I guess the level of perforation of the sound is responsible of this). There are a lot of sonic artifacts: try different deviations or none (as shown before), but remember that even the plugins for pitch-shifting produce sonic artifacts:
 //Now you can combine both processes, for example, slowing down the audio, but raising the pitch at the same time:
 
 (
-Routine({
+r = Routine({
 	var durBuffer, durGrain, position = 1, speed, waitTime, superposition, stretch;
 
 	durBuffer = c.duration;
@@ -463,9 +486,11 @@ Routine({
 }).play
 )
 
+r.stop
+
 //One last experiment adding several synths featuring different rates at the same time to create a chord (it works pretty well applying a different delay to each synth too): each synth features a different pitch-shifting (one featuring the original tuning, for example, the rest using the interval relationships with .midiratio. The amplitudes could be also adjusted to create a balance depending on the pitch (be aware of the addition of amplitudes as the principle is that, when multiple Synths write to the same bus, their output is summed (i.e. mixed).):
 (
-Routine({
+r = Routine({
 	var durBuffer, durGrain, position = 1, speed, waitTime, superposition, stretch;
 
 	durBuffer = c.duration;
@@ -509,6 +534,9 @@ Routine({
 }).play
 )
 
+r.stop
+c.free
+
 ///////////////////////////////////////////////////////////////////////////
 //SUMMARY: BASIC MODEL OF GRANULATOR (to be modified and extended):
 
@@ -535,7 +563,7 @@ SynthDef(
 )
 
 (
-Routine ({
+r = Routine({
 	var durBuffer, durGrain, position, speed = 1;
 
 	durBuffer = b.duration;
@@ -561,3 +589,6 @@ Routine ({
 	});
 }).play
 )
+
+r.stop
+b.free

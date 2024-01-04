@@ -12,6 +12,7 @@ a.numChannels //Asking its number of channels.
 a.bufnum //Asking its bufnum.
 a.query //Several parameters of the audio file will be printed in the postwindow (bufnum, numFrames, numChannels and sampleRate).
 a.play //To simply play the audio.
+a.free //Proper way to free the buffer (instead of ctrl + period): need the buffer to be assigned to a variable.
 { PlayBuf.ar(a.numChannels, a.bufnum) }.play //Plays the sample contained in the buffer back and allows to adjust some parameters.
 
 //There is an alternative way to indicate the path of the audio files, but it only works if the audios are located in the same drive (in C, in case of using PC). This technique is called "standardizePath" and it is useful to work on the same project from different computers. This following line searches in the SC resources folder, which contain the SC default audios (really ugly, but useful to work with the same audio with all students in the class). This is the equivalent to the path written above:
@@ -52,6 +53,7 @@ c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") 
 
 }.play
 )
+c.free //Freeing the buffer in "c" --> Then, if running the previous code again, the program will complain because there is nothing in "c". Run the buffer again and continue with the examples.
 
 //CHANGING THE RATE: When lowering the rate, the higher frequencies are lost (if the maximum was 22050 Hz, half of the sampling rate, now the maximum is 11025 Hz) --> The solution for this would be increasing the sampling rate (it is one of the reasons for doing so: reproducing sounds at a lower rate while keeping all the spectrum of audible frequencies). When increasing the rate, on the contrary, we may obtain aliasing because frequencies over 22050 will fold back to the audible spectrum (rate = 2, double speed and 8ve higher, 4 = two 8ves higher, etc.). Lastly, negative rates reproduce the audio file backwards keeping the same behavior as positive rates otherwise:
 (
@@ -120,33 +122,32 @@ c = Buffer.read(s, "C:/Program Files/SuperCollider-3.10.3/sounds/a11wlk01.wav") 
 }.play
 )
 
+c.free //Now we can free the buffer in "c".
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //WAVESHAPE DISTORTION
 //The timbre of a sound depends greatly on its waveshape. Distortion is the alteration of the waveshape of a signal, and it is usually nonlinear. In non-linear distortion, the relationship between the input and output is nonlinear: the amplitude of the output is not strictly proportional to the input's, bringing about new frequency components in the output signal. Linear distortion is an alteration of amplitude or phase that doesn't produce new frequency components, but what we understand as "distortion" refers mainly to non-linear distortion, that is to say, to the alteration of not only the waveshape but also the spectrum of a signal.
 //Distortion can be complemented by other processes so it does not have to be, for example, noisy (it can work alongside a filter, for instance). It is very useful for expanding the spectrum of a sound.
 
 //We can use methods such as clip2, wrap2 and fold2: they accept an argument which indicates the amplitude value from which the signal will be affected by the distortion (the smaller this value, the sooner the signal will be affected while increasing its amplitude from 0). They basically modify the amplitude limit from which the distortion will be produced and specify what happens to that excess of amplitude:
+b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav") //Let's use the previous sample for all following examples.
 
 //Clip2: this one is the smoothest (and most used) out of these methods:
 
-{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).clip2(0.5)}.scope //It will cut information from the SinOsc waveshape from 0.5 amplitude value.
-
-b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav"); //Using again the default sound from SC library.
+{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).clip2(0.5) }.scope //It will cut information from the SinOsc waveshape from 0.5 amplitude value.
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(0.01, 10, \exponential).poll).clip2(0.5) }.scope //Observe the distortion, now applied to the buffer.
 
 //Fold2: what is beyond the limit imposed by the method (here 0.5) is folded or "bounced" within the limits:
 
-{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5)}.scope //Same example. It is more aggressive than clip2:
-
-b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav")
+{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5) }.scope //Same example. It is more aggressive than clip2:
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5) }.scope
 
 //Wrap2: the harshest. What exceds the limit of the distortion is folded and inverted. The jump is too big a too sudden:
 
-{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).wrap2(0.5)}.scope
-
-b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
+{ SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).wrap2(0.5) }.scope
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(0.01, 10, \exponential).poll).wrap2(0.5) }.scope
+
+b.free
 
 //We can use these methods applied to numbers (for algorithmic operations, for example). Study the differences between the three:
 
@@ -170,6 +171,8 @@ b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(1, 100, \exponential)).softclip * 0.5 }.scope
 
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(1, 100, \exponential)).distort * 0.5 }.scope
+
+b.free
 
 //The following graphical representations show the differences in the waveshape with each method:
 
@@ -316,11 +319,11 @@ ring4: //(a * a * b) - (a * b * b)
 
 //Other examples (the resultant timbre of each method will greatly depend on the signals involved in the modulation):
 
-{ BrownNoise.ar(0.3) ring3: SinOsc.ar(LFDNoise3.ar(1, 1500, 2000), 0, 0.3)}.play
+{ BrownNoise.ar(0.3) ring3: SinOsc.ar(LFDNoise3.ar(1, 1500, 2000), 0, 0.3) }.play
 
-{ BrownNoise.ar(0.3) ring4: SinOsc.ar(LFDNoise3.ar(1, 1500, 2000), 0, 0.3)}.play
+{ BrownNoise.ar(0.3) ring4: SinOsc.ar(LFDNoise3.ar(1, 1500, 2000), 0, 0.3) }.play
 
-{SinOsc.ar(7000, 0, 0.1) ring4: SinOsc.ar(LFDNoise3.ar(3, 125, 7000), 0, 0.3) !2}.play
+{ SinOsc.ar(7000, 0, 0.1) ring4: SinOsc.ar(LFDNoise3.ar(3, 125, 7000), 0, 0.3) !2 }.play
 
 //"ring" is a method, but since it represents a product between two signals, it runs at 44100 Hz, turning into a signal itself. When the method is applied to, for instance, numbers (for example, for algorithmic procedures), then it is not a signal because it does not run at audio rate.
 
@@ -330,7 +333,7 @@ ring4: //(a * a * b) - (a * b * b)
 //A decay line generates an exponential envelope with a certain duration. It is especially useful to enhance the beginning of sounds, as we'll see in some examples.
 //The Decay acts as an envelope for the mul argument of the BrownNoise here. Decay generates an envelope each time the trigger (first argument) is activated. It's second argument is the decay time in seconds:
 
-{ BrownNoise.ar * Decay.ar(Impulse.ar(0.5), 1, 0.3)}.play
+{ BrownNoise.ar * Decay.ar(Impulse.ar(0.5), 1, 0.3) }.play
 
 //In the following example, a bank of Ringz filters (three frequencies) is modulated (ring modulation) by a WhiteNoise, whose amplitude is defined by a Decay line. There is a common trigger for both signals (the Impulse), so both signals happen at the same time, being the WhiteNoise the "attack" of the Ringz filters thanks to the ring modulation:
 (
@@ -383,7 +386,7 @@ p.entries.do{ //It will repeat the function as many times as elements are in the
 //Using non-declared variables: the previous code would be implemented as follows:
 (
 ~folder = [];
-~path = PathName.new("F:/DOCUMENTOS/1 SIBELIUS 2021-22/Media and Sonic Arts/Old definitive work/Factory sounds library"); //Random path (drag your folder of samples here)
+~path = PathName.new("F:/DOCUMENTOS/!SUMMER 23 - PREPARATORY YEAR 23-24/SUPERCOLLIDER/THEORY CODES/ugly_percussion_library/group1"); //Random path (drag your folder of samples here)
 ~path.entries.do({arg path, i; ~folder = ~folder.add(Buffer.readChannel(s, path.fullPath, bufnum: i));});
 //~folder.size //Testing the size of the folder (number of samples).
 )

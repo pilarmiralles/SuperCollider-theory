@@ -780,3 +780,84 @@ SynthDef(
 )
 
 Synth(\filters)
+
+
+////////////////////////////////////////////////////////////////////////////
+//##################################################################
+
+//SOLUTIONS TO ISSUES RELATED TO MULTICHANNEL EXPANSION:
+//The following codes are equivalent, obviously. In addition, there is a single Dust duplicated on both sides thankt to !2, as it is shared through a variable:
+(
+{
+	var in, signal;
+
+	in = Dust.ar(3);
+
+	signal = Ringz.ar(
+		in,
+		Array.fill(60, { exprand(200, 3000) }),
+		Array.fill(60, { exprand(0.2, 0.5) }),
+		0.01
+	);
+
+	{ Mix(signal) } !2
+
+}.play
+)
+
+(
+{
+	var in;
+
+	in = Dust.ar(3);
+
+	{ Mix(
+		Ringz.ar(
+			in,
+			Array.fill(60, { exprand(200, 3000) }),
+			Array.fill(60, { exprand(0.2, 0.5) }),
+			0.01
+		)
+	) } !2
+}.play
+)
+
+//Now, in the following code, there is a different Dust of each side as the UGen is within the scope of !2. There are 60 filters on each side, and each Dust affects (it is shared by) each set of 60 filters at the same time on each side
+(
+{
+	var in;
+
+	//in = Dust.ar(3);
+
+	{ Mix(
+		Ringz.ar(
+			Dust.ar(3),
+			Array.fill(60, { exprand(200, 3000) }),
+			Array.fill(60, { exprand(0.2, 0.5) }),
+			0.01
+		)
+	) } !2
+}.play
+)
+
+//Finally, we have here 60 different Dust, one for each filter, because the array affects the entire filter and Dust is not shared through a variable:
+(
+{
+	var in;
+
+	//in = Dust.ar(3);
+
+	{ Mix(
+		Array.fill(60,
+			{ Ringz.ar(
+				Dust.ar(3),
+				exprand(200, 3000),
+				exprand(0.2, 0.5),
+				0.01
+			)}
+		)
+	) } !2
+}.play
+)
+
+//##################################################################

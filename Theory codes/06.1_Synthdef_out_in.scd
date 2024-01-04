@@ -39,8 +39,11 @@ SynthDef(
 
 //In order to play the instrument and obtain sound, we need to create a Synth (Synth.new), the client-side representation of a single sound producing object (synth), which calls the SynthDef through its name and modifies its arguments, which are called using symbols as well. Notice that it is not possible to evaluate the SynthDef and the Synth at the same time because it takes a certain time for the server to decode the text into its own language (our writing --> Byte-code: we can apply the method .asBytes.asCompileString at the end of a SynthDef to see in the postwindow these numbers that the server understands. The Byte-code is something in between our language and the binary code).
 
-Synth(\sineWave, [\out, 0, \freq, 1000, \phase, 0, \amp, 0.1]) //Out = 0 goes to the left side by default / Out = 1 goes to right side by default.
-Synth(\sineWave, [\out, 0, \freq, Array.fill(50, {exprand(100, 3000)}).choose, \phase, 0, \amp, 0.1]) //The order of the arguments is not important because we are calling them by their names (similar to using keyword assignment). Here using a random frequency.
+a = Synth(\sineWave, [\out, 0, \freq, 1000, \phase, 0, \amp, 0.1]) //Out = 0 goes to the left side by default / Out = 1 goes to right side by default.
+b = Synth(\sineWave, [\out, 0, \freq, Array.fill(50, {exprand(100, 3000)}).choose, \phase, 0, \amp, 0.1]) //The order of the arguments is not important because we are calling them by their names (similar to using keyword assignment). Here using a random frequency.
+
+//When operating with synths, the command ctrl + period shouldn't be used to stop the process, but one should get used to the method .free:
+a.free; b.free
 
 //In summary, according to the Help file of Synth: "A Synth is the client-side representation of a synth node on the server. A Synth represents a single sound producing unit. What it does is defined in a SynthDef, which specifies what UGens are used and how they are patched together. It also specifies what inputs and outputs the Synth will have. A SynthDef is thus a kind of fixed pattern, upon which Synths are be based".
 
@@ -58,8 +61,9 @@ SynthDef(
 ).add
 )
 
-Synth(\sineWaveRand, [\out, 0, \phase, 0, \amp, 0.1]) //Now the frequency will be different each time the Synth is evaluated.
+w = Synth(\sineWaveRand, [\out, 0, \phase, 0, \amp, 0.1]) //Now the frequency will be different each time the Synth is evaluated.
 //The Synth is already part of the client and not of the server. Therefore, if a method such as exprand or rrand needs to be used in the Synth, it does not need to run in the server as a UGen.
+w.free
 
 //IMPORTANT: it is not possible to change the size of any kind of array within the SynthDef once it is compiled (for example, sending it as an argument from the Synth). Therefore, it is not possible to apply any kind of operation through an argument to the size of an array.
 //The arguments are most usually fed with numbers.
@@ -81,7 +85,8 @@ SynthDef(
 }).add
 )
 
-Synth(\filters) //SynthDef is evaluated once, then each evaluation of the Synth will create a new version of the filter due to the randomness of the function within the SynthDef. Some ideas for arguments that could be controlled from the outside (which is the point of an instrument): the amplitude, the panning, the upper and lower limites of the ExpRand frequency values, etc. (Try to do send these arguments as an exercise).
+f = Synth(\filters) //SynthDef is evaluated once, then each evaluation of the Synth will create a new version of the filter due to the randomness of the function within the SynthDef. Some ideas for arguments that could be controlled from the outside (which is the point of an instrument): the amplitude, the panning, the upper and lower limites of the ExpRand frequency values, etc. (Try to do send these arguments as an exercise).
+f.free
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //The UGen Out sends out the signals created within the function of SynthDef: "bus" is the index in the channels array from which the signals will be sent out / "channelsArray" it's a mono signal or array of signals (when more than one):
@@ -117,7 +122,7 @@ SynthDef(
 )
 
 a = Synth(\sineGate, [\out, 0, \freq, 500, \amp, 0.3, \gate, 1]) //Open the gate.
-a.set(\gate, 0) //Close the gate, killing the Synth due to doneAction = 2.
+a.set(\gate, 0) //Close the gate, killing the Synth due to doneAction = 2 (no need to apply the method .free).
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,6 +180,7 @@ SynthDef(\filter,
 //WHY THIS DOES NOT SOUND? --> See the node tree: the filter is above the noise, hence we need to flip them in order to hear the noise (noise = what sounds / filter = listens to the noise):
 a = Synth(\noise, [\out, 4,]) //The noise is sent to channel 4, a private channel (thus, it does not sound).
 b = Synth(\filter, [\out, 0, \in, 4, \freq, 600]) //The filter takes the noise from channel 4, filters it, and sends the result through channel 0 (out left).
+a.free; b.free
 
 //Here is the correct version: we need to indicate that the noise should be on top (head) of the filter (tail). 'addToHead' is the message by default in all Synths. We tell this to "s", which is the audio server of SuperCollider:
 
@@ -182,6 +188,7 @@ a = Synth(\noise, [\out, 4], s, \addToHead)
 b = Synth(\filter, [\out, 0, \in, 4, \freq, 600], s, \addToTail)
 s.scope //Visualize the signal now.
 //Review again the node tree to check the change.
+a.free; b.free
 
 //These two Synths can be evaluated at the same time (never the SynthDef and the Synth though), but they need parenthesis and a semicolon between them:
 
@@ -189,6 +196,9 @@ s.scope //Visualize the signal now.
 a = Synth(\noise, [\out, 4], s, \addToHead);
 b = Synth(\filter, [\out, 0, \in, 4, \freq, 600], s, \addToTail)
 )
+
+a.free; b.free
+
 
 //At the end of this document, an alternative to this is given based on the creation of different groups in the node tree (one for systhesis or \noise, the other for processing or \filter, in the previous case).
 
@@ -245,14 +255,25 @@ SynthDef(
 a = Synth(\sine, [\in, 0, \amp, 0.1]) //This runs the sine wave, and listens to the control channel 0, but there is nothing there yet.
 
 b = Synth(\controlSine, [\out, 0, \freq, 1]) //Now we hear the sine wave being controlled by the control sine wave (the sine wave listens to control 0 (in), and control sine wave goes out through control 0, thus we don't hear the static sine way, but its modulation. Now, if we stop the modulation and evaluate "a" again, the last value where we stopped the modulation will be still there, sounding as a static sine wave, as that is the signal of that SynthDef.
+b.free //When freeing "b", the control channel (in = 0) holds the static sine wave.
+a.free //When freeing "a", the sine wave is silenced, but the information about the last value is still in the control channel 0, so "a" will recover it anyway if evaluated again listening to that channel.
 
 c = Synth(\controlSaw, [\out, 1, \freq, 1]) //We can evaluate "a" and "c", then set in = 1 to "a" in order to hear the modulation of the Saw wave (out = 1).
 a.set(\in, 1)
-a = Synth(\sine, [\in, 1, \amp, 0.1]) //When stopping the modulation, the new frequency from channel 1 is tracked (in = 1).
+c.free //When freeing "c", the last value will be tracked and frozen in control channel 1 (in = 1).
+a.free //Same as before.
 
 d = Synth(\controlNoise, [\out, 2, \freq, 1]) //We can evaluate "a" and "d", then set in = 2 to "a" in order to hear the LFDNoise modulation (out = 2).
 a.set(\in, 2)
-a = Synth(\sine, [\in, 2, \amp, 0.1]) //When stopping the modulation, the new frequency from channel 2 is tracked (in = 2).
+d.free //The control channel (in = 2) holds the last frequency from the modulation produced in "d".
+a.free //Same as before.
+
+//Now there are three frequencies stored in control channels:
+a = Synth(\sine, [\in, 0, \amp, 0.1]) //Here, "a" will hear the frequency stored in channel 0.
+a.set(\in, 1) //Here directly switching to channel 1.
+a.set(\in, 2) //Lastly, channel 2.
+a.free //Freeing "a" and stopping the sound.
+
 
 //With .choose it is possible to choose between the three modulation options (we need to evaluate b, c and d before):
 
@@ -264,6 +285,9 @@ d = Synth(\controlNoise, [\out, 2, \freq, 1])
 )
 
 a.set(\in, [0, 1, 2].choose) //Once the previous block is evaluated, the modulation can be randomly changed setting a different "in" to "a").
+
+//Switch everything off (remember that the tracked frequencies will remain there though!):
+a.free; b.free; c.free; d.free
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //SENDING ARRAYS AS ARGUMENTS: we can send an array to the argument of a SynthDef by using an array of literals. This kind of array is preceded by a #. It is created at compile time and can't be altered at run time. This is, once again, why we can't modify its size once the SynthDef is compiled (more information can be found in the "Arrays" chapter of this link: https://doc.sccode.org/Reference/Literals.html):
@@ -343,6 +367,9 @@ a.set(\which, {rrand(0, 2)}) //Random choice.
 SynthDef(\chance, { [1, 2, 3, 4].choose.poll; Out.ar(0, DC.ar) }).add //Silent SynthDef, just to test (DC.ar's argument "in" is a constant amplitude signal: by default is 0, so it will output silence): .choose is an operation happening only in the language, so there is only an initial choice when the language is interpreted, and that choice is compiled (all instances of the SynthDef will carry the same value).
 Synth(\chance) //All instances feature the same value unless the SynthDef is compiled again.
 
+//(Here is an example of the use of DC for testing porpuses, this time with a simpler signal):
+{ LFDNoise3.ar.scope; DC.ar }.play
+
 //The solution in this case is to carry out the random choice in the language (through an argument):
 SynthDef(\chance, { arg chance; chance.poll(5); Out.ar(0, DC.ar) }).add
 x = Synth(\chance, [\chance, 2]) //Get the synth running.
@@ -401,4 +428,10 @@ s.sendMsg(\n_free, 2) //Synths and groups need to be freed by sending the messag
 //https://doc.sccode.org/Classes/Group.html (about groups - help file).
 //https://doc.sccode.org/Reference/Server-Command-Reference.html (all information about message style commands).
 
+
 //STRUCTURE OF THE SERVER TREE SUMMARY: GROUP, NODE, BUS: the architecture is organized in groups of nodes (points in the server: a node can be a synth or a group of synths). The first node is the Root Group (nodeID = 0): recording, monitoring, and other primitive functions; then the second one is the default group (nodeID = 1), is the user group, inside which the new nodes (synths and groups) are created; then third level comprises all the other groups you can create (from 2 to inf), and so on. The synths and processes need to be organized (from the bottom to the top, which is the one that is heard).
+
+//Additional commands for networking OSC messages between SC and some other software:
+NetAddr.langPort //NetAddr creates a new network address: .langPort gets the port sclang is currently listening on.
+NetAddr.localAddr //.localAddr gets a NetAddr corresponding to the localhost and the port sclang is listening on.
+Server.local.addr //To connect NetAddr with the server.

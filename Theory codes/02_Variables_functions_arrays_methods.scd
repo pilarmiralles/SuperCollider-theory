@@ -1,88 +1,81 @@
 //2 - VARIABLES, FUNCTIONS, ARRAYS, METHODS
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 //VARIABLES:
-//Variables are data containers. The data is asigned to a variable, which will represent such data. Then, we can apply transformations and processes to that data through the variables.
+//Variables are data containers. They represent the data that is assigned to them. Then, operations can be applied to the data through the variables.
 
-a = 1 //"a" contains a number 1 when the code is evaluated.
-a = 2 * 1 //The value of "a" is reasigned to new value. Now "a" contains the multiplication 2 * 1.
+//Each variable can contain one value at a time only:
+a = 1 //"a" contains an integer when the line is executed.
+a = 2 * 1 //"a" can be reassigned to a new value. Now "a" contains the product 2 * 1.
 
-//Each variable can contain only one value at a time.
-//Variables "a" to "z" are non-declared variables and can be used wherever in the code. Sometimes it is more convenient, though, to declare the variables used within a specific block of code. Those declared variables could be only called within that code. The declared variables can receive a specific (and more descriptive) name. "s" can't be used as a non-declared variable because it contains the server by default (if its value is reasigned, the communication with the audio server is lost).
+//Variables "a" to "z" are global (non-declared)variables, which can be called from anywhere in the code. The server is assigned to variable "s" by default, so this letter should be avoided in order not to lose the communication with the server.
+a = 1
+a //"a" alone returns 1 in the post window.
 
-//Non-declared variables (if used elsewhere in the code, their value will be reasigned and its function within this block of code wills change):
+this.dump //Prints (shows in the post window) the "instance of the interpreter": "this" is the keyword normally used for the current instance of something (in instance methods, it refers to the instance itself, in class methods, it refers to the class itself, and here -out of context- it refers to the current instance of the interpreter); the method .dump "prints a detailed low-level representation of the receiver to the post window". What is important from this is that the current instance of the interpreter includes all global variables and the values currently assigned to them (if nothing else, up to this moment it will show that "a" contains integer 1 and "s" contains an instance of the server).
 
-(
-a = 2;
-b = 16;
-c = a ** b //Note: in the postwindow, we only get the result of the last line of the entire block.
-)
-
-//Declared variables (they contain specific data only within this block of code and hence its value cannot be reasigned from the outside):
-
+//Declared variables or local variables can only be called within the portion of code they are declared in. They are preceded by the keyword "var", and named with any combination of characters and underscores (beginning with a lower-case letter). Get used to write descriptive names for declared variables, so that your code is understandable for someone else.
 (
 var value1, value2, power;
 
-value1 = 2;
+value1 = 2; //If we try to evaluate this single line, SC will tell us that the variable "value1" is not defined.
 value2 = 16;
-power = value1 ** value2 //Same result.
+power = value1 ** value2 //When executing the entire block, only the result of the last line is shown in the post window.
 )
 
-//Non-declared variables can receive a descriptive name different than a letter. In this case, we use the following character ~ and the name. These variable can be useful to send data from one block of code to another, but when working within a single block of code, it is advisable to declare the variables so the data they contain won't be accidentally changed from the outside of the specific code. If a block of code contains smaller portions of code, the variables could be declared within the smaller sections to limit their usage as much as possible and avoid the confusion.
+//As mentioned before, the interpreter in SC offers variables a-z as global variables. These variables are, nonetheless, very easy to overwrite accidentally, although they are useful for simple codes and examples. There is another option for global variables that can receive a descriptive name. These variables are not stored in the interpreter but in an environment called "currentEnvironment", a place where global data can be stored. Without getting into detail just now, an environment is a special type of collection containing pairs of keys (tags) and their value (key -> value).
+//We can create global variables in the currentEnvironment with the symbol ~ and the variable name we wish to assign:
+~variable1 = 1 //(alt gr-4-space in my keyboard for ~).
+~variable1 //Contains 1 now.
+//(The symbol ~ is indeed a shortcut of this:)
+currentEnvironment.put(\variable1, 1);
 
-~variable //This variable is equivalent to a letter, but we can give it a more descriptive name.
+currentEnvironment //This line prints the current state of the currentEnvironment, which is empty by default and which should show the association variable1 -> 1 by now.
+currentEnvironment.clear //With this command, we can clear all the variables created in the currentEnvironment.
 
-
-//###########################################
-//"this" --> communication with the interpreter. Use "this.dump" to see what it is asigned to each non-declared variable in the code (the state of the interpreter). For instance, you can see that the Server is assigned to "s" by default.
-//--> Note for myself: reminder of other informative methods:
-s.meter //Inputs and outputs.
-{LFTri.ar(440, mul: 0.1)}.scope //.scope: plays + shows the signal.
-{LFTri.ar(SinOsc.ar(1/3, 0.5pi, 250, 550).poll(5), mul: 0.1)}.scope //.poll: prints the live values of a signal (here is the frequency of the LFTri, which is being modulated by the SinOsc). .poll prints 10 values per second by default. Here I specified in its argument (between parenthesis) that I want 5 values per second. The phase is changed in the modulating signal, because the "carrier" (the LFTri) is reproduced at audio rate (with a freq between 300 and 800 Hz), therefore the phase won't be perceptible.
-//###########################################
-
+//In SC, you can actually create you own environment (IdentityDictionary) with customized key-value associations. More information here: https://doc.sccode.org/Classes/Environment.html
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//FUNCTIONS:
-//Functions are blocks of code carrying out a specific task. They are written between square brackets (braces). They need to be evaluated through the message (method) ".value", and a list of arguments for the function can be sent through this method (in the order we declared the arguments in the code):
+/////////////////////////////////////////////////////////////////////
+//FUNCTIONS
 
-//Useless function (because of fixed result) as an example:
+//A function is an expression which defines operations that are performed when it is sent the .value and a list of arguments in the order they are declared within the function. The arguments of a function are input values (given from the outside) that make the function flexible (and thus reusable). Functions are expressed between curly brackets. All operations or instructions (separated by semicolons) within a function are executed at once from top to bottom (eager evaluation). The result obtained in the post window will correspond to the last line of code in the function.
 
-a = {1 + 1} //Run this line to compile the function (the function is assigned to a non-declared variable, so the method to obtain the value can be applied outside the code).
-a.value //Run this line to evaluate the function and obtain its result.
+//Functions actually have a compilation limit. If they contain more than 256 selectors (class and method names, or functions within the function delimited by curly brackets), they will print an error, but this may refer to a code composed by several thousand lines, which would obviously work better if made “modular”.
 
-//A function is more useful when there are variable values, sent as arguments through the method .value:
+//Useless example of a function (because of fixed result):
+a = {1 + 1} //When running this line, the function is compiled and assigned to the variable "a". The post window says this is "a Function".
+a. value //Now, when applying the method .value to "a", we obtain the result of the function.
 
-(
-a = {
-	arg value1 = 1, value2 = 5; //Default value.
-	var result;
+//Let's write a less useless example including some arguments. Arguments can be declared within the function by using the keyword "arg" followed by a list of names and values, or by surrounding the list with vertical bars | | (newer syntax). Arguments are always declared before local variables:
+( //An entire block of code can be selected at one by double-clicking next to the first / last parenthesis.
+f = { |value1 = 1, value2 = 5, deviation = 0.9| //List of argument and their default values (to be replaced by those sent from .value).
+	//arg value1 = 1, value2 = 5, deviation = 0.9; //This is the alternative syntax for the list of arguments, outdated, but still widely in use.
+	var result; //Declared variable.
 
-	result = value1 + value2
+	result = value1 + value2;
+	result.postln; //We can return the previous line only if applying printing methods, like .postln, which prints and introduces a new line afterwards.
+	result = result * deviation //The semicolon is often avoided in the last line of a function, as this is indicating that this line is the last instruction.
 }
 )
 
-a.value(2, 3) //Those are the arguments in order, now with values different than the default.
+f.value(2, 3, 0.09) //Evaluating the function and sending values to its arguments.
+f.value(deviation: 0.99) //Keyword assignment: specifying the arguments in any order. Those that are not specified keep their default value.
+f.value(3, value2: 6) //You can mix normal arguments (in order) and keyword arguments.
 
-//Another example:
-
+//Another example: a function to calculate the area of a trapezoid A = ((a + b) / 2) * h:
 (
-b = {
-	arg secondValue = 2, mul = 20;
-	var result;
+{ |shortBase = 2, longBase = 3, height = 2|
+	var area;
 
-	result = 1 + secondValue;
-	result = result * mul; //Here the value of the variable "result" is reasigned (overwritten).
-	result //Only the last line of the code will be shown when evaluating the function.
-}
+	area = shortBase + longBase / 2; //Remember that there is no hierarchy regarding the operations in SC: they will be performed from left to right.
+	area = area * height //We could have included this product in the previous line already, but sometimes splitting the operations clarifies the code.
+
+}.value(1, 2, 2) //Method .value applied to the block of code directly because there is no global variable. Functions are usually assigned to variables and called from somewhere else in the code though.
 )
 
-b.value(1, 10)
-
-//There is an alternative syntax for declaring the arguments as shown in the following code. It is advisable to choose and stick to one of them. This function creates a cluster using pitch classes starting by 0, by default (notice the use of the module 12 to keep the pitch classes between 0 and 11):
-
-(
+//Other examples:
+(//This function creates a cluster using pitch classes starting from 0 by default (notice the use of the module 12 to keep the pitch classes between 0 and 11):
 c = {
 	| fundamental = 0 | //Alternative way of writing the arguments.
 
@@ -90,24 +83,7 @@ c = {
 }
 )
 
-c.value(7) //This will create a semitonal cluster of three pitches from pitch 7 in pitch class ([7, 8, 9]).
-
-//Another example: this function chooses random numbers within a uniform distribution within a given range (rrand), which is 0.0 to 1.0 by default.
-
-(
-f = {
-	arg bottomValue = 0.0, topValue = 1.0;
-
-	rrand (bottomValue, topValue) //Using "exprand" instead of "rrand" would provide with random values according to an exponential distribution (more advisable when working with frequencies in Hz). When using exponential distribution, the value 0 must be avoided within the range of choice.
-}
-)
-
-f.value //Random numbers between 0.0 and 1.0 (floats, due to float input in rrand).
-f.value (0, 10) //Random numbers between 0 and 10, integers (due to integer input in rrand, both numbers).
-f.value (0, 5.2) //Random numbers between 0 and 5.2 --> if only one of the numbers is a float, the result will always be a float anyway.
-f.value (topValue: 2) //Changing only the second argument thanks to the use of the key-word assignment (argument: value), which allows you to write the arguments and their value in whichever order, especially useful when only specific arguments need a value different than the default one, and especially when the list of arguments is long.
-
-//The message ".value" can be directly applied to the block of code of the function as the following code shows. This way, the function would be compiled and evaluated with a single click, and the non-declared variable wouldn't be needed anymore. Though, the function couldn't be called from anywhere else in the code, but this choice depends on the task of the function:
+c.value(7) //The result is a semitonal cluster of three pitches, [7, 8, 9] in pitch class. The result will be an array, we will study later why.
 
 (//This function calculates the Pythagorean theorem:
 {
@@ -116,31 +92,30 @@ f.value (topValue: 2) //Changing only the second argument thanks to the use of t
 
 	hypotenuse = (sideA.pow(2) + sideB.pow(2)).sqrt
 
-}.value(5, 4) //Here the .value method is applied directly to the block of code of the function. The result is given right away.
+}.value(5, 4)
 )
 
-//Other examples of functions (advanced):
+//##############################################################
+//Advanced examples:
 
-//This function calculates the mul and add for the modulation of a parameter between two values (which will be studied later on):
-(
-d = {arg bottomValue, topValue;
+(//This function calculates the add and mul for the modulation of a parameter between two values. We will study this later on:
+d = { arg bottomValue, topValue;
 	var mul, add;
 
 	mul = topValue - bottomValue /2;
 	add = mul + bottomValue;
-	[mul, add] //Using an array will allow you to make the function return two values (mul and add) at the same time.s
+	[mul, add] //Using an array here allows to print several results at one within an array.
 }
 )
 
-d.value(500, 1000) //It is calculated here, for instance, a modulation between 500 and 1000 Hz for a sine wave (which will be studied later on).
+d.value(500, 1000) //For instance, a modulation between 500 and 1000 Hz for a sine wave.
 
-//Applying the former function in a more complex block of code:
-(
+(//Applying the former function within a more complex block of code, including the modulation itself. In order to make sound, we need to boot up the server with the key combination Ctrl-B:
 {
 	var function, mulAdd, freqs;
 
-	//A first function calculates the mul and add (the variable "function" contains the array with the mul and add values):
-	function = {arg bottom, top;
+	//First, a function calculates the mul and add (the variable "function" contains the array with the mul and add values):
+	function = { arg bottom, top;
 		var mul, add;
 
 		mul = top - bottom /2;
@@ -149,38 +124,34 @@ d.value(500, 1000) //It is calculated here, for instance, a modulation between 5
 	};
 
 	//The former function is applied to a real modulation within the same code:
-	freqs = Array.fill(2, { rrand (30, 16000)}).sort; //A series of random frequencies in order is created.
-	mulAdd = function.value(freqs[0], freqs[1]); //The bottom and top frequencies are applied to the previous function. The variable mulAdd contains its evaluation.
+	freqs = Array.fill(2, { rrand(30, 16000) }).sort; //Two random frequencies are created.
+	mulAdd = function.value(freqs[0], freqs[1]); //The bottom and top frequencies are applied to the previous function as arguments. The variable mulAdd contains the function's evaluation.
 	SinOsc.ar(SinOsc.ar(10, 0, mulAdd[0], mulAdd[1]), 0, 0.1) //The mul and add values are taken from the resulting array of "function" using the index of each one, and applied to a SinOsc whose frequency is being modulated by another SinOsc.
 
 }.play
 )
 
-//This function receives the overtone number within the overtone series (n) and gives back the pitch of that overtone in Hz and MIDI.
-(
-{
-	arg n, fundFrecMidi = 24; //Fundamental frequency by default = C1 (24 MIDI).
+(//This function receives the an overtone number within the overtone series (n) and output the frequency of that overtone in Hz and MIDI based on a fundamental frequency input value (in MIDI). MIDI values are normally based on A = 440 in equal intonation. This is why the results of this function are approximate:
+{ arg n, fundFrecMidi = 24; //Fundamental frequency by default = C1 (24 MIDI).
 	var hz, midi;
 
-	hz = n * fundFrecMidi.midicps; //Converting the fundamental freq into Hz so the frequency of the overtone can be calculated as "n * fund freq".
-	midi = hz.cpsmidi.round(1); //Now using the result of Hz, so the value is coming from the natural temperament, although when converting into midi, there are decimals, which will be rounded in order to obtain an integer for the midi value.
+	hz = n * fundFrecMidi.midicps; //Converting the fundamental freq into Hz so that the frequency of the overtone can be calculated as "n * fund freq".
+	midi = hz.cpsmidi.round(1); //Converting back the result in Hz (just intonation): the value will need to be rounded when converted back into MIDI.
 
 	[hz, midi]
 
 }.value(8) //Here, as an example, calculating the C4 (8th overtone of the C1 series, hence n = 8).
 )
 
-//This function checks out whether a word (a string of letters) is a palindrome or not):
-(
-f = {
-		arg word;
+(//This function checks out whether a word (a string of letters) is a palindrome or not:
+f = { arg word;
 		var original, reverse;
 
 		original = word;
 
 		reverse = word.reverse;
 
-	original == reverse;
+	original == reverse; //Checking equality (same series of characters in the same order).
 	}
 )
 
@@ -188,19 +159,17 @@ f.value("lol") //The result will be either true or false, as the function consis
 f.value("tacocat")
 f.value("dog")
 
-//This is called symmetric difference (see "Set" theory below in this code for a method equal to this function): This function compares two arrays and gives back an array featuring all elements only present in one of the arrays: for example, comparing [1, 2, 3, 4] and [2, 3, 4, 5], the result should be [1, 5]
-//Approach: comparing each element of the first array: asking the second array how many instances are in there of each element of the first array (if no instances, it passes to the final array) + same viceversa + concatenate both results at the end:
-
+//The last example is called symmetric difference (see theory about Set later on in this document for a method that performs this same function). It compares two arrays and returns an array containing only the unique elements of each array: for example, comparing [1, 2, 3, 4] and [2, 3, 4, 5], the result should be [1, 5].
+//My approach: comparing each element of the first array: asking the second array how many instances are in there of each element of the first array (if no instances, it passes to the final array). The same is done to the other array. Both results are concatenated (united in one single array) at the end, filtering any repeated values:
 (
-a = {
-	arg array1, array2;
+a = { arg array1, array2;
 	var result1, result2, finalArray, addition, utmostArray;
 
-	//Comparing the array and obtaining the unique values of each:
+	//Comparing the arrays and obtaining the unique values of each:
 
 	result1 = array1.select({ //The method select receives a collection and features a function and two arguments (item and index). The method answers a collection consisting of all items in the receiver for which its function answers "true".
-		arg item;
-		array2.occurrencesOf(item) == 0 //OccurrencesOf(item) refers to the number of repetitions of the given item within a collection.
+		arg item; //The argument item refers to each element in the collection.
+		array2.occurrencesOf(item) == 0 //OccurrencesOf(item) refers to the number of repetitions of the given item within the collection.
 	});
 
 	result2 = array2.select({
@@ -208,175 +177,165 @@ a = {
 		array1.occurrencesOf(item) == 0
 	});
 
-	finalArray = result1 ++ result2;
-	finalArray.postln;
+	finalArray = result1 ++ result2; //Concatenating both results.
+	finalArray.postln; //Printing the result at this point just for testing.
 
 	//Filtering repetitions:
 
-	finalArray = finalArray.as(Set); //See theory about Set.
+	finalArray = finalArray.as(Set); //See theory about Set (this kind of collection does not accept repeated values.
 	finalArray = finalArray.as(Array)
 }
 )
 
-a.value([1, 2, 3, 3, 6, 7, 7], [5, 2, 1, 4, 6, 8, 1]) //--> The solution should be [3, 7, 5, 4, 8]. It works!
-//You could try to create a similar function in which the number of compared arrays is flexible --> See "Symmetric difference algorithmic practice" in the folder of "Codes for specific tasks" for a solution.
+a.value([1, 2, 3, 3, 6, 7, 7], [5, 2, 1, 4, 6, 8, 1]) //The solution should be [3, 7, 5, 4, 8]. It works!
+//You could try to create a similar function in which the number of compared arrays is flexible and not just two. See "Symmetric difference algorithmic practice" in the folder of "Codes for specific tasks" for a solution.
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//##############################################################
+
+
+/////////////////////////////////////////////////////////////////////
 //METHODS
-//The transformation of and operations with objects created by Classes are defined by methods. They can be (as shown is the document 1) instance of class methods (class methods create objects / instance methods apply transformations and operations to objects already created by classes).
 
-/* Definition of "message" and "method" according to SC guide:
-MESSAGE: A request for an object to perform an operation (the operation itself and the act of assigning the operation to an object, the request).
-METHOD: A description of the operations necessary to implement a message for a particular class (the word of the message and its arguments, the text itself, the "physical" form of the message).
-*/
+//As introduced in the previous theory file, a message is a request for an object (the receiver)to perform one of its operations. The way in which this operation is performed is defined by the object's class. Messages represent the way to change an object's state since its implementation is hidden from the client. Messages consist of a message selector (name of the operation) and, in some cases, a list of arguments (input values) which give additional information about the operation (for example, if creating an oscillator, its frequency). A message always returns a result on the post window (by default, the receiver itself).
 
-//Theoretical example of how the objects, classes, messages (methods) work in SC:
+//Methods are descriptions of the operations necessary to implement a message for a particular class: they tell how to implement messages sent to the instances of a class. In a class, there is a method definition for each message to which the instances of that class respond to: when an object is sent a message, the method whose name matches the message selector in the receiver’s class is executed. Methods may inquire about some property of the receiver, ask the receiver to change its internal state, or ask the receiver to return some computed value.
 
-//These two are our Classes (capital letter):
+//There are two main types of methods: class methods are sent to class objects to create instance objects of that class; instance methods are sent to an instance object to modify it or inquire information about it.
+
+//This link might be useful again for the next explanation: https://doc.sccode.org/Guides/WritingClasses.html. Let's see how classes, methods and messages work together:
+
+//Let's imagine these Classes exist:
 Sandwich
 Ham
 
-//These are our methods:
+//And let's imagine we can apply the following methods to them:
 Sandwich
-* prepare //Class method (creates the sandwich)
-hitUp //Instance methods (modify the sandwich)
+* prepare //Class method (creates the sandwich), indicated with an asterisk.
+heat
+Up //Instance methods (modify the sandwich):
 cut
 
 Ham
-* marinate
-fry
+* marinate //Class method (creates the ham).
+fry //Instance method (modifies the ham).
 
-//Syntax object-message --> class.method:
+//The syntax is object - method: receiver.message(arguments):
+Sandwich.prepare //The message "prepare" is sent to the class "Sandwich".
 
-Sandwich.prepare
+//Example of a real class:
+s.boot //Remember to boot the server before performing any audio synthesis.
+{ SinOsc.ar(440, 0, 0.1, 0) }.play //The class SinOsc receives the message .ar, whose corresponding method asks it to create an audio rate sinewave oscillator signal (class method). It also receives a list of arguments specifying the frequency, phase, and amplitude of the oscillator. The signal is then placed into a function to which the message .play is sent. The method .play, when sent to a function, plays a synth from UGens returned by the function (instance method). When executing the line, we can see in the post window that a synth, an instance of a synth definition, which is a single sound producing unit that runs in the audio server, has been created.
 
-//Real example in SuperCollider:
+//Now let's see how our imaginary objects would be written in SC's implementation:
 
-{SinOsc.ar}.play //.ar is a class method (ask the class to create an audio signal), .play is an instance method (plays the audio signal created by the class, requested by .ar).
+//Defining imaginary arguments:
+Sandwich{
 
-//Defining arguments for the methods within our Sandwich Class:
-
-Sandwich {
-
-	*prepare{ arg extraIngredients = [ 'tomato', 'cheese'], //Our class method "prepare" (*) and its arguments and default values.
-		bread = 'baguette',
-		meat = 'chicken';
-		...
-		...
+	//Class method:
+	*prepare{ //List of arguments and default values:
+		arg extraIngredients = ['tomato', 'cheese'], bread = 'baguette', meat = 'chicken';
 	}
 
-	hitUp{ arg temp = 50, time = 120; //Instance method and its arguments and default values.
+	//Instance methods:
+	heatUp{ arg temp = 50, time = 120;
 	}
 
-	cut { arg numPieces = 2;
+	cut{ arg numPieces = 2;
 	}
 }
 
-//Now we can define its arguments, change their default values:
+SinOsc //Press ctrl + i (and double click on SinOsc in the list): source code of SinOsc (resembling our imaginary example).
 
+//Applying our imaginary methods to our imaginary classes:
 Sandwich.prepare(['tomato'], 'baguette', 'tofu')
-Sandwich.prepare(meat: 'tofu')  //Key-word assignment, changing just the third argument (rest of them by default).
+Sandwich.prepare(meat: 'tofu') //Remember that the keyword assignment allow us to specify any argument in any order by naming it and adding a colon (the rest of the will receive their default value).
 
-//Another example, using the rest of our methods for the Sandwich Class:
-
+//Now adding the other class:
 a = Sandwich.prepare(
-	[ 'pepper'],
+	['pepper'],
 	'baguette',
 
-	Ham.marinate.fry(260) //First argument of the method .fry is the temperature.
+	Ham.marinate.fry(260) //First argument of the method .fry is temp (for instance): the Help file of the class Ham should indicate what is the unit of temp (just like when applying .ar to SinOsc, it is indicated that the unit of frequency is the Hz).
 )
 
-a = a.hitUp //Now what the class created applying the class method .prepare can be further transformed by the instance method .hitUp.
-a = a.cut(4) //Argument of the method .cut is the number of pieces.
+//Applying instance methods:
+a = a.heatUp //Now that "a" contains the prepared sandwich, we can heat it up.
+a = a.cut(4) //The argument of of .cut is the number of pieces. Here we are cutting the sandwich we prepared and heated up.
+
+//Remember from last theory file the word polymorphism. This is a very important feature of SC and consists of the capacity of different classes to respond to the same message in different ways. For instance, we have seen that the method .ar is used to generate audio rate signals: when sent to SinOsc, it will create a sine oscillator at audio rate, but when sent to LFTri, it will create a triangle oscillator at audio rate instead.
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//ARRAYS:
-//A collection is an object which contains a group of objects: the elements of the collection. An array is a type of collection (the most used one).
+/////////////////////////////////////////////////////////////////////
+//COLLECTIONS (ARRAY)
 
-//An array is written between square brackets and the elements inside it are separated by commas. Arrays can contain homogeneous (same kind of elements, for example, numbers), or heterogeneous (different kindss of elements). The elements within a collection can be accessed using indexes.
+//Collection is an abstract class, meaning that we don't create direct instances of it, but instead we create instances of the many types of collections (subclasses). A collection is always an object containing a series of objects, the elements of the collection. Array is the most used type of collection. It is so common that its class does not need to be written: instead of Array[1, 2, 3], we can just write [1, 2, 3], which will be interpreted as an array by default.
+//An array is written between square brackets and its elements are separated by commas. The elements contained within an array can be indexed (meaning that their order matter). The index of each element is an integer starting by 0, which can be used to access this element. Arrays can contain any kind of object and the same obect might appear several times (other collections such as Set do not allow repetition of equal objects). Arrays can be homogeneous (when they contain the same kind of elements, for example, integers) or heterogeneous (when they contain different kinds of elements):
 
-[ 1, 2, 3, 4, 5 ] //Homogeneous collection (integers).
+//Homogeneous array of integers:
+[1, 2, 3, 4, 5]
 
-[ \symbol, 67, "string", {SinOsc.ar(mul: 0.1)} ] //Heterogeneous collection (symbol, integer, string and sine wave function).
+//Heterogemeous array (symbol, integer, string and sine oscillator function):
+[\symbol, 67, "string", { SinOsc.ar(mul: 0.1) }]
 
-a = [ 1, 2, 3, 4, "hello", {SinOsc.ar(mul: 0.1)} ] //A collection assigned to a non-declared variable.
+//An array assigned to a global variable:
+a = [1, 2, 3, 4, "hello", { SinOsc.ar(mul: 0.1) }]
 
-//The index indicates the position of the element within the collection, starting by 0 (IMPORTANT: THE 1st ELEMENT WILL BE INDEX 0).
+//Now we can address each element using its index (remember that the first element's index is always 0):
+a[0] //= 1
+a[4] //= "hello"
+a[5].play //Applying the method .play to the function at index 5 (remember to boot the server).
+a.at(0) //Method .at: equivalent to a[0]: = 1 again.
 
-a[0] //This will be equal to 1.
-a[4] //This will be equal to te string "hello".
-a[5].play //This will apply the method .play to the sine wave function.
+//Let's review some class and instance methods that can be applied to arrays:
 
-//Instance / class methods can be applied to arrays.
-//CLASS METHODS: they create arrays:
 
-//ARRAY.FILL:
-//Array.fill(size, function): it creates an array with a specific size (1st argument). Then, it will evaluate the given function (2nd argument) as many times as stated in the size argument. Remember that the function should always be written between curly brackets. Avoid the space between Array.fill and the parenthesis:
+//CLASS METHODS: class methods for arrays create arrays. These are only the main class methods for arrays:
+//Array.fill: creates an array with a specific size by evaluating a function as many times as the size value:
 
-Array.fill(6, { rrand (0, 11)}) //Creates an array with 6 random numbers between 0 and 11.
+Array.fill(6, { rrand(0, 11) }) //Six random numbers from 0 to 11.
 
-Array.fill(6, {arg i; i}) //The argument "i" (index) = number of the index of each element of the array, as seen before (any name can be used for the index arg). This array will contain the numbers of the indexes (0 to 5).
+Array.fill(6, { |i| i }) //The function passes an argument, which is the index of each element in the array. We will normally use "i" for this argument, but any name can be given to it. This function just prints the indexes (0 to 5 because the size is 6).
 
-Array.fill(6, {arg i; [i, rrand(0, 11)]}) //Here creating separate arrays containing each index and a random number from 0 to 11.
+Array.fill(6, { |i| [i, rrand(0, 11)] }) //Array of six arrays containing the index number and a random number from 0 to 11.
 
-//Using Array.fill to obtain 30 sine waves, which will be the overtones of the fundamental frequency 440Hz (this content will be studied later on):
+//The duplication of "n" times (!n) of a function is equivalent to Array.fill:
+({ |i| [i, rrand(0, 11)] } !6) //equal to:
+Array.fill(6, { |i| [i, rrand(0, 11)] }) //and it is also equal to the method .dup:
+{ |i| [i, rrand(0, 11)] }.dup(6)
+
+//Example of the use of Array.fill in a function: this function provides the frequency of an overtone series for which we can establish the root in Hz and the number of overtones (slots):
 (
-{
-	{
-		Mix( //"Mix" will mix all frequencies in a single channel. This is why the entire function needs to be duplicated in order to get a stereo sound.
-			Array.fill(30, {
-				arg n;
-				var overtone;
-
-				overtone = n + 1; //This will add 1 to every index number, avoiding starting by 0.
-
-				SinOsc.ar((440 * overtone), 0, 0.01/overtone) //Mul is divided into each index number, so each frequency is weaker as it goes up in frequency (it is now a bit too quiet, but the resulting sound is also quite piercing, akin to a sawtooth wave).
-
-			})
-		)
-	} !2
-}.play
-)
-
-//Same function, now changing the size of the array (number of overtones) and the root of the overtone series (this function only gives the frequency values, excluding the sound synthesis part):
-(
-{
-	arg root = 50, slots = 7; //Default values.
+f = { arg root = 50, slots = 7; //Default values.
 
 	Array.fill(slots, {
 
-		arg i;
+		| i |
 
-		(i + 1) * root //Adding 1 to avoid the 0 (any other number could be added to start from a different point of the overtone series).
-
+		(i + 1) * root //Adding 1 to i so that 0 is avoided. This way, we start with the root as first overtone. We can add any number to start from a different overtone in the series.
 	});
-
-}.value(50, 8) //50 Hz for the root's freq, 8 overtones calculated (the first one being the root).
+}
 )
 
-//Duplicating (!n) is equivalent to Array.fill:
+f.value(110, 16) //The 16 first overtones of the series from 110 Hz are calculated.
 
-//Equal functions:
-({arg i; [ i, rrand(0, 11) ]} !6) //and:
+//With this line we can hear the previous overtones, no need to understand the code just yet:
+{ SinOsc.ar( EnvGen.ar(Env([110, f.value(110, 16)].flat, 1, \step).circle), 0, 0.1) }.play //The first value needs to be repeated because of the step envelope that is changing the frequency of the sine oscillator, which jumps directly to the second value. We will study envelopes later on.
 
-Array.fill(6, {arg i; [i, rrand(0, 11)]})
 
-//ARRAY.SERIES:
-//The second class method for arrays is Array.series(size, start, step): it creates an arithmetic series:
+//Array.series: creates an arithmetic series within an array. Its arguments determine the size of the array, the starting value and the step (a value added to each element of the series, or the distance between the "steps"):
 
-Array.series(12, 0, 1) //Series from 0 to 11 (12 values, starting by 0, 1 step between each value).
+Array.series(12, 0, 1) //Series from 0 to 11 with a step of 1.
 
-Array.series(24, 60, 0.5) //Scale within an octave, in quarter tones (thus, 24 steps for an octave), from midi 60 (central C).
+Array.series(24, 60, 0.5) //Series representing a scale of quarter tones within an octave from 60 MIDI (for instance, if applied to sound. 0.5 MIDI is equivalent to a quarter tone).
 
-//An array can be assigned to a variable and visualized on a chart:
-
+//Visualizing arrays:
 x = Array.series(50, 0, 5)
-x.plot(discrete:true) //Discontinuous points.
-x.plot(discrete: false) //Continuous line (although the content of the array is still a series of "points").
+x.plot(discrete: true) //.plot will create a chart. Discontinuous points (discrete).
+x.plot(discrete: false) //Continuous line (although the content of the array is still a series of "points"), by default, no need to indicate.
+//Key "m" in the keyboard changes the type of graph between the available options.
 
-//ARRAY.GEOM:
-//The third class method for arrays is Array.geom(size, start, grow): it creates a geometric series. The arguments are the same as in Array.series (size and start), but the third argument is grow, the product (multiplication) for the geometric series, as the step (sum) would be for the arithmetic series.
+
+//Array.geom: The third class method for arrays is Array.geom(size, start, grow): it creates a geometric series. The arguments are the same as in Array.series (size and start), but the third argument is grow, the product (multiplication) for the geometric series, as the step (sum) would be for the arithmetic series.
 
 //It is really useful to calculate frequencies based on a certain interval, using the ratios (numeral relationship between overtones within the overtone series) of each interval (for natural or Pitagoric tuning):
 Array.geom(5, 220, 2) //For example, grow = 2 will create octaves (regarding frequency in Hz) --> Five octaves from A3, counting the A3 itself.
@@ -800,8 +759,72 @@ SinOsc.ar(mul: 0.1, freq: 330) //The name of the argument is written as a "key" 
 )
 
 
+//#############################################################################
+//Some extra remarks on style guidelines and issues with arguments grammar:
+
+//ARG vs || when and argument receives an array:
+//I found an example in which arg and the recommended grammar to replace that outdated way of writing arguments, ||, behave differently when they are sent an array as default value.
+//See the last example for a possible solution: using an array of literals. This kind of array is preceded by a #. It is created at compile time and can't be altered at run time (it can be used, therefore, and for instance, to send array to the arguments of a SynthDef, though these arrays can't be modified regarding their size once the SynthDef has been compiled). Find more information in the "Arrays" chapter of this link: https://doc.sccode.org/Reference/Literals.html. In fact, in the last example, we are sending a bigger array than the one stated in the arguments by default. Nonetheless this is not an issue because the function is "compiled" each time if the input argument is an array of size 10, then the fixed array will have a size of 10 as well).
+
+//DOES NOT WORK WITH ||
+(
+{ |array = [1, 2, 3, 4, 5]|
+	var size, middle;
+
+	size = array.size;
+
+	if (size.odd, {middle = (size / 2).roundUp - 1}, {middle = size / 2});
+
+	array[middle.asInteger..]
+
+}.value([1, 2, 3, 4, 5, 6, 7])
+)
+
+//SAME FUNCTION, DOES WORK WITH ARG
+(
+{ arg array = [1, 2, 3, 4, 5];
+	var size, middle;
+
+	size = array.size;
+
+	if (size.odd, {middle = (size / 2).roundUp - 1}, {middle = size / 2});
+	array[middle.asInteger..]
+
+}.value([1, 2, 3, 4, 5, 6, 7])
+)
+
+//DOES WORK, WITH NO DEFAULT ARRAY
+(
+{ |array|
+	var size, middle;
+
+	size = array.size;
+
+	if (size.odd, {middle = (size / 2).roundUp - 1}, {middle = size / 2});
+
+	array[middle.asInteger..]
+
+}.value([1, 2, 3, 4, 5, 6, 7])
+)
+
+//DOES WORK: USING AN ARRAY OF LITERALS
+(
+{ |array = #[1, 2, 3, 4, 5]|
+	var size, middle;
+
+	size = array.size;
+
+	if (size.odd, {middle = (size / 2).roundUp - 1}, {middle = size / 2});
+
+	array[middle.asInteger..]
+
+}.value([1, 2, 3, 4, 5, 6, 7])
+)
+
+//#############################################################################
+
 //IGNORE THIS:
-//Bonus code (so GitHub doesn't turn my file into markdown:
+//Bonus code (so GitHub doesn't turn my file into markdown):
 
 (
 SynthDef(

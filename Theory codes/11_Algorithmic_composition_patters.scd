@@ -32,6 +32,11 @@ if ((i % 2) == 0, {"true".postln}, {"false".postln})//Though an even better opti
 //In case of using "if" within a routine and wanting to avoid applying an operation to the very first iteration, you can add to your conditional ".and(i != 0)" using the method "i" from .do:
 if (0.5.coin.and(i != 0), {"true".postln}, {"false".postln})
 
+//TAKE INTO ACCOUNT! Booleans in the server side (for example, used in a SynthDef) work in a very different way than in the client side: booleans in SynthDefs are either 1 or 0 (floats), rather than true or false.
+//More information about this here: https://doc.sccode.org/Guides/UserFAQ.html (section about "if" statements in a SynthDef).
+//And in this video (where the UGen Select, studied in the theory file 6, is explained alongside others like SelectX: https://www.youtube.com/watch?v=ZapNpkN7q7I
+//So, booleans can be used in the server side, but taking into consideration their different functioning.
+
 //////////////////////////////////////////////////////////////////
 //OTHER CONTROL STRUCTURES (advanced, apart from "if"):
 
@@ -76,7 +81,7 @@ switch (value,
         defaultFunction); //Else case.
 
 (//This example was taken from the Xenakis code (review its synthdef in its own document - "codes for specific tasks"):
-Routine({
+r = Routine({
 
 	var thisIteration, xenakisCode, counter, modulo, iterationsPattern;
 
@@ -104,6 +109,8 @@ Routine({
 
 }).play
 )
+
+r.stop
 
 //CASE -> The case method allows for conditional evaluation with multiple cases. Since the receiver represents the first case this can be simply written as pairs of test functions and corresponding functions to be evaluated if true. Compared to "switch", it does not need to incorporate the operation on which its results depend on because the boolan expression is written within each case (instead of just the result):
 
@@ -147,7 +154,7 @@ SynthDef(
 
 //Minimum number of rules: random pitch in Hz and random duration from 32nd-note to half-note (taking the second as unit for the quarter-note):
 (
-Routine({
+r = Routine({
 	inf.do({
 		Synth(
 			\sine,
@@ -158,9 +165,11 @@ Routine({
 }).play
 )
 
+r.stop
+
 //Increasing the order: exponential distribution for choosing durations --> Higher probability for short values:
 (
-Routine({
+r = Routine({
 	inf.do({
 		Synth(
 			\sine,
@@ -171,9 +180,11 @@ Routine({
 }).play
 )
 
+r.stop
+
 //Unifying the durations using just 32nd-notes so rhythmic complexity is removed:
 (
-Routine({
+r = Routine({
 	inf.do({
 		Synth(
 			\sine,
@@ -184,9 +195,11 @@ Routine({
 }).play
 )
 
+r.stop
+
 //Simplifying the pitches: the freqs are transformed into midi and rounded to integers (as exprand always give back floats) in order to use equal temperament. The range is also reduced to one octave only:
 (
-Routine({
+r = Routine({
 	inf.do({
 		Synth(
 			\sine,
@@ -197,6 +210,8 @@ Routine({
 }).play
 )
 
+r.stop
+
 
 //Now we move from BORING to BAFFLING in that order, using the former SynthDef, and building different levels of randomness:
 
@@ -204,7 +219,7 @@ Routine({
 (
 var pitches;
 
-pitches = Routine({
+f = Routine({
 	inf.do({
 		60.yield; //C4
 		63.yield; //E4
@@ -214,7 +229,7 @@ pitches = Routine({
 })
 });
 
-Routine({
+r = Routine({
 	inf.do({
 		Synth(\sine,
 			[\freq, pitches.next.postln.midicps] //The freqs are in midi numbers. If postln is placed after .midicps, the freqs would be posted in Hz.
@@ -223,6 +238,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop //Are the values in the variable "pitches" still running?
 
 //Let's add some complexity to our system: 1 out of 5 times there is the probability of obtaining the arpeggio transposed a tritone up. The coin is the last step of the first routine, so the alternative arpeggio has a probability to appear after the first. If it doesn't, the loop will come back to the beginning of the first arpeggio:
 (
@@ -248,7 +265,7 @@ pitches = Routine({
 	})
 });
 
-Routine({
+r = Routine({
 	inf.do({
 		Synth(\sine,
 			[\freq, pitches.next.postln.midicps]
@@ -257,6 +274,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Opening the choice a bit more: the variable "transposition" chooses a number between 0 (no transposition) and 6 (tritone transposition). After that, there is a new loop: a G7 chord from which 0, 1 or 2 pitches are selected (pitches are chosen from the chord thanks to .do, and it does it from 0 to 2 times), and the variable "transposition" is added. If transposition = 6, the chord will be C#7. Now we are playing with three .do, two of them nested within a single routine:
 (
@@ -292,7 +311,7 @@ pitches = Routine({
 	})
 });
 
-Routine({
+r = Routine({
 	inf.do({
 		Synth(\sine,
 			[\freq, pitches.next.postln.midicps]
@@ -301,6 +320,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Now we'll add new algorithmic processes to the second routine. Looking at the wait time, durations of 32nd note OR durations between 8th-notes and half-notes are chosen. Wchoose prioritizes the random short values:
 (
@@ -336,7 +357,7 @@ pitches = Routine({
 	})
 });
 
-Routine({
+r = Routine({
 	inf.do({
 		Synth(\sine,
 			[\freq, pitches.next.postln.midicps]
@@ -346,6 +367,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Now we create a condition so only the higher pitches (above midi 90) are going to have longer durations. We need a new variables for this: "thisPitch", so we can connect such a condition to the frequency argument later on, and "dur" so we can condition the duration in the waiting time:
 (
@@ -381,7 +404,7 @@ pitches = Routine({
 	})
 });
 
-Routine({
+r = Routine({
 		var dur, thisPitch;
 
 	inf.do({
@@ -395,6 +418,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //We add now another condition to the conditional using .and: the pitch has to be higher than midi 90 AND overcome the probability of 1/6.coin:
 (
@@ -430,7 +455,7 @@ pitches = Routine({
 	})
 });
 
-Routine({
+r = Routine({
 		var dur, thisPitch;
 
 	inf.do({
@@ -444,6 +469,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Now, every 24 notes, something is going to happen, using the module %24 connected to the index argument of the second routine's loop. We need a second "transposition" variable. Every 24 notes, a  random number from 0 to 11 is going to be chosen. Then, the new transposition is going to be added to the pitches obtained from the first routine (rememeber that it can be 0 = no transposition):
 (
@@ -479,7 +506,7 @@ pitches = Routine({
 	})
 });
 
-Routine({
+r = Routine({
 		var dur, thisPitch, transposition2 = 0;
 
 	inf.do({ | i |
@@ -498,6 +525,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Continue experimenting with other possibilities, other choices, expanding the code, playing with the extremes between boring and baffling...
 
@@ -549,7 +578,7 @@ var pitches;
 
 pitches = Pseq([60, 63, 67, 70, 72], inf).asStream;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -559,6 +588,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //We can perform arithmetic operations with patterns. Here there is an addition: the addition between arrays with different size is cyclical from the smaller to the bigger, as seen when studying the arrays. The method .asStream should affect both patterns. Now we are also creating a second pattern for the durations:
 (
@@ -572,7 +603,7 @@ pitches = (
 
 durations = Pseq([0.25, 0.5, 0.25], inf).asStream; //Fixed rhythm (short - long - short): try to divide the array by 4, so the durations are shorter.
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -582,6 +613,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //We can also embed patterns (nested patterns): here, in the bigger pattern of the former addition, there are two smaller patterns creating smaller loops to write a more complex series of numbers in the array in a shorter way: 3 times of 60-63 loop, 67, 70, and 5 times of 73-72 loop. The inner loops shouldn't have an infinite number of repetitions, because the bigger pattern would be stuck at them. The method .asStream is only applied to the outer pattern:
 (
@@ -595,7 +628,7 @@ pitches = (
 
 durations = (1/8); //Stable durations now so we can focus on the pattern of pitches.
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -605,6 +638,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 
 //PRAND
@@ -627,7 +662,7 @@ pitches =  Prand([ 60, 62, 66, 67, 71, 72 ], inf).asStream; //In order to work w
 
 durations = Prand([2, 3] /8, inf).asStream; //Prime numbers work well as random durations. A division is also applied so the values are proportionally shorter.
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -637,6 +672,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Another example: pitches from a cluster 60-65 midi, and adding another prime number to the durations, 5.
 (
@@ -646,7 +683,7 @@ pitches =  Prand((60..65), inf).asStream;
 
 durations = Prand([2, 3, 5] /8, inf).asStream;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -656,6 +693,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Nested pattern here regarding the durations, using an Array.geom (and applying .mirror so the values go back and forth). Then, in the outer pattern, there is a choice between 0.1 and this inner pattern (Pseq is repeated just once by default):
 (
@@ -665,7 +704,7 @@ pitches =  Prand((60..65) + 12, inf).asStream; //Adding an octave higher.
 
 durations = Prand([0.1, Pseq(Array.geom(8, 0.1, 1.5).mirror)], inf).asStream; //It speeds up suddenly and randomly.
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -675,6 +714,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Prand with a variable number of repetitionss (remember that rrand needs the curly brackets to operate as a function):
 (
@@ -690,7 +731,7 @@ pitches =  Pseq(
 
 durations = 1/8; //Stable duration.
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -700,6 +741,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //############################################
 //Advanced option:
@@ -724,7 +767,7 @@ pitches = Pn(
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 		Synth(\sine, [
 			\amp, 0.5,
@@ -734,6 +777,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 //############################################
 
 //There is also Pxrand, which will never choose the same value twice in a row:
@@ -763,7 +808,7 @@ pitches =  Pwrand([36, 78, 97], [0.15, 0.8, 0.05], inf).asStream;
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -773,6 +818,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Our arpeggio code, choosing between four different chords. The chords are chosen randomly, but with a probability for each of them:
 (
@@ -792,7 +839,7 @@ pitches = Pwrand(
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -802,6 +849,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //PSHUF
 //It comes from "shuffle", but it works as a .scramble: Pshuf reads an array as Pseq, but it changes randomly the order of the elements of the array. This order is chosen just once, and then it is kept for all repetitions of the pattern.
@@ -822,7 +871,7 @@ pitches =  Pshuf([60, 62, 64, 65, 67, 69, 71], inf).asStream;
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -832,6 +881,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Back to the arpeggio code: applying Pshuf to each chord instead of Prand so now we hear all pitches from each chord (although in a random order). The number of repetitions now is 1 because it is referred to the number of repetitions of the whole list as in Pseq, and not to the number of chosen values as in Prand. It seems that the order of the values in Pshuf is indeed changed here with each repetition of the Pwrand (as it re-evaluates the inner patterns again):
 (
@@ -850,7 +901,7 @@ pitches = Pwrand(
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -860,6 +911,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //PN
 //Similar to the former solution for evaluating Pshuf with a different order with each iteration --> Random permutation with Pn. Pn gives back any kind of object a specific number of times. It is ideal for nested patterns (to provide patterns such as Pshuf with the possibility of random permutation). No need to use the last argument for now (see the help document, for boolean application of "key"):
@@ -888,7 +941,7 @@ pitches = Pn(Pshuf([60, 62, 64, 65, 67, 69, 71], 1), inf).asStream;
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -898,6 +951,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Same example, now changing the pattern every 5 repetitions:
 (
@@ -907,7 +962,7 @@ pitches = Pn(Pshuf([60, 62, 64, 65, 67, 69, 71], 5), inf).asStream;
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -917,6 +972,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Same example, changing the order every 1 to 5 repetitions, being this number of repetitions random using the function of rrand:
 (
@@ -926,7 +983,7 @@ pitches = Pn(Pshuf([60, 62, 64, 65, 67, 69, 71], {rrand(1, 5).postln}), inf).asS
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -936,6 +993,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //Same example, using sixth-tones (thanks to the Array.series):
 (
@@ -945,7 +1004,7 @@ pitches = Pn(Pshuf(Array.series(7, 67, 0.66), { rrand(1, 4).postln}), inf).asStr
 
 durations = 1/8;
 
-Routine({
+r = Routine({
 	inf.do({
 
 		Synth(\sine,
@@ -956,8 +1015,10 @@ Routine({
 }).play
 )
 
+r.stop
+
 //###########################################################
-//Advance example of algorithmic routines and patterns:
+//Advanced example of algorithmic routines and patterns:
 
 //Example of changing values each certain number of iterations of a routine, maintaining the new value until a new change comes. This code plays the melody of the Theme of the Goldberg variations by Bach, choosing a random factor of speed that affects the whole melody each time it is repeated (read the comments throughout the code):
 (
@@ -987,7 +1048,7 @@ pitches = Pseq([ 7, 7, 9, 7, 9, 11, 9, 7, 6, 4, 2 ] + 72, inf).asStream; //Pitch
 
 durations = Pseq([ 1, 1, 1/8, 1/8, 1/2, 1/4, 1/2, 1/4, 1/4, 1/2, 1.5 ], inf).asStream; //Ratios (duration of each note of the melody) to be multiplied by the factor of speed.
 
-Routine({ var thisDur, factor;
+r = Routine({ var thisDur, factor;
 
 	inf.do({ arg i;
 
@@ -1007,6 +1068,8 @@ Routine({ var thisDur, factor;
 
 }).play
 )
+
+r.stop
 //###########################################################
 
 //PLAZY
@@ -1086,7 +1149,7 @@ durations = Pn(
 
 pan = Pseq([-1, 1], inf).asStream; //Panning: a new pattern is applied here for the panning: it creates a series alternating between -1 and 1 (left and right). Then, within the Synth (arguments below), this value is multiplied by the duration value from the array (which is changing in each iteration) divided by the last value of the values of that array (which is also different each time) --> When the result of that division is smaller, it means that the duration is shorter, and the panning goes closer to 0 / When the result of the division is higher (up to 1), the durations will be longer, and the panning will get to the extremes (1 or -1, alternating).
 
-Routine({
+r = Routine({
 	inf.do({
 		thisDur = durations.next; //The former Plazy is applied to the waiting times (the durations, which is also connected to the duration of the envelope in the SynthDef). As we need the value of the pattern in several places, we need to put it into a variable, as commented earlier.
 
@@ -1104,6 +1167,8 @@ Routine({
 }).play
 )
 
+r.stop
+
 //One more example: choosing between two patterns in the last line of the function of Plazy. The chosen pattern is printed in the postwindow:
 (
 var midinote;
@@ -1120,7 +1185,7 @@ midinote = Pn(
 	})
 ).asStream;
 
-Routine({
+r = Routine({
 	inf.do({
 		Synth(
 			\sine,
@@ -1133,6 +1198,8 @@ Routine({
 	})
 }).play
 )
+
+r.stop
 
 //////////////////////////////////////////
 

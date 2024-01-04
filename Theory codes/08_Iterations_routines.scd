@@ -239,6 +239,7 @@ r = Routine({
 )
 
 r.play //A value is selected and printed every second.
+r.stop //This is the proper way to stop a Routine (avoid using ctrl + period).
 
 //Controlling the clock in SC:
 r.clock //We open the communication with the clock, called "TempoClock".
@@ -282,6 +283,8 @@ r.play(TempoClock(180/60));
 z.play(TempoClock(60/60))
 )
 
+r.stop; z.stop
+
 //Example with sound:
 (
 SynthDef(
@@ -311,6 +314,8 @@ r = Routine({
 	})
 }).play
 )
+
+r.stop //DoneAction 2 already kills every synth, so it is not necessary to free it.
 
 //#####################################################
 //Extra (and unnecessary) information: with this code, an envelope is created within the routine to modulate the number of beats over 60 (per minute), from 120 to 130 (.asStream in combination with .next will be studied in future chapters). This would need to be implemented in a routine that sounds (featuring any Synth):
@@ -373,3 +378,4 @@ r = Routine({
 )
 
 r.clock.tempo = 60/60 //In case the default clock was changed at some point of this document, you can evaluate this line to put it back to 60 bpm.
+r.stop //It does not suddenly cut whatever is sounding, but the synth in play does end normally and then no other synth is created.

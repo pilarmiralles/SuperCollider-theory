@@ -340,3 +340,6 @@ Pdef(\ch1,
 
 Pdef(\ch1).stop //For some reason, this does not stop the Pdef in this case.
 m.allNotesOff(0)
+
+//More information on this topic can be also found here:
+//https://doc.sccode.org/Tutorials/A-Practical-Guide/PG_Cookbook04_Sending_MIDI.html
