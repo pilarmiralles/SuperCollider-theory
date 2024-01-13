@@ -435,26 +435,3 @@ Synth(\blip)
 //Ringz filter or "ringing filter". It includes a "decay time" instead of an "rq" value. Beware the amplitude when using a Ringz filter: unlike filters with rq value, which might need an amplitude above 1, Ringz filters will require to decrease the amplitude quite a bit as the decay time argument increases:
 { Ringz.ar(Impulse.ar(1), 440, 0.5, 0.1) }.play //Clear example of how the Ringz's decay works, here resonating a click at 440 Hz with a decay time of 0.5 seconds.
 { Ringz.ar(WhiteNoise.ar(1), 440, 1, 0.001) }.play //Here applied to a noise as continuous sound.
-
-
-///////////////////////////////////////////////////////////////////////
-//IGNORE THIS:
-//Bonus code (so GitHub doesn't turn my file into markdown):
-
-(
-SynthDef(
-	\filters,
-	{
-		var noise, signal;
-
-		noise = WhiteNoise.ar(0.0001);
-
-		signal = Array.fill(18, { Ringz.ar(noise, ExpRand (100, 3000)) });
-		signal = Mix(signal);
-		signal = Pan2.ar(signal, 0);
-
-		Out.ar(0, signal)
-}).add
-)
-
-Synth(\filters)

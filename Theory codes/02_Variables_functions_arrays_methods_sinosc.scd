@@ -867,7 +867,3 @@ p = Pseq([1, 2, 3], inf).asStream.trace; { inf.do({ p.next; 1.wait }) }.fork //T
 }.value([1, 2, 3, 4, 5, 6, 7])
 )
 //##############################################################
-
-
-///////////////////////////////////////////////////////////////////////
-//For some reason I don't seem to be able to avoid the markdown in this file at GitHub. I'll think about something soon :')
