@@ -5,3 +5,5 @@ This compilation of theory and practice in the SuperCollider programming languag
 The tutorials and examples shown in here are quite focused on sound synthesis and algorithmic composition for tape music and mostly in stereo format, simply because this is the way I find SuperCollider useful to cover my expressive necessities. Some other aspects of using SuperCollider, such as real-time processing (live coding), OSC communication with other software, or connecting SC to hardware, are barely commented on throughout these files. But there is a rich documentation and resources out there on these and other topics.
 
 Happy exploring! :)
+
+PS. Some theory files, such as 1, 2, 4, and 7.1 (for now), are automatically applied some markdown formatting. I still don't know how to avoid that, so for those files, I recommend opening the raw code and copying it into a SC file.
