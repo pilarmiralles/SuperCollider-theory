@@ -437,10 +437,9 @@ Synth(\blip)
 { Ringz.ar(WhiteNoise.ar(1), 440, 1, 0.001) }.play //Here applied to a noise as continuous sound.
 
 
-//##############################################################
+///////////////////////////////////////////////////////////////////////
 //IGNORE THIS:
-
-//Bonus code (so GitHub doesn't turn my file into markdown:
+//Bonus code (so GitHub doesn't turn my file into markdown):
 
 (
 SynthDef(
