@@ -1,20 +1,22 @@
 //3 - WAVE SHAPES, NOISE AND FILTERS
 
 ////////////////////////////////////////////////
-
 //WAVE SHAPES:
 
-//TRIANGLE WAVE: LFTri is a non-band-limited triangle oscillator. This means that the signal is not limited (filtered).  As we will see when studying the square and sawtooth waves, there are both limited and non-limited versions with different functions. All LF signals (Low Frequency) are prepared to be used in modulations rather than to produce sound. Its amplitude value oscillates between -1 and 1. The arguments are the same as in a SinOsc (the phase here is called iPhase or "initial phase").
+//Other basic periodic wave shapes apart from the sine wave are the triangle, square and sawtooth oscillators. These UGens have a non-filtered and a filtered (band-limited) version the non-filtered featuring in its identifier the letters LF, standing for low frequency, as these UGens are usually used as lFOs). the triangle oscillator, LFTri, exists only as non-filtered because it does not usually pose any aliasing problem (a form of undersampling occuring when the signal is not sampled fast enough to construct an accurate waveform: we'll see an example of this when introducing the square wave). But if LFPulse or LFSaw are used to produce sound, they might produce aliasing. Instead, when used for sound, the UGens Pulse and Saw (the band-limited versions) might be a better option. Aliasing effects can be nonetheless an aesthetical choice or an expressive resource to be used as well.
 
-{ LFTri.ar(440, 0, 0.5)}.plot(1/440) //Graph of the triangle wave (one cycle).
-{ LFTri.ar(440, 0, 0.5)}.scope //Graph of the signal AND sound.
 
-//We can build a triangular wave out of a sum of sine waves. Their frequency has to be multiplied by the odd numbers (odd overtones), from 1 to as many as we need (the more overtones we add, the more defined the triangular wave will be). Then, the amplitude of each overtone will be calculated as the inverted power of two (.squareds) of the overtone number:
+//Triangle wave:
+{ LFTri.ar(440, 0, 0.5) }.plot(1/440) //Graph of cycle (will boot the server if it wasn't running).
+{ LFTri.ar(440, 0, 0.1) }.scope //Oscilloscope and sound.
+//The arguments of LFTri are the same as in SinOsc. The phase aregument is called iphase in here referring to the "initial" phase. This argument is present in LFTri, LFPulse and LFSaw, but not in their band-limited versions, as there is no point in changing the phase value (when used for sound). For some reason, in this case the phase values go from 0 to 4 (0 = 0 radians, 1 = 0.5pi, 2 = 1pi, 3 = 1.5pi, 4 = 2pi = 0, and everything in between). In LFSaw and LFPulse the phase is measured in a different way, see the respective help file!
 
-({
-	var freq = 440; //Fundamental freq (overtone 1).
+//Building a triangle wave out of a sum of sine waves in order to understand how the spectrum is built:
+(
+{ var freq = 440; //Fundamental freq (overtone 1).
 
-	SinOsc.ar (freq * 1, 0, 1/1.squared)
+	//Sum of odd overtones (when summing up a bunch of signals, they are added to a single channel, thus the amplitude should be compensated).
+	SinOsc.ar (freq * 1, 0, 1/1.squared) //The amplitude of each overtone is the power of 2 of the overtone reciprocal.
 	+
 	SinOsc.ar (freq * 3, 0, 1/3.squared)
 	+
@@ -38,63 +40,77 @@
 	+
 	SinOsc.ar (freq * 23, 0, 1/23.squared)
 	+
-	SinOsc.ar (freq * 25, 0, 1/25.squared) //The more overtones, the more definition (we will learn a more efficient way to do this later on).
+	SinOsc.ar (freq * 25, 0, 1/25.squared)
 	*
-	0.5 //General amplitude of the total sum of signals (when adding signals, their amplitude is accumulated, therefore we have to control the total amplitude in order to maintain it between 0 and 1 (and preferably below 1).
-}.scope
+	0.1 //Total amplitude * 0.1 (compensate addition of signals).
+}.scope //Close, but not like a triangle wave (need more overtones to be closer to it). The more overtones, the more definition of the wave shape.
 )
 
-//Modulating with a triangle wave:
-//Note for myself: The number of steps affects also the pace of the freq modulation: the higher the round value, the slower the change because the bigger the steps (so the faster the range is covered), but the lower the number (the smaller the steps) the faster is has to move in order to cover the space in the same time, each seconds. As the steps are fixed in 200 Hz and the frequency in Hz is exponential, the steps are bigger at the low freqs and smaller when reaching higher freqs (it works like an overtone series):
-
+//Example of a modulation with LFTri: try out different ranges, different values for the round argument, different frequencies for the modulating signal, etc.:
 (
-{
-	a = LFTri.ar(1, 0, 500, 1500); //A triangular wave moves in the graph between 1000 and 2000 Hz each second (up and down).
-	a = a.round(125); //This creates little steps of 125 hz within the continuous movement given the range from 1000 to 2000. Without this, the sound of the SinOsc would be continuous.
-	c = SinOsc.ar(a, 0, 0.3); //The triangular wave is applied to the sine wave, modulating its continuous frequency into the discontinuous steps.
+{ var modulating, carrier;
 
-}.plot(1/1500) //This is the visualization of the wave (observe closely the wave, it is not smoothly rounded, but built out of little straight segments).
-//}.play //For playing the sound.
-)
+	modulating = LFTri.ar(1/2, 0, 500, 1500); //Moving from 1000 to 2000. The speed of the steps depends on the freq of the modulating signal (adapting to a longer or shorter time to wander the same amount of steps).
+	modulating = modulating.round(200); //Split into 5 steps with 200, 1000/200=5 (as equal steps in Hz, smaller distance in between the higher the frequency and vice-versa).
 
-//Smaller steps:
-(
-{
-	a = LFTri.ar(1, 0, 500, 1500);
-	a = a.round(75); //Feels almost continuous with steps of 75 already.
-
-	a.poll(20); //Need to print more than 10 values per second if I want to see all steps from 1000 to 2000 with the applied round value.
-
-	c = SinOsc.ar(a, 0, 0.3)
+	carrier = SinOsc.ar(modulating, 0, 0.2) //Applying the LFTri to a SinOsc's freq.
 
 }.play
 )
 
-//Bigger steps:
+
+//Square wave:
+//Filtered version (normally, for sound). It does not feature an iphase argument:
+{ Pulse.ar(440, 0.5, 0.5) }.plot(2/440)
+{ Pulse.ar(440, 0.5, 0.1) }.scope
+
+//Raw version, non-band-limited (normally, as LFO):
+{ LFPulse.ar(440, 0, 0.5, 0.5) }.plot(2/440)
+{ LFPulse.ar(440, 0, 0.5, 0.1) }.scope //Already produces sound artifacts.
+
+//Both versions include a new argument, the "width", which represents with a ratio from 0 to 1 the percentage of time that the wave spends at 0 and 1 in each cycle. By default, the width is 0.5 (half of the time in 0, half in 1). With a width equal to 0.8, the wave will spend 80% of the time at 1, and 20% at 0, for instance.
+
+//Comparing Pulse and LFPulse: moving, especially through higher frequencies will produce aliasing when using LFPulse:
+{ Pulse.ar(MouseX.kr(20, 22050, \exponential).poll, 0.5, 0.125) }.scope
+{ LFPulse.ar(MouseX.kr(20, 22050, \exponential).poll, 0.5, 0.125) }.scope
+
+//The square wave is unipolar, meaning that its amplitude range or depth goes from 0 to 1 instead of from -1 to 1 (as it happens in bipolar signals). Compare these two signals:
 (
 {
-	a = LFTri.ar(1, 0, 500, 1500);
-	a = a.round(200);
-
-	a.poll(20);
-
-	c = SinOsc.ar(a, 0, 0.3)
-
-}.play
+	[
+		SinOsc.ar(440, 0, 1, 0), //Sine wave is bipolar: with mul 1 and add 0, the amplitude range will go from -1 to 1 (so add represents the center).
+		LFPulse.ar(440, 0, 0.5, 1, 0) //Pulse wave is unipolar: with mul 1 and add 0, the amplitude range will go from 0 to 1 (so add represents to lower limit).
+	]
+}.plot(5/440, minval: -3, maxval: 3) //Displaying 5 cycles of the periodic waves within amplitude values -3 to 3.
 )
 
-//SQUARE WAVE: two versions of the square wave might be used according to its function: LFPulse is the non-band-limited pulse oscillator, mainly used for modulations. The filtered version is Pulse, better for producing sound because it reduces the possibility of aliasing. The filtered version, Pulse, does not have the iPhase argument (because it is not used for modulating other signals). If the non-filtered version is used for sound synthesis, it can produce aliasing when modulated. Aliasing sounds are interesting (akin to old radios trying to syntonize a frequency), but they can also sound too evident as aliasing. The square wave is the only one which does not oscillate below amplitude 0 (it produces the pulses from 0 to 1, or any other value used for a modulation). This has to be taken into consideration when calculating the mul and add for a modulation. The 3rd argument in LFPulse (or 2nd in Pulse) is "width", the percentage of the wave that is at 0 and at 1, usign a ratio between 0 and 1 (0.5 is the default, same percentage at 0 and at 1. If we use 0.8, there is more percentage at 1. If we use 0.2, there is more percentage at 0), this is especially useful when modulating using a square wave (at a rate at which the width is audible, as it happened with the phase in a SinOsc):
+//Unipolar signals can be turned into bipolar and vice-versa by using the methods .bipolar and .unipolar:
+(
+{
+	[
+		//SinOsc.ar(440, 0, 1, 0).unipolar, //Sine wave turned into a unipolar signal. See the following line:
+		SinOsc.ar(440) * 0.5 + 0.5, //This calculation is equivalent to the method .unipolar applied to the previous line (and equal to writing mul = 0.5 and add = 0.5 within the signal).
+		LFPulse.ar(440, 0, 0.5, 1, 0).bipolar //Pulse wave turned into a bipolar signal.
+	]
+}.plot(5/440, minval: -3, maxval: 3)
+)
 
-{ Pulse.ar(440, 0.5, 0.5) }.scope //Filtered version (signal and sound). The filtered version has no phase argument.
-{ LFPulse.ar(440, 0, 0.5, 0.5) }.scope //Non filtered version (careful with sound, produces aliasing).
-{ LFPulse.ar(440, 0, 0.5, 0.5) }.plot(2/440) //Graph (two cycles).
+//The band-limited version is, on the other hand, bipolar (because it is prepared to generate sound):
+(
+{
+	[
+		SinOsc.ar(440, 0, 1, 0), //Both signals are bipolar.
+		Pulse.ar(440, 0.5, 1, 0) //Because of the band limitation, the amplitude of the Pulse wave seems to be lower than the one indicated in its "mul" (or rather it seems that instead of converting the signal to bipolar, the unipolar signal's center is moved down to 0).
+	]
+}.plot(5/440, minval: -3, maxval: 3)
+)
 
-//A square wave can also be built out of a sum of sine waves. In this case, we also use the odd overtones only, but the amplitude of each is the inverted number of the overtone (without the power of 2):
+//Building a square wave out of sine waves:
+(
+{ var freq = 440; //Fundamental frequency (overtone 1).
 
-({
-	var freq = 440; //Fundamental frequency.
-
-	SinOsc.ar (freq * 1, 0, 1/1)
+	//Sum of odd overtones (as in the triangle wave):
+	SinOsc.ar (freq * 1, 0, 1/1) //The amplitude of each overtone is the overtone reciprocal (overtones are more present than in a triangle wave).
 	+
 	SinOsc.ar (freq * 3, 0, 1/3)
 	+
@@ -116,47 +132,37 @@
 	+
 	SinOsc.ar (freq * 21, 0, 1/21)
 	+
-	SinOsc.ar (freq * 23, 0, 1/23) //... The more overtones, the more definition.
+	SinOsc.ar (freq * 23, 0, 1/23)
 	*
-	0.5 //Again, general amplitude for the total sum of sine waves.
-}.scope
+	0.1 //Total amplitude * 0.1
+}.scope //Close, but not a real square (need more overtones to sharp the definition of the spectrum).
 )
 
-//Differenciating Pulse and LFPulse: aliasing:
+//Modulating with LFPulse (useful as a switch): when multiplying a signal by another signal, the modulation is applied to the amplitude of the first (just like when multiplying a number by a signal, which is applied equally to its "mul"):
+{ (SinOsc.ar(440) * LFPulse.ar(1)) * 0.2 }.play //Using the filtered version would generate two pulses per second still at freq = 1, possibly because of being bipolar and featuring a positive and negative max value.
 
-{Pulse.ar(MouseX.kr(20, 22050, \exponential).poll, 0.5, 0.125) }.scope //By moving the mouse from left to right, we increase the frequency. Thanks to the filtering, all overtones frequencies go up or down at the same time.
-{LFPulse.ar(MouseX.kr(20, 22050, \exponential).poll, 0.5, 0.125) }.scope //Here, using the non-filtered version, we can hear the aliasing: some overtones go up, some go down (especially regarding the higher frequencies, because of their reflection when getting out of the audible spectrum --> See Nyquist theorem).
 
-//Modulating with a Square wave (in this case, amplitude modulation): pulsation effect:
+//Saw tooth wave:
+//Filtered version (normally, for sound). It does not feature an iphase argument:
+{ Saw.ar(440, 0.1, 0) }.plot(2/440)
+{ Saw.ar(440, 0.1, 0) }.scope
 
-{ SinOsc.ar(440) * LFPulse.ar(1) }.play //The square wave turns on and off the signal, like a switch.
+//Raw version (normally, for LFO):
+{ LFSaw.ar(440, 0, 0.1, 0) }.plot(2/440) //The shape of the non-
+{ LFSaw.ar(440, 0, 0.1, 0) }.scope
 
-//Difference between LFPulse and Pulse:
+{[LFSaw.ar(1000), Saw.ar(1000)]}.plot(0.02) //Comparing both versions, the filtered one has its shape inverted and reaches only half of the amplitude.
 
-{ SinOsc.ar(440) * LFPulse.ar(1) }.play; //Version used to modulate (1 pulse per second): the non-filtered version is UNIPOLAR because it does not reach negative values (just values from 0 to x).
-{ SinOsc.ar(440) * Pulse.ar(1) }.play; //Version for sound (not for modulating, produces 2 pulses per second): the filtered is BIPOLAR because it has a positive and negative maximum (might be the reason why it produces two pulses per second).
-{ SinOsc.ar(440) * (Pulse.ar(1) > 0.00125)}.play; //Solution for it to play one pulse per second (keeping it below zero).
+//Comparing Pulse and LFPulse (aliasing when moving in between higher freqs and when sustaining higher freqs, artifacts reflected over the low spectrum):
+{ Saw.ar(MouseX.kr(20, 22050, \exponential).poll, 0.5, 0.125) }.scope
+{ LFSaw.ar(MouseX.kr(20, 22050, \exponential).poll, 0.5, 0.125) }.scope
 
-{[LFPulse.ar(1000), Pulse.ar(1000)]}.plot(0.02) //Observe the graphs, the upper one is the pure basic form of the Pulse wave from 0 to 1 (LFPulse), but the one below (Pulse) crosses the 0.
+//Building a saw tooth wave out of sine waves:
+(
+{ var freq = 440; //Fundamental frequency (overtone 1).
 
-//Now observe the differences when the different signals are converted to unipolar / bipolar:
-{[Pulse.ar(1000).unipolar, Pulse.ar(1000)]}.plot(0.02) //Pulse is bipolar by default: when .unipolar is applied, it is cut to half (in amplitude) and lifted between 0 and 1 (it is higher than 0 maybe because of the embedded filter).
-{[LFPulse.ar(1000), LFPulse.ar(1000).bipolar]}.plot(0.02) //LFPulse is unipolar by default: when .bipolar is applied, it is expanded to double its amp, reaching the amplitude range between -1 and 1.
-
-//SAWTOOTH WAVE: we find the same two options: Saw is the band-limited sawtooth generator, used to produce sound; LFSaw is the non-band-limited sawtooth generator, used for modulations. As in Pulse, Saw does not feature a phase argument because it is not used for modulations. The amplitude oscillates between -1 and 1.
-
-{ Saw.ar(440, 0.5, 0.5) }.scope //Filtered version. No phase argument (graph and sound).
-{ LFSaw.ar(440, 0, 0.5, 0.5) }.scope //Non-filtered version. The sound produces aliasing.
-{ LFSaw.ar(440, 0, 0.5, 0.5) }.plot(2/440) //Graph.
-
-{[LFSaw.ar(1000), Saw.ar(1000)]}.plot(0.02) //It is interesting that the filtered version has its graph inverted and reaching almost half of the amplitude.
-
-//We can build a sawtooth wave out of a sum of sine waves. In this case, we add all even and odd overtones, and the amplitude of each will be the inversions of the overtone number, as in the pulse wave:
-
-({
-	var freq = 440; //Fundamental frequency.
-
-	SinOsc.ar (freq * 1, 0, 1/1)
+	//Sum of both odd and even overtones (this is why we might need even more overtones to sharp the spectrum towards a real sawtooth wave):
+	SinOsc.ar (freq * 1, 0, 1/1) //The amplitude of each overtone is, again, the overtone reciprocal.
 	+
 	SinOsc.ar (freq * 2, 0, 1/2)
 	+
@@ -184,130 +190,167 @@
 	+
 	SinOsc.ar (freq * 14, 0, 1/14)
 	+
-	SinOsc.ar (freq * 14, 0, 1/14)//... roughly 50 sine waves bring about a decent sawtooth wave (this one does not sound convincing yet).
+	SinOsc.ar (freq * 15, 0, 1/15)
 	*
-	0.5 //General amplitude for the total addition.
+	0.1 //Total amplitude * 0.1.
+}.scope //Very poor sawtooth with just 15 overtones, not convincing:
+)
+
+//We would need approx. 50 sine waves to obtain something closer to Saw:
+(
+{ var freq = 440, signal;
+
+	signal = SinOsc.ar(freq * 1, 0, 1/1); //Fundamental frequency (overtone 1).
+
+	//Repeating 49 times the addition of sine waves (+ the fundamental freq = 50 sine waves):
+	49.do({ |i| //Argument "i" = number of iteration (from 0 to 48
+
+		signal = signal + SinOsc.ar(freq * (i + 2), 0, 1/(i + 2)); //i + 2 to avoid the overtone 0 and the overtone 1 (already the fundamental freq).
+	});
+
+	signal * 0.05 //Balancing the total amplitude.
+
 }.scope
 )
 
-//Modulating with a sawtooth (frequency modulation of a sine wave, for instance):
+//Modulating with LFSaw (can clearly ientify the wave shape):
+{ SinOsc.ar(LFSaw.ar(1, 0, 400, 1000), 0, 0.1 !2) }.play
 
-{ SinOsc.ar(LFSaw.ar(1, 0, 400, 1000), 0, 0.3)}.play //The frequency goes down suddenly and comes up progressively again (following the waveshape of the saw).
 
-//Remember that the aliasing is also avioded raising the sample rate (over the 44100 Hz set by default).
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////
 //LOW FREQUENCY NOISE GENERATORS:
 
-//LFDNoise0, 1 and 3 are UGens used to modulate. They are low frequency noise generators. The number in thir names corresponds to their interpolation (how the lines between the random values produced by the generator are traced: 0 = no interpolation / 1 = linear interpolation (straight lines) / 3 = cubic interpolation (curved lines). They have three arguments: frequency (freq = 10, for instance, will produce 10 random values per second; freq = 1/10 will produce 1 value each 10 seconds / mul and add (calculate those for the specific modulation values as studied in the document 2).
+//Low frequency noise generators can present three different interpolations, that is to say, ways in which they move from one random value to the next:
+//Low frequency noise generators are mostly used at low frequencies, that is, below 20 Hz (as any repetition or iteration performed above 20 Hz will produce a new frequency spectrum). In the following examples, a frequency above 20 Hz is used to exemplify the auditory difference between different interpolations:
+{ LFDNoise0.ar(440, 0.2, 0) }.play //No interpolation or step interpolation (leaps between values).
+{ LFDNoise1.ar(440, 0.3, 0) }.play //Linear interpolation (straight lines between values).
+{ LFDNoise3.ar(880, 0.3, 0) }.play //Cubic interpolation (curved lines between values).
 
-//Some examples:
+//Their arguments are the frequency (number of random values per second), and the mul and add. There are other kinds of low frequency noise generators in SC, such as LFNoise0, LFNoise1, LFNoise2, LFClipNoise, LFDClipNoise, etc. (they simply feature different randomness).
 
-{ LFDNoise0.ar(440, 0.3, 0)}.play //LFNoise is not prepared to produce sound, but this is the noise generator at audio rate (440 Hz).
+//Low frequency noise generators are normally used for aperiodic low frequency modulations (examples of modulation applied to a sine wave's frequency, this time under 20 Hz):
+{ SinOsc.ar(LFDNoise0.ar(10, 500, 1000), 0, 0.2) }.play //No interpolation.
+{ SinOsc.ar(LFDNoise1.ar(10, 500, 1000), 0, 0.3) }.play //Linear interpolation.
+{ SinOsc.ar(LFDNoise3.ar(10, 500, 1000), 0, 0.3) }.play //Cubic interpolation.
 
-a = { SinOsc.ar(LFDNoise0.ar(10, 500, 1000), 0, 0.3) }.play //Applied to a sinewave's frequency, produces 10 random values per second, between 500 and 1500 Hz. There is no interpolation, so the signal jumps to each new frequency.
+{ SinOsc.ar(LFDNoise3.ar(10, 12, 60).midicps, 0, LFDNoise3.ar(3, 0.5, 0).max(0)) }.play //Applied to two parameters and using the method .max (usefult to create random gaps, as .max only passes what's above 0, and the amplitude range here is -0.5 to 0.5).
 
+//The methods .min and .max are useful to limit ranges of parameters:
+20.max(60) //Passes only whats above the argument (here, 60): so, if lower than the argument, it passes the argument --> FOR LOW LIMIT.
+20.min(10) //Passes only what's below the argument (here, 10): so, if higher than the argument, it passes the argument --> FOR HIGH LIMIT.
 
-{ LFDNoise1.ar(440, 0.3, 0) }.play //Different interpolation, different sound quality of the pure noise (again, not prepared for sound), as if LPF was applied.
+{ SinOsc.ar(5000, 0, LFDNoise0.ar(10, 0.3, 0.3)) }.play //Another example, only amplitude modulation (constant freq, quite effective).
 
-a = { SinOsc.ar(LFDNoise1.ar(10, 500, 1000), 0, 0.3) }.play //Linear interpolation: now the pitches are connected by sort of a glissando.
-
-a = { SinOsc.ar(LFDNoise1.ar(10, 24, 60).midicps, 0, 0.3) }.play //Using notes in midi (equal temperament) within four octaves (two octaves - 24 midi values - below 60 midi and two above 60 midi). The conversion method.
-
-
-{ LFDNoise3.ar(880, 0.3, 0) }.play //Last type of interpolation, higher frequencies even more cut (higher frequency so we can hear it).
-
-a = { SinOsc.ar(LFDNoise3.ar(10, 500, 1000), 0, 0.3) }.play //Frequency modulation using cubic interpolation: more accute glissando between freqs.
-
-{ SinOsc.ar(LFDNoise3.ar(10, 12, 60).midicps, 0, max(LFDNoise3.ar(3), 0))}.play //Usign LFNoise to modulate the frequency + using another LFDNoise to modulate the amplitude, applying the method "max" to keep only the values above 0 (thus, it produces silence when the signal goes below 0. Applying the method "min", it would keep only what is below zero on the contrary, which in this case would bring about a similar effect if not the same, as negative or positive amplitude at audio rate just depends on the phase of the sound wave, it is "symmetric").
-
-//Amplitude modulation using LFDNoise (keeping constant freq so the changes can be easily percieved):
-
-{ SinOsc.ar(5000, 0, LFDNoise0.ar(10, 0.3, 0.3))}.play
-
-//There are other low frequency noise generators such as LFNoise2. They just feature other kinds of randomness and interpolations (see in the help document).
-
-//Example of nested LFDNoise to randomly modulate the frequency of another LFDNoise that is modulating the fresq of the Array of freqs of the sine wave: each second, there is a different number of random frequencies produces, from 1 to 10 (as the freq of the "times" variation is = 1, and its mul (4.5) and add (5.5) bring about the range 1 to 10):
+//Last example:
 (
-{
-	var times;
+{ var times;
 
-	times = LFDNoise0.ar(1, 4.5, 5.5);
+	times = LFDNoise0.ar(1, 4.5, 5.5); //Modulation of an LFDNoise0's frequency with another LFDNoise0 (random value each second). As this LFDNoise is assigned to a variable, the same random value is shared among all the signals (unlike the LFDNoise applied to the frequencies, which produces different random frequencies for each signal, but let's deepen into this in the next theory file).
 
-	Mix(
+	Mix( //Five sine waves with different random frequencies mixed into a single channel (and then duplicated on both channels). See next theory file for an explanation of multichannel expansion.
 		SinOsc.ar(
-			Array.fill(5, { LFDNoise0.ar(times, 245, 539)}),
+			Array.fill(5, { LFDNoise0.ar(times, 220, 660) }), //Random frequency value between 1 to 10 times per second (every second, new value for the frequency of the modulation). Freqs between 440 and 880 Hz.
 			0,
-			1/20) //So the total mul is 0.25.
-) !2}.play
+			1/20) //Compensating the addition of signals (0.05 * 5 = 0.25).
+	) !2
+}.play
 )
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//CONTROL OF PARAMETERS WITH THE MOUSE:
 
-//We can control parameters using MouseX.kr (horizontally), MouseY.kr (vertically) or MouseButton.kr (clicking the mouse). We usually use control rate (.kr) with these UGens which does not produce signals but they control already existent signals (the mouse is by no means going to be moved at 44100 Hz of sample rate, hence we don't need the audio rate).
+//##############################################################
+//Controlling parameters with the mouse:
+
+//Sometimes it is useful to use the mouse to wander about the given range of a specific parameter. We can control parameters with the mouse using:
+MouseX.kr //Horizontally across the screen.
+MouseY.kr //Vertically across the screen.
+MouseButton.kr //Clicking the mouse.
+
+//These UGens are usually used at control rate because they don't produce signals, but control already existent signals (and we will by no means move the mouse at audio rate).
 //Some examples:
 
-{SinOsc.ar(MouseX.kr(20, 16000, \exponential).poll, 0, 0.1)}.play //Same would be using MouseY. Controlling the frequency. The wrap argument is the type of interpolation between frequencies (\exponential is the most natural one. Other option is \linear. This influences the distribution of the frequencies on the space of the screen. This is why the exponential is the best option when working with frequencies, whose distribution is exponential). The lag argument is the time used for moving from one value to the next one.
+{ SinOsc.ar(MouseX.kr(20, 16000, \exponential).poll, 0, 0.1) }.play //Simply controlling the frequency of a sine wave. The Mouse UGen is placed in the argument to be controlled. Then, its arguments are the min and max values (range), the type of interpolation or "warp" (being exponential best when working with Hz), and a lag value, the time needed for moving from one value to the next (0.2 sec by default). Same could be applied to MouseY.
 
-{SinOsc.ar(MouseButton.kr(500, 1000), 0, 0.5) }.play //Not pressing = minVal / Pressing = maxVal (minVal and maxVals are the arguments). The lag argument is the time used for going to one frequency to the next (there is no wrap argument due to the pulse nature of this UGen).
+{ SinOsc.ar(MouseButton.kr(500, 1000), 0, 0.5) }.play //MouseButton does not have a warp value, just the range values and the lag. In this case, when clicking, we obtain the upper octave of the sine wave. minVal is played when not clicking, and maxVal is obtained when clicking.
 
-//NOTE FOR MYSELF----> It is good to work with frequency in MIDI (and convert with .midicps) and with amplitude in dB (and convert with .dbamp), in order to be conscious of the real values we are working with. Though frequency in MIDI only allows working with equal temperament (unless using cents through decimals).
+//##############################################################
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////
 //NOISE GENERATORS:
 
-//The noise generators are used to produce sound, especially as the sound source for filtering. They only have mul and add as arguments. We can use four main noise generators, from the brightest to the darkest:
+//Noise generators are usually used to produce sound (noise) or as the sound source for filtering. They only have two arguments: mul and add. Their frequency depends on the sample rate: by default, they produce 44100 random frequency values per second, bringing about as a result what we call "noise" (an aperiodic signal).
+//The random frequencies are picked from the whole spectrum, although some types of noise are affected by filtering. The following objects allows the visualization of the frequency spectrum:
+FreqScope.new //Compare the different spectrum of the following noise generators with it (the graph can be frozen by pressing "stop").
 
-FreqScope.new //Evaluate this to analize (visualize) the frequencies when trying the following noise generators (you can freeze the graph by pressing "stop").
+// These are the main noise generators, from the brightest to the darkest (the last one being an extra, exception):
+{ ClipNoise.ar(0.1) }.play //Brightest (chooses values from the extremes of the spectrum).
+{ WhiteNoise.ar(0.1) }.play //Bright (although all frequencies feature the same probability of been chosen, higher frequencies seem to be highlighted).
+{ PinkNoise.ar(0.1) }.play //Perceived as "plain" noise (that is, with all frequencies featuring the same probability) but, in fact, spectrum falling 3dB per octave (25% of their amplitude).
+{ BrownNoise.ar(0.1) }.play //Darkest because values are chosen out of Brownian motion or random walk (that is to say, there is a maximum deviation for going from one random value to the next). Also spectrum falling 6dB per octave (50% of their amplitude).
+{ GrayNoise.ar(0.1) }.play //Based on digital synthesis (flips random values in the binary code at sample rate).
 
-{ClipNoise.ar(0.3)}.play //The brightest one as it chooses values from the extremes of the frequency range (the high freqs tend to be perceived as more intense). At 44100 Hz of sample rate, the UGen chooses 44100 random values per second, which produces the noise sound.
+//Modulations with noise generators: as the frequency of the noise is changing randomly at sample rate, the result is another aperiodic signal, although the spectrum is perceptibly defined by the mul and add parameters of the modulating signal. Some examples of FM (frequency modulation):
+{ SinOsc.ar(ClipNoise.ar(1980, 4000), 0, 0.1) }.play
+{ SinOsc.ar(WhiteNoise.ar(1980, 2000), 0, 0.1) }.play
+{ SinOsc.ar(PinkNoise.ar(7620, 8000), 0, 0.1) }.play
+{ SinOsc.ar(PinkNoise.ar(54.5, 76.5).midicps, 0, 0.1) }.play
+{ SinOsc.ar(BrownNoise.ar(1980, 4000), 0, 0.1) }.play
+{ SinOsc.ar(BrownNoise.ar(54.5, 76.5).midicps, 0, 0.1) }.play
 
-{WhiteNoise.ar(0.3)}.play //A bit less bright, all the freqs have the same probability to be chosen, but we tend to perceive the higher ones as more intense still.
+//Experimenting with different combinations of mul and add (with the mouse).
+{ SinOsc.ar(PinkNoise.ar(MouseY.kr(100, 9000), MouseX.kr(200, 10000)), 0, 0.1) }.play
+{ SinOsc.ar(GrayNoise.ar(MouseY.kr(100, 8000), MouseX.kr(300, 10000)), 0, 0.1) }.play
+{ SinOsc.ar(BrownNoise.ar(MouseY.kr(100, 9000), MouseX.kr(200, 10000)), 0, 0.1) }.play
 
-{PinkNoise.ar(0.3)}.play //It is perceived as plain noise (all freqs same probability), but indeed its spectrum falls 3dB of per octave (a 25% of the amplitude).
+//Duplicator (!) when working with randomness: difference between mono-duplicated signals and different instances of a function (different randomness on each channel). Note that the use of one or another of these options depends on our objectives:
+{ BrownNoise.ar(0.1) !2 }.play //Mono-duplicated signal: same randomness on each side of the stereo.
+{ BrownNoise.ar(0.1 !2) }.play //Creating two different instances of the function (applying !2 to the mul argument of the UGen): different function on each side of the stereo, meaning different randomness (the difference between mono-duplicated and different instances of the function is obviously perceptible only when a signal involves some kind of randomness).
+{ { BrownNoise.ar(0.1) } !2 }.play //Equivalent to the former function (when a function receives a duplicator, the contents of the function are executed as many times as it is duplicated, therefore creating different instances of it): useful when applying the duplicator to signals with no mul (such as Mix, which will be studied in the next theory file).
+{ Array.fill(2, { BrownNoise.ar(0.1) }) }.play //Yet another example of the former line using Array.fill to duplicate the function (equivalent of !n).
+{ { BrownNoise.ar(0.1) }.dup(2) }.play //Yet another option using the method .dup(n), as seen in the previous theory file.
 
-{BrownNoise.ar(0.3)}.play //The brown noise is also known as brownian noise or random walk noise, is the darkest one. There is no abrupt jumps between frequencies and the spectrum falls 6 dB per octave (a 50% of the amplitude).
+//Little example to demonstrate how functions respond to duplication:
+rrand(50, 1000) !4 //Same result repeated 4 times.
+{ rrand(50, 1000) } !4 //Four different results.
 
-//There is also GrayNoise.ar in SC, based on digital synthesis flipping random values in the binary code, which happen at sample rate, hence bringing about the noise. Lower frequencies are emphasized within the spectrum of this noise:
-{GrayNoise.ar(0.1)}.play //QUITE NICE.
+//In some cases, though, the duplicator is applied to other arguments of the UGen to obtain the proper duplication:
+{ SinOsc.ar(PinkNoise.ar(1800 !2, 2700), 0, 0.05) }.play //Duplicated differently on each side
+{ SinOsc.ar(PinkNoise.ar(1800, 2700), 0, 0.05 !2) }.play //Monoduplicated
 
-//Examples of modulation using noise generators:
+//Try next example with a freq of 20, 50, 100, 200, 500, 1000... in the LFDNoise: the higher the frequency, the closer it comes to a noise:
+{ SinOsc.ar(LFDNoise3.ar(500, 180, 270), 0, 0.05 !2) }.play //Monoduplicated
+{ SinOsc.ar(LFDNoise3.ar(500, 180 !2, 270), 0, 0.05) }.play //Monoduplicated
+{ SinOsc.ar(LFDNoise3.ar(500 !2, 180, 270), 0, 0.05) }.play  //Duplicated differently on each side
 
-{SinOsc.ar(ClipNoise.ar(1980, 2000), 0, 0.3)}.play //The frequency is still changed at a very fast pace, so the resultant sound is closer to noise than to a sine.
-{SinOsc.ar(WhiteNoise.ar(1980, 2000), 0, 0.3)}.play //A bit more centered.
-{SinOsc.ar(PinkNoise.ar(7620, 8000), 0, 0.3)}.play  //Using a higher frequence.
-{SinOsc.ar(PinkNoise.ar(54.5, 76.5).midicps, 0, 0.3)}.play //Between 22 and 131 midi.
-{SinOsc.ar(BrownNoise.ar(1980, 2000), 0, 0.3)}.play //Trying the brown noise.
-{SinOsc.ar(BrownNoise.ar(54.5, 76.5).midicps, 0, 0.3)}.play //Or using midi.
+//Same case as before:
+{ Saw.ar(200,  LFDNoise3.ar(2 !2, 0.1, 0.1)) * 0.2 }.play //Duplicated differently on each side
+{ Saw.ar(200, LFDNoise3.ar(2, 0.1 !2, 0.1)) * 0.2 }.play //Monoduplicated
 
-//Amplitude modulations using noises also modulate the value 44100 times per second, producing a hybrid noise (it is an alternative way of performing ring modulation, but we'll study that later on).
+s.meter //See how each channel moves independently or together. The method .meter shows the volume level of each input and output channel (the input channel, by default, is just the microphone of out computer, if any).
 
-//Randomness and stereo sounds using the duplicator !2:
-{BrownNoise.ar(0.1) !2}.play //It copies the BrownNoise, with the same randomness (literal copy) on each side of the stereo = mono duplicated.
-{BrownNoise.ar(0.1 !2)}.play //It duplicates the entire function of the BrownNoise, thus the noise will be different (different randomness) on each side.
-{{BrownNoise.ar(0.1)} !2}.play //Equivalent of the former example, useful to duplicate Functions with UGens that do not feature the mul argument (Mix, for instance).
-//As Array.fill is equivalent to !n, we can now understand why the function of Array.fill is written between curly brackets, in order to duplicate the function with different results (if the function produces different results) instead of just duplicating or copying the literal content.
+//One last noise generator: chaotic noise generator (based on a chaotic function): its arguments are chaosParam, mul and add. About the first argument: "A parameter of the chaotic function with useful values from just below 1.0 to just above 2.0. Towards 2.0 the sound crackles". Some more information about the chaotic function here: https://github.com/supercollider/supercollider/blob/608bb981162c2c26f0a32c09d82557b29774a32e/server/plugins/NoiseUGens.cpp#L379 and here (where I got the previous link from) https://scsynth.org/t/are-crackle-and-dust-repetitive/3087:
+{ Crackle.ar(MouseX.kr(1, 2), 0.5) }.scope
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////
 //IMPULSE GENERATORS:
 
-{Impulse.ar(1, 0, 0.5)}.play //Produces a click (a single value) per second. Its frequency is the number of impulses per second. The amplitude moves from 0 to 1, as in a square wave (thus, take into consideration that add = bottom limit, not the center).
+//Impulse generators (commonly used as triggers, that is, something that causes a reaction. In SC, a trigger is produced when zero is crossed in the input of the trigger):
+{ Impulse.ar(1, 0, 0.5) }.play //Single impulse (contains the full freq spectrum) = click. The arguments are freq, phase, mul and add (see help file for further discussion). Impulse is a unipolar signal.
+{ Dust.ar(10, 0.5) }.play //Random impulse generator (density = average of impulses per second), also called impulse noise generator. Dust is also unipolar, but there is a bipolar version, Dust2.
 
-{Dust.ar(10, 0.5)}.play //This is the random version of Impulse: with a freq = 10, it will produce 10 click per second, but randomly distributed throughout the second. The amplitude of each click is also random within the given range.
-//Dust.ar vs Dust2.ar: Dust amplitude's range goes from 0 to 1, and Dust2 amplitude's range goes from -1 to 1 (so one is unipolar and the other, bypolar).
+//For example, ToggleFF acts as a switch, like LFPulse, but it is not an oscillator and therefore needs a trigger: Dust can act as its trigger (applied to the amplitude of the SinOsc):
+{ SinOsc.ar(440, 0, ToggleFF.ar(Dust.ar(3))) * 0.1 }.play //Morse code :) (if only using Dust, the signal wouldn't be longer than a click).
 
-//Examples: if used for a modulation (instead of as a trigger, which is their main use), Dust or Impulse need some more duration, and ToggleFF is a good option for this (other option is the method "lag"):
+//There is another UGen related to impulse generators, called Blip, which is a "band limited impulse generator" (it includes a filter). There is a warning in the help file: "This waveform in its raw form could be damaging to your ears at high amplitudes or for long periods", therefore, BEWARE THE AMPLITUDE!
 
-{SinOsc.ar(440, 0, ToggleFF.ar(Dust.ar(3))) * 0.1}.play //Toggle is a switch so we can apply the Dust as a trigger to switch on and off the sine wave.
+{ Blip.ar(1, 500, 0.1) }.play //The first argument is the frequency of the impulses and the second argument is the number of harmonics (from 0 = sine wave, to as many harmonics as we want = the higher, the more "squared" the timbre), which gives the frequency (pitch) of each impulse. Last, but not least, the mul.
 
-//There is also Blip, which is sort of an impulse, but featuring a filter and amplified (BEWARE THE AMPLITUDE).
 
-{Blip.ar(1, 500, 0.1)}.play //The first argument is the frequency of the impulses (the speed), and the second argument is the number of harmonics (from 0 = sine wave, to as many harmonics as we want = the higher, the more "squared" the timbre), which gives the frequency (the pitch) of each impulse. Last, but not least, the mul.
+//##############################################################
+//Advanced note:
 
-//Advanced note://///////
-//I just found a tutorial with the equivalent of Blip in SynthDef version, just to understand how it works, could be useful to copy it over here:
-
+//I found a tutorial with the equivalent of Blip in SynthDef version, which could be useful to understand how Blip works. I'll leave it copied over here:
 (
 SynthDef(\blip, {
 	|freq = 200|
@@ -316,9 +359,7 @@ SynthDef(\blip, {
 	sum = 0; //Initial value for sum (so the later addition does not lead to an error because sum is not nil).
 
 	10.do{ |i|
-		temp = SinOsc.ar(
-			freq * (i + 1) //Fundamental freq and 9 more overtones, using the argument "i" (iteration) to get the multiples of the fundamental (i + 1 so it does not multiply the first time by 0).
-		);
+		temp = SinOsc.ar(freq * (i + 1)); //Fundamental freq and 9 more overtones, using the argument "i" (iteration) to get the multiples of the fundamental (i + 1 so it does not multiply the first time by 0).
 
 		sum = sum + temp; //Each iteration adds one more sine wave up to a sum of ten signals (this occurs all at once though).
 	};
@@ -333,91 +374,72 @@ Synth(\blip)
 
 { Blip.ar(200, 10, 0.5) }.play //Same exact thing, using Blip with 10 harmonics and fundamental freq of 200.
 
-/////////////////////////////////////////////////////////////////////////////////////
-//BUTTERWORTH FILTERS: HPF, LPF, BPF y BRF: when filtering a signal, the amplitude of its frequencies falls at a specific pace from a cut-off frequency onwards. It is not an abrupt cut, but a gradual one: in SuperCollider, these are 2nd order filters, which means that the freqs from the cut-off point are going to fall 12 dB per octave.
+//##############################################################
 
-//There are several types of filters:
 
-//HPF (High Pass Filter) and LPF (Low Pass Filter): as arguments, there is the signal to be filtered (in), the cut-off freq, the mul and add:
-//Examples:
+////////////////////////////////////////////////
+//BUTTERWORTH FILTERS:
 
-{HPF.ar(PinkNoise.ar, 1000, 0.1)}.play //Noise filter (1000 = cut-off frequency).
+//A filter is used to emphasize or eliminate some frequencies from a signal, that is to say, filters affect the frequency spectrum of a sound. The main filters used in SC include the high pass filter (HPF), low pass filter (LPF), band pass filter (BPF), band reject filter (BRF), and resonating filters (such as RHPF, RLPF, Resonz, Ringz, etc.). The basic filters LP, HP, BP and BR are 2nd order Butterworth filters: Butterworth filters are designed to have a frequency response that is as flat as possible, and its order refers to the slope of the filter (how fast the frequencies are cut off: 2nd order = 12dB per octave). These filters receive a signal and a cutoff frequency from which the spectrum will fall gradually. Noises are good input signals for filters as they contain all the frequency spectrum.
+//https://en.wikipedia.org/wiki/Butterworth_filter (about Butterworth filters).
+//https://depts.washington.edu/dxscdoc/Help/Tutorials/Mark_Polishook_tutorial/14_Subtractive_synthesis.html (some info about filters in this link about subtractive synthesis).
 
-{HPF.ar(PinkNoise.ar, LFTri.ar(1/10, 0, 8000, 8020), 0.1)}.play //A triangular oscillator modulates the frequency of the filter. WARNING: be careful wiith very low or negative frequencies, they can create extremely loud noise artifacts.
+//High-pass filter. Arguments are the input signal, cutoff frequency, mul and add:
+{ HPF.ar(PinkNoise.ar, 1000, 0.1) }.play //Filtering a PinkNoise.
+{ HPF.ar(PinkNoise.ar, LFTri.ar(1/10, 0, 8000, 8020), 0.1) }.play //LFTri modulating the cut-off freq from 20 to 16020 Hz every 10 seconds.
 
-//Using Midi numbers in here:
+//Low-pass filter. Same arguments as in a HPF:
+{ LPF.ar(PinkNoise.ar, LFTri.ar(1, 0, 54.5, 76.5).midicps, 0.1) }.play //LFTri modulating the cut-off freq, now using midi values and modulating every second.
+
+//Band-pass filter. The new argument here is "rq" or "reciprocal of q", being q = cutoff freq / bandwidth (remember that x/y/z = x * (z/y), that is to say, "rq" = bandwidth / cutoff freq). The lower the "rq" value, the narrower the passed band of frequencies ("cleaner" sound). But also, the lower the "rq", the more we need to increase the amplitude to compensate, so that we could need mul values even well over 1:
+{ BPF.ar(PinkNoise.ar, 1000, 0.01, 3) }.play //Try other RQ (0.5-0.005): compensate the amplitude!
 (
-{HPF.ar(
-	PinkNoise.ar,
-	LFTri.ar(1/10, 0, 54.5, 76.5).midicps,
-	0.1
-
-)
+{
+	BPF.ar(
+		PinkNoise.ar,
+		LFTri.ar(1/10, 0, 54.5, 76.5).midicps, //Modulating the frequency with a LFTri.
+		0.01,
+		3
+	)
 }.play
 )
 
-//Now applying a low pass filter:
+//Band-reject filter. Same arguments as in a BPF:
 (
-{LPF.ar(
-	PinkNoise.ar,
-	LFTri.ar(1, 0, 54.5, 76.5).midicps,
-	0.1
-
-)
+{
+	BRF.ar(
+		PinkNoise.ar,
+		LFTri.ar(1/10, 0, 54.5, 76.5).midicps,
+		1, //RQ: the closer to 1, the more noticeable is the rejected band (try out 0.1 for a less clear result). Going over 1 can result in sonic artifacts.
+		0.3
+	)
 }.play
 )
 
-//BPF (Band Pass Filter) - and BRF (Band Reject Filter): they include a new argument, the RQ, which is equal to the bandwidth divided into the cut off freq. This means that the filter is going to be narrower when the RQ is low (0.005, for example), and wider, when it is high (0.5, for instance).
+//Resonant high-pass and low-pass filters:
+{ RHPF.ar(PinkNoise.ar, 1000, 0.01, 0.2) }.play //Same arguments as in a BP or BR filter.
+{ RLPF.ar(PinkNoise.ar, 1000, 0.01, 0.2) }.play
 
-{BPF.ar(PinkNoise.ar, 1000, 200/1000, 0.3)}.play //RQ calculated as bandwidth / cutOff Freq. Not so narrow.
-
-//A bit narrower + modulating the frequency at the same time using a LFTri:
+//Resonz filter (the "bwr" argument is equivalent to the "RQ" value), another kind of resonant filter:
 (
-{BPF.ar(
-	PinkNoise.ar,
-	LFTri.ar(1/10, 0, 54.5, 76.5).midicps,
-	0.01,
-	0.5
-)
+{
+	Resonz.ar(
+		PinkNoise.ar,
+		LFTri.ar(1, 0, 8000, 8100),
+		0.05,
+		1
+	)
 }.play
 )
 
-//Example of the Band Reject Filter: the "hole" (with a RQ of 0.5) is moved thoughout the spectrum by the LFTri that is modulating the frequency:
-(
-{BRF.ar(
-	PinkNoise.ar,
-	LFTri.ar(1/10, 0, 54.5, 54.5 + 22).midicps,
-	0.5,
-	0.3
-)
-}.play
-)
-
-//Renonant Filters: RHPF, Resonz, RLPF. Resonz is perhaps the most effective one:
-
-{RHPF.ar(PinkNoise.ar, 1000, 0.01, 0.5)}.play //The cut-off frequency resonates. As the RQ is lower (narrower bandwidth), the frequency is more noticeable within the noise. The amplitude has to be risen when lowering the RQ.
-
-//Here including a frequency modulation:
-(
-{RHPF.ar(
-	PinkNoise.ar,
-	LFTri.ar(1, 0, 8000, 8020),
-	0.1,
-	0.5
-)
-}.play
-)
-
-//Ringz Filter: also a resonant filter, including decay time instead of RQ. WARNING: when working with Ringz, the amplitude of each frequency that is mainained is accumulated until the decay is over. The higher the decay time, the lower the amplitude needs to be (do not mix up with the higher amplitude needed by filters featuring RQ):
-
-{ Ringz.ar(Impulse.ar(1), 440, 0.5, 0.3)}.play //As an example to see how the decay time works: the impulse resonates during 0.5 seconds.
-
-{ Ringz.ar(WhiteNoise.ar(0.001), 440, 1)}.play //When filtering a noise, the frequencies accumulate. Thus, the mul has to be very low. Here decay of 1 second.
-
-{ Ringz.ar(Impulse.ar(1), XLine.ar(440, 880, 10), 1, 0.3)}.play //XLine can be used to trace an exponential line regarding the value of a specific parameter (working well with frequencies and otherwise, Line can be used for linear lines). Here, it traces a cuadratic line between 440 and 880 hz in 10 seconds (it is not an envelope, thus, it does not repeat the process, but rather stays at the final pitch of the line).
+//Ringz filter or "ringing filter". It includes a "decay time" instead of an "rq" value. Beware the amplitude when using a Ringz filter: unlike filters with rq value, which might need an amplitude above 1, Ringz filters will require to decrease the amplitude quite a bit as the decay time argument increases:
+{ Ringz.ar(Impulse.ar(1), 440, 0.5, 0.1) }.play //Clear example of how the Ringz's decay works, here resonating a click at 440 Hz with a decay time of 0.5 seconds.
+{ Ringz.ar(WhiteNoise.ar(1), 440, 1, 0.001) }.play //Here applied to a noise as continuous sound.
 
 
+//##############################################################
 //IGNORE THIS:
+
 //Bonus code (so GitHub doesn't turn my file into markdown:
 
 (
@@ -437,4 +459,3 @@ SynthDef(
 )
 
 Synth(\filters)
-
