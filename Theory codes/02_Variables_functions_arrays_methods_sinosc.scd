@@ -873,19 +873,14 @@ p = Pseq([1, 2, 3], inf).asStream.trace; { inf.do({ p.next; 1.wait }) }.fork //T
 //Bonus code (so GitHub doesn't turn my file into markdown):
 
 (
-SynthDef(
-	\filters,
-	{
-		var noise, signal;
-
-		noise = WhiteNoise.ar(0.0001);
-
-		signal = Array.fill(18, { Ringz.ar(noise, ExpRand (100, 3000)) });
-		signal = Mix(signal);
-		signal = Pan2.ar(signal, 0);
-
-		Out.ar(0, signal)
-}).add
+{
+	Klank.ar(
+		`[
+			[178, 570, 7384, 605, 356, 1150, 14768, 1210],
+			1,
+			[0.002, 0.012, 0.018, 0.013]
+		],
+		{ Dust.ar(3, 0.1) } !2
+	)
+}.play
 )
-
-Synth(\filters)
