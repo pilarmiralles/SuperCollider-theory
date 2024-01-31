@@ -6,4 +6,4 @@ The tutorials and examples shown in here are quite focused on sound synthesis an
 
 Happy exploring! :)
 
-PS. Some theory files, such as 1, 2, 4, and 7.1 (for now), are automatically applied some markdown formatting. I still don't know how to avoid that, so for those files, I recommend opening the raw code and copying it into a SC file.
+PS. Some theory files, such as 1, 2, 4, and 7.1 (for now), allow a "preview" version. I recommend opening the "code" version or the raw code for a clearer view of the file!
