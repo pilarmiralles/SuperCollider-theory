@@ -15,6 +15,7 @@ https://scsynth.org/ (new community forum)
 https://github.com/madskjeldgaard/awesome-supercollider (tutorials, plugins, quarks and whatnot)
 http://sccode.org/ (another forum)
 https://github.com/supercollider/supercollider/wiki/Code-style-guidelines (code style guidelines)
+//I have included some extra links for general matters at the very end of this document.
 
 //Some more online articles about how to write clean code:
 https://blog.alexdevero.com/6-simple-tips-writing-clean-code/
@@ -329,7 +330,7 @@ s.meter //Inputs and outputs.
 
 
 ///////////////////////////////////////////////////////////////////////
-//A FEW NOTES ON ACOUSTICS (WAVE MECHANICS):
+//A FEW NOTES ON ACOUSTICS (WAVE MECHANICS)
 
 //It might be convenient to revise some basic concepts of acoustics before continuing. Some meager notes:
 /*
@@ -372,3 +373,11 @@ s.meter //Inputs and outputs.
 	osc1 + osc2
 }.play
 )
+
+
+///////////////////////////////////////////////////////////////////////
+//Some extra links for general matters:
+//Some discussion on volume safety when working with SC: https://scsynth.org/t/levels-and-volume-safety-protecting-yourself-from-hearing-damage-in-sc/4669
+//Debugging tips: https://doc.sccode.org/Guides/Debugging-tips.html
+//Understanding errors: https://doc.sccode.org/Guides/Understanding-Errors.html
+//Another general guide looking good: https://thormagnusson.gitbooks.io/scoring/content/index.html

@@ -1,63 +1,58 @@
 //13 - PBIND
-//////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //INTRODUCTION
-//Associations between objetcs: we can use the relationship key --> value:
 
+//Associations between objetcs: we can use the relationship key --> value:
 a = \freq -> 440 //The key \freq is associated to the value 440, and this association is contained in the variable "a".
 
 //Now we can ask "a" about its key or its value:
-
 a.key
 a.value
 
-//Besides Array, there are other classes regarding collections: a Dictionary is a collection of associations:
+//As we already know, there are other kinds of collections besides Array: A Dictionary is an associative (unordered) collection mapping keys to values. In a Dictionary, two keys match if they are equal (==), that is to say, strings and symbols can be both equally used as keys because the matching is done by equality and not identity:
+d = Dictionary[ \freq -> 440, \amp -> 0.1 ]
 
-d = Dictionary[ \freq -> 440, \amp -> 0.1 ] //The use of [] without the specification of the type of collection is an Array by default because it is the most common collection.
-
-//We ask "d" about the value in any of the keys contained within the dictionary (the keys within the dictionary are used as indexes --> the order within the dictionary is not important unlike the order within an array: this is why we don't use numbers as indexes anymore in this context):
-
+//We can ask "d" about the value in any of the keys contained within the dictionary (the keys within the dictionary are used as indexes: as mentioned, the order within the dictionary is not important unlike in an array, where we can use numbers as indexes):
 d[\freq]
 d[\amp]
 
-//There is another type of collection called IdentityDictionary, which accesses the keys much quicker because it compares them using identity instead of equivalence: hence we only use symbols as keys:
+//See more about Dictionary and its methods here: https://depts.washington.edu/dxscdoc/Help/Classes/Dictionary.html
 
+
+//There is another type of collection called IdentityDictionary, which accesses the keys much quicker because it compares them using identity instead of equality (and hence we can only use symbols as keys):
+//Remember:
 "horse" == "horse" //"True": equivalent --> two different strings featuring the same characters.
 "horse" === "horse" //"False": not identical --> they are not the same object.
 \horse === \horse //"True": equivalent AND identical --> Symbols featuring the same name represent the same object.
 
 //Then, the series of Classes within the Class Tree is (Array is in a different super class, SequenceableCollection, alongside the collections in which the order of the elements is important):
-
 Collection --> Set (set according to equality) --> Dictionary (associative collection mapping keys to values) --> IdentityDictionary (dictionary based on identity / symbols) --> Environment (a dictionary which can serve as a 'name space' for functions) --> Event (an environment that represents an action)
 
-//Next, we will focus on that last subclass named Event, with which we can created sonic events, that is to say, something with frequency, amplitude, duration, etc. It works with .play.
-
+//Next, we will focus on that last subclass named Event (usually used as a shortcut for an IdentityDictionary), with which we can created sonic events, that is to say, something with frequency, amplitude, duration, etc. It works with .play:
 Event[ \midinote -> 61, \amp -> 0.1, \dur -> 1 ] //Here is an event with some values associated to some keys.
 
-//In order to make it sound according the given values (associations), we need to implement the method .play:
-
+//In order to make it sound according the given values (associations), we need to sent the message .play:
 Event[ \midinote -> 61, \amp -> 0.1, \dur -> 1 ].play //The default sound in SC is a very ugly and cheap piano sampler (although it has an interesting envelope if sustained).
 
-(midinote: 61, amp: 0.1, dur: 1, pan: 1).play //When the Event is already created, we can change the values in this other way (like a shortcut). All values can be replaced or reasigned as with variables. All defined keys have their own default value. It is also possible to define new associations apart from the default ones.
+(midinote: 61, amp: 0.1, dur: 1, pan: 1).play //When the Event is already created, we can change the values in this other way (like a shortcut). All values can be replaced or reassigned as with variables. All defined keys have their own default value. It is also possible to define new associations apart from the default ones.
 
 //In summary (for instance):
+Event[].play //Default Event.
+(dur: 3, midinote: 71, amp: 0.5).play //New values.
 
-Event[].play
-(dur: 3, midinote: 71, amp: 0.5).play
-
-//In here we can see all the default keys and values of Event:
-
-Event.default.parent.associationsDo(_.postln);"" //The empty string "" at the end provokes that the last element to be returned and printed is an empty string, avoiding lots of extra lines, and the underscore before .postln is just a shortcut meaning "apply to all items" (and thus all the list is printed). For example, we can see that the default value for the key "pan" is 0.0 (and indeed we already have an estereo signal).
+//As said in the Help file: "The class Event provides a large library of default event instances and play functions, e.g. for pitch". In here we can see all the default keys and values of Event:
+Event.default.parent.associationsDo(_.postln);"" //The empty string "" at the end provokes that the last element to be returned and printed is an empty string, avoiding lots of extra lines, and the underscore before .postln is just a shortcut meaning "apply to all items" (and thus all the list is printed). For example, we can see that the default value for the key "pan" is 0.0 (and indeed we already have an estereo signal when creating a defult Event).
 
 //For instance, there are several ways of writing the pitch (this happens to many other parameters, as we'll se later on):
-
 (midinote: 60).play //In Midi values.
 (freq: 5000).play //In Hz.
 (note: 2).play //In pitch class (number of semitones into a scale from C).
 
-/////////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //PBIND
+
 //Most popular class in SC :)
 //Pbind sequences events (the syntax here is behind the class and not exposed as when we build our own routines, but many processes are much more doable and efficient using Pbind. As we will see later on, Pbind can be connected to our own SynthDef, but for now we will use the piano sound of SC, which is actually a default SynthDef called "default" (this is a reason for not using that name in any other SynthDef, as we would lose the communication with this default SynthDef). Pbind is also based on key-value associations:
 
@@ -110,9 +105,10 @@ p.next(Event[ \a -> 0, \b -> 0, \c -> 1000 ]) //We can use a non-empty event, bu
 p = Pbind(\a, Pseq([ 0, 1 ], inf), \b, Prand([ 100, 200 ], inf)).asStream
 p.next(Event[])
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //KEYS
+
 //Keys listed in the Pbind help file show a certain hierarchy worth of following by using the same key names in our Pbind (and as our arguments later on when using our own SynthDefs: for example, using the argument "freq" for the frequency allows us to use other keys such as "midinote" or "scale" without specifying those arguments in the SynthDef. A single level of hierarchy should be chosen nevertheless, without mixing with others: for example, "freq" can be combined with the key "detune", and "scale" will be combined with "degree" or "octave", but "freq" and "midinote" will never be combined as they are two different ways of specifying pitch).
 
 //KEY DUR: it is 1 by default (in seconds).
@@ -427,8 +423,8 @@ p.stop
 
 \sustain = \dur * \legato * \stretch //The key \sustain is equal to this operation, but it is not so recommended: it is easier to set durations using \dur and \legato, and maybe \stretch, in order to understand what is happening behind.
 
-///////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //SECOND PART: USING OUR OWN SYNTHDEFS:
 
 //KEY INSTRUMENT: so we can use our own Synths:
@@ -582,8 +578,8 @@ p = Pbind(
 )
 p.stop
 
-/////////////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //PATTERNS FOR STOCHASTIC DISTRIBUTION: stochastic = random = chance = haphazard...
 
 //UNIFORM DISTRIBUTION (= rrand):
@@ -943,8 +939,8 @@ p = Pbind(
 )
 p.stop
 
-////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //EXTENSIONS FOR THIS CHAPTER:
 
 //Creating a displacement of the phase of two similar melodies (as in Steve Reich's piano phase, for example):

@@ -1,7 +1,7 @@
 //3 - WAVE SHAPES, NOISE AND FILTERS
 
-////////////////////////////////////////////////
-//WAVE SHAPES:
+/////////////////////////////////////////////////////////////////////
+//WAVE SHAPES
 
 //Other basic periodic wave shapes apart from the sine wave are the triangle, square and sawtooth oscillators. These UGens have a non-filtered and a filtered (band-limited) version the non-filtered featuring in its identifier the letters LF, standing for low frequency, as these UGens are usually used as lFOs). the triangle oscillator, LFTri, exists only as non-filtered because it does not usually pose any aliasing problem (a form of undersampling occuring when the signal is not sampled fast enough to construct an accurate waveform: we'll see an example of this when introducing the square wave). But if LFPulse or LFSaw are used to produce sound, they might produce aliasing. Instead, when used for sound, the UGens Pulse and Saw (the band-limited versions) might be a better option. Aliasing effects can be nonetheless an aesthetical choice or an expressive resource to be used as well.
 
@@ -217,8 +217,8 @@
 { SinOsc.ar(LFSaw.ar(1, 0, 400, 1000), 0, 0.1 !2) }.play
 
 
-////////////////////////////////////////////////
-//LOW FREQUENCY NOISE GENERATORS:
+/////////////////////////////////////////////////////////////////////
+//LOW FREQUENCY NOISE GENERATORS
 
 //Low frequency noise generators can present three different interpolations, that is to say, ways in which they move from one random value to the next:
 //Low frequency noise generators are mostly used at low frequencies, that is, below 20 Hz (as any repetition or iteration performed above 20 Hz will produce a new frequency spectrum). In the following examples, a frequency above 20 Hz is used to exemplify the auditory difference between different interpolations:
@@ -275,8 +275,8 @@ MouseButton.kr //Clicking the mouse.
 //##############################################################
 
 
-////////////////////////////////////////////////
-//NOISE GENERATORS:
+/////////////////////////////////////////////////////////////////////
+//NOISE GENERATORS
 
 //Noise generators are usually used to produce sound (noise) or as the sound source for filtering. They only have two arguments: mul and add. Their frequency depends on the sample rate: by default, they produce 44100 random frequency values per second, bringing about as a result what we call "noise" (an aperiodic signal).
 //The random frequencies are picked from the whole spectrum, although some types of noise are affected by filtering. The following objects allows the visualization of the frequency spectrum:
@@ -307,7 +307,7 @@ FreqScope.new //Compare the different spectrum of the following noise generators
 { BrownNoise.ar(0.1 !2) }.play //Creating two different instances of the function (applying !2 to the mul argument of the UGen): different function on each side of the stereo, meaning different randomness (the difference between mono-duplicated and different instances of the function is obviously perceptible only when a signal involves some kind of randomness).
 { { BrownNoise.ar(0.1) } !2 }.play //Equivalent to the former function (when a function receives a duplicator, the contents of the function are executed as many times as it is duplicated, therefore creating different instances of it): useful when applying the duplicator to signals with no mul (such as Mix, which will be studied in the next theory file).
 { Array.fill(2, { BrownNoise.ar(0.1) }) }.play //Yet another example of the former line using Array.fill to duplicate the function (equivalent of !n).
-{ { BrownNoise.ar(0.1) }.dup(2) }.play //Yet another option using the method .dup(n), as seen in the previous theory file.
+{ { BrownNoise.ar(0.1) }.dup(2) }.play //Yet another option using the method .dup(n), as seen in the previous theory file (but only true duplication of the function if the UGen is wrapped by curly brackets).
 
 //Little example to demonstrate how functions respond to duplication:
 rrand(50, 1000) !4 //Same result repeated 4 times.
@@ -332,8 +332,8 @@ s.meter //See how each channel moves independently or together. The method .mete
 { Crackle.ar(MouseX.kr(1, 2), 0.5) }.scope
 
 
-////////////////////////////////////////////////
-//IMPULSE GENERATORS:
+/////////////////////////////////////////////////////////////////////
+//IMPULSE GENERATORS
 
 //Impulse generators (commonly used as triggers, that is, something that causes a reaction. In SC, a trigger is produced when zero is crossed in the input of the trigger):
 { Impulse.ar(1, 0, 0.5) }.play //Single impulse (contains the full freq spectrum) = click. The arguments are freq, phase, mul and add (see help file for further discussion). Impulse is a unipolar signal.
@@ -377,8 +377,8 @@ Synth(\blip)
 //##############################################################
 
 
-////////////////////////////////////////////////
-//BUTTERWORTH FILTERS:
+/////////////////////////////////////////////////////////////////////
+//BUTTERWORTH FILTERS
 
 //A filter is used to emphasize or eliminate some frequencies from a signal, that is to say, filters affect the frequency spectrum of a sound. The main filters used in SC include the high pass filter (HPF), low pass filter (LPF), band pass filter (BPF), band reject filter (BRF), and resonating filters (such as RHPF, RLPF, Resonz, Ringz, etc.). The basic filters LP, HP, BP and BR are 2nd order Butterworth filters: Butterworth filters are designed to have a frequency response that is as flat as possible, and its order refers to the slope of the filter (how fast the frequencies are cut off: 2nd order = 12dB per octave). These filters receive a signal and a cutoff frequency from which the spectrum will fall gradually. Noises are good input signals for filters as they contain all the frequency spectrum.
 //https://en.wikipedia.org/wiki/Butterworth_filter (about Butterworth filters).

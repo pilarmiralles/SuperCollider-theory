@@ -1,71 +1,77 @@
 //12 - GRANULAR SYNTHESIS
-//////////////////////////////
 
-//The objective here is to create our own granulators instead of using the UGens already prepared for such a purpose in SC. The advantage of this is to be able to control every single parameter, being conscious of the background process.
-//We will work from a buffer (digital sound file), but it is possible to create an alternative source of sound (another synthesizer, for example) to be granulated.
+/////////////////////////////////////////////////////////////////////
+//CREATING A GRANULATOR
 
-p = Platform.resourceDir +/+ "sounds/a11wlk01.wav" //Deafult sound from SC library.
+//The objective here is to create our own granulator using the SynthDef-Routine combo while using audio samples as input instead of audio synthesis processes. The audio samples are cur into pieces and different parameters are randomized in order to create different textures that can change over time. This does not only allow us to play around with granular synthesis (very small grains) but also to work with bigger chuncks of the audio samples (bigger than the "conventional" size of a grain in granular synthesis).
+//Of course, there are UGens in SC for granular synthesis, being TGrains one of the most commonly used. The advantage of creating a granulator from scratch is to learn how granular synthesis works and to be able to control every single detail of the process.
 
-b = Buffer.read(s, p) //Sound file into the buffer.
-b.numChannels //It's a mono signal in this case.
+//Building a granulator:
+p = Platform.resourceDir +/+ "sounds/a11wlk01.wav" //Very ugly default audio sample from SC (good for testing as it is available in every computer where SC has been downloaded).
 
-//Here is our grain producer, the "chopping machine": Playbuf, possible panning, and an envelope (similar to our algorithmic routines):
+b = Buffer.read(s, p) //Allocating the buffer and reading the sample into it.
+b.query //Information about the buffer "b".
+b.duration //Duration of the buffer ( = numFrames / sampleRate).
 
+//Here is the granulator (or rather chopper):
 (
 SynthDef(
 	\grain,
-	{ | bufnum, position, rate, dur, pan, amp = 0.1 |
+	{ |bufnum, position, rate, dur, pan, amp = 0.1|
 		var signal, env;
 
-		signal = PlayBuf.ar(1, bufnum, rate, 1, position); //Mono signal. We won't be able to change this once the SynthDef is compiled. The trigger argument also needs to be = 1 to start playing the audio right away. We always create an argument for the bufnum (which will be assign to the variable containing the buffer) so it can be automatically assigned by the server.
+		//We only need a signal, which will be our audio sample (using PlayBuf here to play it), and an envelope (a sine envelope is conventionally used for granular synthesis, but any other kind of envelope can be tested):
+
+		signal = PlayBuf.ar(1, bufnum, BufRateScale.kr(bufnum) * rate, 1, position); //The rate receives the object BufRateScale applied to the specific buffer number in order to compensate the possible difference of sampling rate (between the audio sample and the one stablished in SC). This should not be always needed and we will see examples without it (but it is the way to go if the post window points out a problem related to dealing with different sampling rates).
+		//signal = signal[0]; //In case the audio sample has two channels and want to apply panning to it, we can just select one channel of it with this line (taking the first index of the array of channels).
 		signal = Pan2.ar(signal, pan);
+
 		env = EnvGen.ar(
 			Env.sine(dur, amp),
 			doneAction: 2
 		);
 
-		OffsetOut.ar(0, signal * env) //We use OffsetOut when creating more than 20-50 synths per second, more or less (for fast pace and short durations = grains). But this UGen is equivalent to Out.ar. OffsetOut sets a small delay for the synths to be read (interpreted) by the server, which is usually performed in control blocks (each 64 values). But if the reading process of the Synths is as fast as 20-50 Hz or above, then we'll obtain a frequency out of this rate (and a possible periodicity). The delay of OffsetOut avoids the possible creation of a spectrum due to the fast-paced creation of Synths, despite reading thm in blocks of 64.
+		OffsetOut.ar(0, signal * env) //Using OffsetOut: when creating something above 20 synths per second, it is possible that a frequency spectrum is generatesd out of this periodicity. OffsetOut helps to avoid this by creating a small delay when the synths are sent to the server based on the control cycles (see its Help file).
+
 }).add
 )
 
-//This is an isolated grain (we obtain just one each time this Synth evaluated): the duration of the grain is 0.1 seconds here. Grains can be longer or shorter. Their duration can also be randomized within a certain range. There is no rule for the duration of grains (conventions set the average in 0.05 - 0.1 secs).
+Synth(\grain, [\bufnum, b.bufnum, \position, 2 * 44100, \rate, 1, \dur, 0.1, \pan, 0]) //Isolated grain for testing (remember that the position is measured in frames, so it will be equal to the time in seconds * sampling rate.
 
-Synth(\grain, [\bufnum, b.bufnum, \position, 1 * 44100, \rate, 1, \dur, 0.1, \pan, 0 ])
-
-//Now we need to create a routine in order to produce Synths successively (one after another or overlapped). Observe what happens to the number of synths in the CPU menu below the postwindow. Take into consideration that all arguments and parameters can be modified according to your taste and necessities. This is just one example. Also, observe where each argument is being sent within the SynthDef above:
-
-(
+( //The Routine will successively create grains and randomize parameters from the granulator (SynthDef):
 r = Routine({
 	var durBuffer, durGrain, position, rate = 1;
 
-	durBuffer = b.duration; //The total duration of the audio file is asked in here in seconds. Then it will be used in the loop.
+	durBuffer = b.duration;
 
 	inf.do({
 
-		durGrain = rrand(0.0, durBuffer); //The duration of each grain is random from 0 to the total duration of the buffer (be aware of this if the used audio is longer).
-		position = rrand(0, durBuffer - durGrain) * 44100; //The position is calculated in no. of frames, hence the number of the seconds is multiplied by the sample rate (44100). The position is random from the beginning of the audio file up to the end (substracting the length of the grain itself so it does not run out of audio file).
+		durGrain = rrand(0.0, durBuffer); //In this case, the duration of each grain can go from 0 to the total duration of the buffer (around 4 seconds).
+		//durGrain = rrand(0.01, 0.2); //Alternative for the durGrain (random short grains, for instance).
 
-		s.bind({ //s.bind can only be around the Synth, which will help the server reading the synths.
+		position = rrand(0, durBuffer - durGrain) * 44100; //The position could be anywhere from 0 to the duration of the sample, but subtracting the duration of the current grain so that it does not exceed the total duration of the sample. Then, it is converted to frames by multiplying it by the sampling rate.
+
+		s.bind({ //Yet another tool to control the large amount of synth in a short duration that is usual in granular synthesis. The method .bind refers to the server ("s") and is related with its latency in order to deal with timing inaccuracies when transmitting lots of OSC messages in a short period of time. This is not always needed, but just a preventive measure.
 			Synth(
 				\grain,
 				[
 					\bufnum, b.bufnum,
 					\position, position,
-					\rate, rate, //The rate can be randomized (for example, using a rrand (0.5, 2), or rrand(1.midiratio, 7.midiratio) in order to used specific intervals).
+					\rate, rate, //The rate could be randomized: rrand(0.5, 2) or rrand(1.midiratio, 7.midiratio), for example, if working with intervals.
 					\dur, durGrain,
-					\pan, rrand(-1.0, 1.0), //The panning is random from -1 to 1.
+					\pan, rrand(-1.0, 1.0), //Randomized panning.
 					\amp, 0.1
 			]);
 		});
-		//1.wait //There is the same space between each grain: this is called synchronic synthesis. This separation would be too long for conventional granular synthesis (this is more like a random routine). Try the option below:
-		rrand(0.01, 0.1).wait //This would be asynchronic synthesis: different space between each grain, randomized.
+
+		//0.1.wait //"Synchronous" granular synthesis.
+		rrand(0.01, 0.1).wait //"Asynchronous" granular synthesis (randonmized waiting time between grains).
 	});
 }).play
 )
-
 r.stop
 
-//Example with a fixed position: try out the routine with no s.bind, then try out changing the OffsetOut by Out.ar to see how it changes:
+//Example with a fixed position: try out the routine with no s.bind, then try out changing the OffsetOut by Out in the SynthDef to see how it changes:
 (
 r = Routine({
 	var durBuffer, durGrain, position, rate = 1;
@@ -94,289 +100,106 @@ r = Routine({
 	});
 }).play
 )
-
 r.stop
 
-//When the audio file within the buffer is already stereo, using Pan.ar is not necessary to obtain sound through both channels. On the other hand, if the panning needs to be applied to a stereo signal, we have to take only one of the signals of the array. Using signal = signal[0] (taking just the left channel of the signal) after the Playbuf is enough to obtain a mono signal to be distributed using Pan2.
 
-//Other variants include using several buffers and creating a variable which randomly chooses among them (remember that all arguments dependant on the buffer should be now dependant on that variable, for example, the bufnum).
-
-//Next example includes superposition and its objective is to play the grains in chronological order:
+//Another example (same SynthDef) using two audio samples (change the paths according to your own machine):
 (
-r = Routine({
-	var durBuffer, durGrain, position, rate = 1, superposition;
-
-	durBuffer = b.duration;
-	position = 0;
-	rate = [1, 0.5, 0.25, 2, 0.25, 2.6, 3.2, 3.5]; //Array of different rate values.
-
-	inf.do({ | i |
-
-		i.postln;
-		durGrain = 1; //The duration could be randomized.
-		superposition = 3; //This avoids noticing the gap between grains: now the position and the wait time will be 3 times shorter than the duration of the grain, so there will be 3 grains when only 1 was expected.
-		position = durGrain / superposition;
-
-		s.bind({
-			Synth(
-				\grain,
-				[
-					\bufnum, b.bufnum,
-					\position, position * 44100, //The position is defined before the wait, so we need a default value as first value (stated above, before the loop). Then, the position is read in frames, so we need to multiply by 44100 (sample rate).
-					\rate, rate[i % (rate.size - 1)], //The argument "i" (index) will give the number of the indexes of the rates array, and will be kept within the number of rate values thanks to the module of rate.size - 1 (because the last index is the number of items - 1 --> It could be easier to use the method .lastIndex instead of .size to avoid the substraction). Thus, each grain will feature a new speed in order according to the array of rates (this could also have been done with a pattern).
-					\dur, durGrain,
-					\pan, 0,
-					\amp, 0.5
-
-			]);
-		});
-		position = (position + durGrain) % durBuffer; //In here, the grains will be read successively: the position (affected before by the superposition) will add the duration of the grain and go ahead within the audio file according to this addition. Then, there is the module of the total duration of the buffer, which will maintain the values of position in seconds within the total duration of the buffer.
-		(durGrain / superposition).wait
-	});
-}).play
+c = Buffer.read(s, "F:/DOCUMENTOS/!SUMMER 23 - PREPARATORY YEAR 23-24/SUPERCOLLIDER/THEORY CODES/Audio-for-granular-examples-1.wav");
+d = Buffer.read(s, "F:/DOCUMENTOS/!SUMMER 23 - PREPARATORY YEAR 23-24/SUPERCOLLIDER/THEORY CODES/Audio-for-granular-examples-2.wav")
 )
 
-r.stop
-
-b.free //Don't forget to free the buffers.
-
-//////////////////////////////////////////////////////////////////////////////////////
-
-//SOLUTIONS TO DIFFERENT ISSUES (GRANULAR SYNTHESIS):
-//Let's prepare a longer buffer to try out the different examples (take into consideration that you will need to change the path of the audio file according to the folder where the audio file is located in your computer):
-
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-1.wav")
-b.numChannels //Stereo signal.
-
-//This first one is an example of using a stereo signal with panning (taking just one of the sides of the stereo array):
-(
+( //Same SynthDef, just adding the line to take one of the two channels of the audio samples so that they can be panned:
 SynthDef(
-	\stereoGrain,
-	{ arg bufnum, position, rate, dur, pan, amp = 0.4;
+	\grain2,
+	{ |out = 0, bufnum, position, rate, dur, pan, amp = 0.1|
 		var signal, env;
 
 		signal = PlayBuf.ar(2, bufnum, rate, 1, position);
 		signal = signal[0];
 		signal = Pan2.ar(signal, pan);
+
 		env = EnvGen.ar(
 			Env.sine(dur, amp),
 			doneAction: 2
 		);
-		OffsetOut.ar(0, signal * env)
-}).add
-)
 
-(
-r = Routine({
-	var durBuffer, durGrain, position, rate = 1;
-
-	durBuffer = b.duration;
-
-	inf.do({
-
-		durGrain = rrand(3.0, 5); //Superposition is implied in this code due to the excess of grain duration in comparison with the wait time, which will cause an overlapping of the grains.
-		position = rrand(0, durBuffer - durGrain); //Random position within the duration of the buffer.
-
-		s.bind({
-		Synth(
-			\stereoGrain,
-			[
-				\bufnum, b.bufnum,
-				\position, position * 44100,
-				\rate, rrand(0.8, 1.2), //Random rate.
-				\dur, durGrain,
-				\pan, rrand(-0.6, 0.6) //Random panning.
-		]);
-		});
-		rrand(0.5, 1.5).wait
-	});
-}).play
-)
-
-r.stop
-b.free
-
-//Applying operations on top of our original signal (after granulating it) --> For instance, reverb (other options are filters, distortion, any modulation that would affect all grains at the same time, etc.): we have to connect the out of our original signal to a private channel, which will be taken by the second SeynthDef (and which will apply the process). Here also using two different buffers randomly chosen:
-(
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-1.wav");
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-2.wav")
-)
-
-( //Info:
-[b.duration, b.numChannels].postln;
-[c.duration, c.numChannels].postln;
-[] //The empty array avoids repeating the second line twice.
-)
-
-(
-SynthDef(
-	\grainReverb,
-	{ arg out, bufnum, position, rate, dur, pan, amp = 0.4;
-		var signal, env;
-
-		signal = PlayBuf.ar(2, bufnum, rate, 1, position);
-		signal = Pan2.ar(signal, pan);
-		env = EnvGen.ar(
-			Env.sine(dur, amp),
-			doneAction: 2
-		);
 		OffsetOut.ar(out, signal * env)
+
 }).add;
-SynthDef(
+/*
+SynthDef( //Possible use of this second SynthDef to pass the previous output through a private channel and apply a reverb to it:
 	\reverb,
-	{ arg in;
+	{ |in, mix, room, mul|
 	 var input, signal;
 
 		input = In.ar(in, 2);
-		signal = GVerb2.ar(input); //If using GVerb, we need a mono signal as input (otherwise, you can also use FreeVerb).
+		signal = FreeVerb.ar(input, mix, room, mul: mul);
 		OffsetOut.ar(0, signal)
 }).add
+*/
 )
 
 (
 r = Routine({
-	var durBuffer, durGrain, position, rate = 1, buffer;
+	var buffer, durBuffer, durGrain, position, rate = 1, superposition;
 
+	position = 0; //Initial value for the position as the position is reassigned a the end of the loop (this will only affect the frist grain).
 
-	position = 0;
-
-	g = Synth(\reverb, [ \in, 4 ], s, 'addToTail'); //Implementing the reverb.
+	//This is the line we would need to pass the samples through the reverb (also, change the out value from 0 to private channel 4):
+	//g = Synth(\reverb, [\in, 4, \mix, 0.7, \rev, 0.8, \mul, 1.2], s, 'addToTail');
 
 	inf.do({
 
-		buffer = [ b, c ].choose; //Choosing one of the buffers randomly.
+		buffer = [c, d].choose; //Choosing a random sample among both buffers.
+
 		durBuffer = buffer.duration;
-		durGrain = 1;
-		position = (rrand(0, durBuffer - durGrain));
+		durGrain = rrand(0.5, 2.5);
+		superposition = 3; //This new variable will be used at the waiting time so that it is, in this case, three times shorter than the duration of the current grain, provoking the superposition or overlapping of grains.
+		//Superposition can occur also just by simply using grain durations longer than the waiting time.
 
 		s.bind({
 			Synth(
-				\grainReverb,
+				\grain2,
 				[
-					\bufnum, buffer,
+					\bufnum, buffer.bufnum,
 					\position, position * 44100,
-					\rate, rrand(0.5, 2),
+					\rate, (0.9, 0.95..1.1).wchoose((0.9, 0.95..1.1).normalizeSum), //Choosing the rate with a specific probability for each value.
 					\dur, durGrain,
-					\pan, 0,
-					\amp, 0.05,
-					\out, 4
+					//\pan, rrand(-0.8, 0.8),
+					\pan, 0, //I like it better with no random pos when no reverb.
+					\amp, 0.5,
+					\out, 0 //reverb = 4, no reverb = 0.
 
-			]);
-
-		});
-
-		rrand(0.01, 0.1).wait
-
-	});
-}).play
-)
-
-r.stop
-g.free //Remember that the reverb synth (with no doneAction 2) needs to be freed too.
-b.free; c.free
-
-//Model of granular routine which follows the chronological development of the audio file:
-
-b = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-1.wav");
-b.duration
-
-(
-SynthDef(
-	\grain,
-	{ arg out, bufnum, position, speed, dur, pan = 0, amp = 0.4;
-		var signal, env;
-
-		signal = PlayBuf.ar(2, bufnum, speed, 1, position);
-		signal = signal[0];
-		signal = Pan2.ar(signal, pan); //The panning could be used.
-		env = EnvGen.ar(
-			Env.sine(dur, amp),
-			doneAction: 2
-		);
-		OffsetOut.ar(out, signal * env)
-}).add;
-SynthDef(
-	\reverb, //We are implementing here an entire Schroeder filter as reverb:
-	{ arg in, time = 0.5, masterVolume = 1;
-		var input, wet, finalSignal;
-
-		input = In.ar(in, 2);
-
-		wet = Mix(
-			{ CombC.ar(
-				input,
-				0.035,
-				rrand(0.025, 0.035),
-				time,
-				rrand(0.25, 0.5)
-			)
-			} !12
-		);
-
-		wet = LeakDC.ar(wet);
-
-		4.do({wet = AllpassN.ar(wet, 0.05, { rrand(0.005, 0.05)} !2, time) });
-
-		finalSignal = input + LPF.ar(wet, 3000);
-
-		OffsetOut.ar(0, finalSignal * masterVolume)
-}).add
-)
-
-(
-r = Routine({
-	var durBuffer, durGrain, position, speed = 1;
-
-
-	position = 0;
-
-	g = Synth(\reverb, [ \in, 4, \time, 0.5, \masterVolume, 1.2 ], s, 'addToTail');
-
-	position = Pseg((0, 1..(260 - 9)), 1.5, 'lin', inf).asStream.trace; //This is an envelope for the position so it is just going straight instead of jumping randomly within the duration of the buffer (I calculated the buf duration and substracted the maximum duration of the grain - which is random -). See Pseg in the theory file 13.
-
-	inf.do({
-
-		durBuffer = b.duration;
-		durGrain = (3, 3.5..8.5).wchoose((1, 2..12).normalizeSum); //If you want use longer or shorter grains, modify the wait time of the routine so the gaps between the entries are still the same (unless you also want each sound to be closer to next one, overlap or keep a longer distance).
-
-		s.bind({
-			Synth(
-				\grain,
-				[
-					\bufnum, b.bufnum,
-					\position, position.next * 44100,
-					\speed, (0.9, 0.95..1.1).wchoose((0.9, 0.95..1.1).normalizeSum), //This modifies the tuning of the buffers with a little deviation of the rate.
-					\dur, durGrain,
-					\pan, rrand(-0.6, 0.6),
-					\amp, 0.8,
-					\out, 0
-
-			],
-				s, 'addToHead'
+				], s, 'addToHead'
 			);
-
 		});
 
-		((3, 3.5..5.5).wchoose((6, 5..1).normalizeSum)).wait //Shorter durations are more probable.
+		//This way, we are able to make the sample advance "in order": the new position will always be the current position + 1, up to the duration of the buffer (by applying the module, so that it wraps when exceeding its value):
+		position = (position + 1) % durBuffer;
+		//position = (position + durGrain) % durBuffer; //Just another option.
 
+		(durGrain / superposition).wait //Posible superposition.
+		//durGrain.wait //No superposition.
 	});
 }).play
 )
 
 r.stop
-g.free
-b.free
+c.free; d.free
+//If using the reverb, the reverb synth will be still running after using r.stop, as it does not feature doneAction. Should use also g.free then (after stopping the routine, so that the reverb does not suddenly disappear in whatever is left).
 
-////////////////////////////////////////////////////////////////////////////
 
-//PITCH-SHIFTING AND TIME-STRETCHING (USING GRANULAR SYNTHESIS):
-//We will use this basic granulator:
+/////////////////////////////////////////////////////////////////////
+//PITCH-SHIFTING AND TIME-STRETCHING (USING A GRANULATOR)
 
-c = Buffer.read(s, "C:/Users/user/Desktop/MI PROPIA TEORÍA SC - 2022/SuperCollider-theory/Theory codes/Audio-for-granular-examples-2.wav")
+//We can extend the use of our granulator to play around with pitch-shifting and time stretching. We need a basic granulator for this:
+
+e = Buffer.read(s, "F:/DOCUMENTOS/!SUMMER 23 - PREPARATORY YEAR 23-24/SUPERCOLLIDER/THEORY CODES/Audio-for-granular-examples-2.wav") //Remember to adapt the path.
 
 (
 SynthDef(
-	\grain2,
+	\grain3,
 	{ | bufnum, position, rate, dur, amp = 0.1 |
 		var signal, env;
 
@@ -388,25 +211,25 @@ SynthDef(
 }).add
 )
 
-//Here we create 50 grains per second instead of the continuous sound of the audio file: the different superposition values will affect the accuracy of this "fake continuity":
+//The strategy consists of creating a lot of short grains per second that will "reconstruct" the continuous audio file: the superposition value will help to cover the spaces in between and create an accurate "fake continuity" of the sound:
 (
 r = Routine({
-	var durBuffer, durGrain, position = 1, rate, waitTime, superposition;
+	var durBuffer, durGrain, position = 1, rate, waitTime, superposition; //We need the position to have a default (and initial) value.
 
-	durBuffer = c.duration;
-	waitTime = 0.02; //Fixed value for the time between the grains: try out waitTime = 1 to see how the grains are taken in order.
+	durBuffer = e.duration;
+	waitTime = 0.02; //Fixed value for the time between the grains.
 	superposition = 3; //With no superposition (= 1), the audio seems to be perforated, damaged. With superposition = 3 or 4, it is closer to the original file (it is actually incredibly accurate).
-	durGrain = waitTime * superposition; //The duration of the grain is calculated with the wait time and superposition. It could also work to stablish a fixed value for the duration of the grains, so the waitTime and superposition would depend on it.
+	durGrain = waitTime * superposition; //The duration of the grain is calculated with the wait time and superposition. It could also work to stablish a fixed value for the duration of the grains, so that the waitTime and superposition would depend on it.
 
 	inf.do({
 		position = (position + waitTime) % durBuffer; //We obtain again the grains in chronological order, this time depending on the waiting time, but it could have been the duration of the grain as mentioned before, if fixed.
 
 		s.bind({
-			Synth(\grain2,
+			Synth(\grain3,
 				[
-					\bufnum, c.bufnum,
+					\bufnum, e.bufnum,
 					\dur, durGrain,
-					\rate, 1,
+					\rate, 1, //Changing the rate won't affect anymore the speed of the audio. We'll see why in the upcoming examples.
 					\position, position * 44100,
 					\amp, 0.5
 			])
@@ -415,29 +238,30 @@ r = Routine({
 	});
 }).play
 )
-
 r.stop
+
+//Let's use this Routine model to implement the two processes:
+
 
 //TIME-STRETCHING
 //Consists of speeding up or slowing down the audio without altering the pitch (use the same granulator and buffer as above in this section):
-
 (
 r = Routine({
 	var durBuffer, durGrain, position = 1, rate, waitTime, superposition, stretch;
 
-	durBuffer = c.duration;
+	durBuffer = e.duration;
 	waitTime = 0.02; //The higher the waiting time, the more perceptible the separation between the grains.
 	superposition = 3;
 	durGrain = waitTime * superposition;
 	stretch = 0.5; //The system works as an inversion of the rate values we used in the previous granulators: 2 for half speed (slower), 0.5 for double (faster), etc.
 
 	inf.do({
-		position = (position + (waitTime/stretch)) % durBuffer; //Here is the trick for the stretch (only working with really small waiting times): for example, if the stretch is 0.5, the next position will be added only half of the waiting time with each grain, so it will advance at half of the normal speed. If the stretch is 2, it will add double the waiting time, so it will advance at double speed.
+		position = (position + (waitTime/stretch)) % durBuffer; //Here is the trick for the stretch (only if working with really small waiting times): for example, if the stretch is 0.5, the next position will be added double the waiting time with each grain, so it will advance at double the normal speed (faster). If the stretch is 2, it will add cur the waiting time in half, so it will advance at half the speed (slower).
 
 		s.bind({
-			Synth(\grain2,
+			Synth(\grain3,
 				[
-					\bufnum, c.bufnum,
+					\bufnum, e.bufnum,
 					\dur, durGrain,
 					\rate, 1, //No rate deviation.
 					//\rate, 1 * rrand(0.975, 1.025), //With deviation (see below the explanation in the waiting time):
@@ -445,36 +269,35 @@ r = Routine({
 					\amp, 0.5
 			])
 		});
-		(waitTime * rrand(0.95, 1.05)).wait; //In order to get rid of possible sonic artifacts, we can add some irregularity to the waiting time so there is no periodicity and resonances derived from it. There is a little deviation applied, between 5% higher and lower from the chosen waiting values. A more agressive deviation could be applied, for example: rrand(0.975, 1.025). Also no deviation could be good. It all depends on the specific audio and the way we process it. This deviation can be also applied to the rate value above. This process is called time wrap (or rate wrap).
-		//waitTime.wait //Different harmonics indeed: there is a big difference.
+		(waitTime * rrand(0.95, 1.05)).wait; //In order to get rid of possible sonic artifacts, we can add some irregularity to the waiting time so there is no periodicity and resonances derived from it. There is a little deviation applied, between 5% higher and lower from the chosen waiting values. A less agressive deviation could be tried out, for example, rrand(0.975, 1.025). Also no deviation could be good. It all depends on the specific audio and the way we process it. This deviation can be also applied to the rate value above. This process is called time wrap (or rate wrap).
+		//waitTime.wait //Different harmonics indeed: there is a big difference if trying it out without the time wrap.
 	});
 }).play
 )
-
 r.stop
 
-//PITCH-SHIFTING
-//On the other hand, changing the pitch (the rate) of the audio without speeding it up or slowering it down: now that the speed depends on the stretch variable, the rate will be applied without altering the speed (I guess the level of perforation of the sound is responsible of this). There are a lot of sonic artifacts: try different deviations or none (as shown before), but remember that even the plugins for pitch-shifting produce sonic artifacts:
-//Now you can combine both processes, for example, slowing down the audio, but raising the pitch at the same time:
 
+//PITCH-SHIFTING
+//On the other hand, changing the pitch (the rate) of the audio without speeding it up or slowering it down: because the position depends on the waitTime and the stretch, the rate of the grains can feature a different rate without affecting the pace at which the grains happen (which is set by the position). Nonetheless, there are a lot of sonic artifacts: try different deviations or none (as shown before), I am still trying to understand and polish this.
+//Now you can combine both processes (for example, slowing down the audio, but raising the pitch at the same time):
 (
 r = Routine({
 	var durBuffer, durGrain, position = 1, speed, waitTime, superposition, stretch;
 
-	durBuffer = c.duration;
+	durBuffer = e.duration;
 	waitTime = 0.02;
 	superposition = 4;
 	durGrain = waitTime * superposition;
 	stretch = 1; //stretch = 1: no time-stretch.
-	speed = 2; //0.5 = octave down, 2 = octave up, and so on. You can use the interval relationships with .midiratio.
+	speed = 1.2; //0.5 = octave down, 2 = octave up, and so on. You can use the interval relationships with .midiratio.
 
 	inf.do({
 		position = (position + (waitTime/stretch)) % durBuffer;
 
 		s.bind({
-			Synth(\grain2,
+			Synth(\grain3,
 				[
-					\bufnum, c.bufnum,
+					\bufnum, e.bufnum,
 					\dur, durGrain,
 					\rate, speed,
 					\position, position * 44100,
@@ -482,51 +305,52 @@ r = Routine({
 			])
 		});
 		(waitTime * rrand(0.975, 1.025)).wait; //Again, try without the deviation or apply the deviation to other parameters.
+		//waitTime.wait //Sounds a bit like old and detuned.
 	});
 }).play
 )
 
 r.stop
 
-//One last experiment adding several synths featuring different rates at the same time to create a chord (it works pretty well applying a different delay to each synth too): each synth features a different pitch-shifting (one featuring the original tuning, for example, the rest using the interval relationships with .midiratio. The amplitudes could be also adjusted to create a balance depending on the pitch (be aware of the addition of amplitudes as the principle is that, when multiple Synths write to the same bus, their output is summed (i.e. mixed).):
+//One last experiment adding several synths featuring different rates at the same time to create a chord (it works pretty well when applying a different delay to each synth too): each synth features a different pitch-shifting (one featuring the original tuning, for example, the rest using the interval relationships with .midiratio). The amplitudes could be also adjusted to create a balance depending on the pitch (be aware of the addition of amplitudes as the principle is that, when multiple Synths write to the same bus, their output is summed (i.e. mixed)):
 (
 r = Routine({
-	var durBuffer, durGrain, position = 1, speed, waitTime, superposition, stretch;
+	var durBuffer, durGrain, position = 92, speed, waitTime, superposition, stretch; //Starting from voice section :D sounds psychedelic.
 
-	durBuffer = c.duration;
+	durBuffer = e.duration;
 	waitTime = 0.02;
 	superposition = 3;
 	durGrain = waitTime * superposition;
-	stretch = 1;
+	stretch = 0.8;
 	speed = 1;
 
 	inf.do({
 		position = (position + (waitTime/stretch)) % durBuffer;
 
 		s.bind({
-			Synth(\grain2,
+			Synth(\grain3,
 				[
-					\bufnum, c.bufnum,
+					\bufnum, e.bufnum,
 					\dur, durGrain,
 					\rate, speed,
 					\position, position * 44100,
 					\amp, 0.4
 			]);
-			Synth(\grain2,
+			Synth(\grain3,
 				[
-					\bufnum, c.bufnum,
+					\bufnum, e.bufnum,
 					\dur, durGrain,
 					\rate, speed * 4.midiratio,
 					\position, position * 44100,
-					\amp, 0.4
+					\amp, 0.35
 			]);
-			Synth(\grain2,
+			Synth(\grain3,
 				[
-					\bufnum, c.bufnum,
+					\bufnum, e.bufnum,
 					\dur, durGrain,
 					\rate, speed * 7.midiratio,
 					\position, position * 44100,
-					\amp, 0.4
+					\amp, 0.3
 			]);
 		});
 		(waitTime * rrand(0.975, 1.025)).wait;
@@ -535,60 +359,4 @@ r = Routine({
 )
 
 r.stop
-c.free
-
-///////////////////////////////////////////////////////////////////////////
-//SUMMARY: BASIC MODEL OF GRANULATOR (to be modified and extended):
-
-b = Buffer.read(s, )
-
-(
-SynthDef(
-	\grain,
-	{ arg bufnum, position, speed, dur, pan, amp = 0.5;
-		var signal, env;
-
-		signal = PlayBuf.ar(2, bufnum, speed, 1, position);
-		signal = signal[0];
-		signal = Pan2.ar(signal, pan);
-
-		env = EnvGen.ar(
-			Env.sine(dur, amp),
-			doneAction: 2
-		);
-
-		OffsetOut.ar(0, signal * env)
-
-}).add
-)
-
-(
-r = Routine({
-	var durBuffer, durGrain, position, speed = 1;
-
-	durBuffer = b.duration;
-
-	inf.do({
-
-		durGrain = rrand(0.0, durBuffer);
-		position = rrand(0, durBuffer - durGrain) * 44100;
-
-		s.bind({
-			Synth(
-				\grain,
-				[
-					\bufnum, b.bufnum,
-					\position, position,
-					\speed, rrand(0.5, 1),
-					\dur, durGrain,
-					\pan, rrand(-1.0, 1.0)
-			]);
-		});
-		rrand(0.05, 0.5).wait
-
-	});
-}).play
-)
-
-r.stop
-b.free
+e.free

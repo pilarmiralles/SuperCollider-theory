@@ -83,7 +83,7 @@ s.boot;
 		Out.ar(out, flt);
 	}).add;
 
-    //This one just plays all the intro by itself (one-time thing, but genous management of triggers and counters): Try by itself (see separate analysis file):
+    //This one just plays all the intro by itself (one-time thing, but genous management of triggers and counters): Try by itself:
 	SynthDef(\intro, { | out=0 |
 		var trig, div, freq, oct, reps, env, osc, flt;
 		oct = [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3];
@@ -156,7 +156,7 @@ s.boot;
 	~ch7ins01 = Synth(\delay, [\bus, ~ch7, \mix, -0.8], ~fxGroup);
 	~ch8ins01 = Synth(\delay, [\bus, ~ch8, \mix, -0.5], ~fxGroup);
 
-    ~masterFader.map(\amp, ~masterAmp); //.map: basically, the addressed argument will read from the addressed bus.
+    ~masterFader.map(\amp, ~masterAmp); //SEE THE FILE FROM SESSION 4 (EXPLANATION ABOUT .MAP: basically, the addressed argument will read from the addressed bus).
 	~numChannels.do { | i | ("fader" ++ i).asSymbol.envirGet.map(\amp, ("chAmp" ++ i).asSymbol.envirGet) };
 
 	~masterAmp.value = 1;

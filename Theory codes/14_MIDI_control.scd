@@ -1,49 +1,55 @@
 //14 - MIDI COMMUNICATION
-////////////////////////////////////////
-//MIDI stands for Musical Instrument Digital Interface. It is a communication protocol for allowing musical devices to talk to each other.
+
+/////////////////////////////////////////////////////////////////////
+
+//MIDI stands for Musical Instrument Digital Interface. It is a communication protocol that allows many devices and software to exchange musical data.
 //Some guides in the SC Help: https://doc.sccode.org/Guides/UsingMIDI.html and https://doc.sccode.org/Guides/MIDI.html
 //Nice introduction and more in these YT tutorials: https://www.youtube.com/watch?v=Oz4KYZ9KLc0&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=11 (part I) and https://www.youtube.com/watch?v=ih2uqOaqb4c&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=19 (part II).
 
-MIDIClient.init; //Initiates the MIDI communication with your operating system to get its knowledge of available MIDI devices. Retunrs a list of MIDI sources and destinations (should detect connected MIDI interfaces).
+//This is a very basic introduction as I have barely used SC for MIDI communication myself, although it allows many functions:
+MIDIClient.init; //Initiates the MIDI communication with your operating system to get its knowledge of available MIDI devices. Retunrs a list of MIDI sources and destinations (should detect connected MIDI interfaces, such as a controller, a virtual port, etc.).
 MIDIIn.connectAll; //Connects SuperCollider with all available MIDI devices.
 //If we needed to connect only a specific device (though MIDIIn.connectAll should work just fine anyway):
 MIDIClient.sources //Returns the array of MIDI sources.
 MIDIIn.connect(0) //Allows to specify the source via its index in the previous array.
 
-//There are two main classes to interact with MIDI data: MIDIFunc and MIDIDef. MIDI Def is a subclass of MIDIFunc. They both allow us to take a certain action whena certain type of MIDI message is received:
-MIDIFunc.trace(true); //Printing the values (to test).
-MIDIFunc.trace(false); //Stop printing the values.
+//There are two main classes to interact with MIDI data: MIDIFunc and MIDIDef. MIDIDef is a subclass of MIDIFunc. They both allow us to take a certain action when a certain type of MIDI message is received:
+MIDIFunc.trace(true); //Printing the values received by an interface (to test).
+MIDIFunc.trace(false); //Stop printing.
 
 //Normally when using, for instance, a keyboard controller, we deal with noteOn and noteOff messages.
 //NoteOn and noteOff:
-MIDIdef.noteOn(\noteOnTest, {"key down".postln}); //The arguments are the key (a symbol which needs to be different for each action, as they will be saved into a Dictionary through indentity), and the function to perform. This would work with all keys as we are not specifying it.
+MIDIdef.noteOn(\noteOnTest, {"key down".postln}); //The arguments are the key (a symbol, which needs to be different for each action as it will be saved to an identity Dictionary), and the function to perform. This would work with all keys as we are not specifying it.
 MIDIdef(\noteOnTest).disable //Frees noteOn from the previous action.
-MIDIdef(\noteOnTest).disable //Reactivates the previous action for noteOn.
+MIDIdef(\noteOnTest).enable //Reactivates the previous action for noteOn.
 MIDIdef(\noteOnTest).free //Destroys the action for noteOn.
-MIDIdef.freeAll //To empty all the dictionary of keys (if using multiple MIDIdefs). MIDIdef is also "destroyed" by pressing ctrl + period.
-MIDIdef.noteOn(\noteOnTest, {"key down".postln}).permanent_(true); //This prevents the ctrl + period command to "destroy" the MIDIdef.
-MIDIdef(\noteOnTest).permanent_(false); //Ctrl + period destroys it again.
+MIDIdef.freeAll //Empties all the dictionary of keys (if using multiple MIDIdefs). MIDIdef is also "destroyed" by pressing ctrl-period, so try to avoid this command.
+MIDIdef.noteOn(\noteOnTest, {"key down".postln}).permanent_(true); //This prevents the ctrl-period command to "destroy" the MIDIdef.
+MIDIdef(\noteOnTest).permanent_(false); //This allows ctrl-period to exert its destructive power.
 
-//We can use MIDIdef to control several MIDI data such as note number, velocity, MIDI channel, etc. In order to do that, we need to declare arguments within MIDIdef's function: the arguments passed in .noteOn, .noteOff and .cc are val, num, chan, src in that order, although they can receive different names (they will mean different things depending on the method: for .noteOn, they will represent, for instance, velocity, note number, MIDI channel and the identifier number associated with the source device):
-MIDIdef.noteOn(\noteOnTest, { arg vel, note, chan, src; [vel, note, chan, src].postln }) //Just printing an array of the four values, which we will see in the postwindow (the last number is the source ID, might be useful for differentiating devices sending the same data). Channel will be 0 by default (a MIDI cable in SC represents channels 0-15).
+//We can use MIDIDef to control several MIDI data such as note number, velocity, MIDI channel, etc. In order to do that, we need to declare arguments within MIDIdef's function: the arguments passed in .noteOn, .noteOff and .cc are val, num, chan, src (value, number, channel, source) in that order, although they can receive different names (they will mean different things depending on the method: for .noteOn, they will represent, for instance, velocity, note number, MIDI channel and the identifier number associated with the source device):
+MIDIdef.noteOn(\noteOnTest, { arg vel, note, chan, src; [vel, note, chan, src].postln }) //Just printing an array of the four values, which we will see in the postwindow (the last number is the source ID, might be useful for differentiating devices sending the same data). Channel will be 0 by default (a MIDI "cable" in SC represents channels 0-15).
 
 //By default, the output sound will be the SynthDef "\default" from SC, which is the ugly piano sound. But we can use any synth created in SC:
 (
 MIDIdef.noteOn(\noteOnTest, {
 	arg vel, note;
+
 	[vel, note].postln
+
 	{
 		var signal, env;
 		signal = SinOsc.ar(note.midicps) !2; //Note is applied to the frequency of a sine oscillator. We could use any kind of oscillator or sound generator in here instead of SinOsc.
-		env = EnvGen.ar(Env.perc, doneAction: 2); //Using an envelope instead of noteOff messages sothat the synths turn themselves off.
-		signal = signal * env * vel.linexp(1, 127, 0.01, 0.3); //Velocity is implemented as amplitude multiplier. As velocity values go from 1 to 127, we need to normalize these values to the 0-1 range (using the linear range to exponential range method). Take care of the upper amp limit when playing several notes at the same time.
+		env = EnvGen.ar(Env.perc, doneAction: 2); //Using an envelope instead of noteOff messages so that the synths turn themselves off.
+		signal = signal * env * vel.linlin(0, 127, 0.01, 0.3); //Velocity is implemented as amplitude multiplier. As velocity values go from 0 to 127 (as a MIDI convention), we need to normalize these values within the 0-1 range (using the linear to linear range method). Take care of the upper amp limit when playing several notes at the same time.
 	}.play
+
 })
 )
 
 //We can use a SynthDef instead of a function.play as a more efficient synthesis source. In addition, we will use here an envelope adsr so that noteOn can be used to initiate the envelope, and noteOff can be applied to release it.
-//In order not to overwrite the Synth with a new note, this guy is using the strategy of creating an empty array of 128 elements, as there are 128 notes in MIDI. Each synth will be stored in its particular place within that array (its index will be equal to the note number). When releasing the note, the Synth should be freed at that index.
-//Remember that after pressing ctrl + period, the MIDIdef needs to be evaluated again by default.
+//In order not to overwrite the Synth with a new note, this guy (whose tutorial I am following) is using the strategy of creating an empty array of 128 elements, as there are 128 notes in MIDI. Each synth will be stored in its particular place within that array (its index will be equal to the note number). When releasing the note, the Synth should be freed at that index.
+//Remember that after pressing ctrl-period, the MIDIdef needs to be evaluated again by default.
 
 //Array of notes and other global variables:
 ~note = Array.newClear(128) //An empty array with size = 128.
@@ -55,7 +61,7 @@ SynthDef(\midiSynth, {
 	arg freq = 440, amp = 0.3, gate = 0, bend; //Gate = 0 by default.
 	var signal, env;
 
-	signal = LDTri.ar(freq * bend.midiratio) !2; //Applying the pitch bend to the frequency and converting semitones into frequency ratio.
+	signal = LFTri.ar(freq * bend.midiratio) !2; //Applying the pitch bend to the frequency and converting semitones into frequency ratio.
 	env = EnvGen.ar(Env.adsr, gate, doneAction: 2); //Default adsr envelope.
 
 	signal = signal * env * amp;
@@ -74,9 +80,9 @@ MIDIdef.noteOn(\noteOnTest, {
 	~note[note.asInteger] = Synth(\midiSynth, //Storing the Synth in the notes array at the index equal to the note number.
 		[
 			\freq, note.midicps,
-			\amp, vel.linexp(1, 127, 0.01, 0.3),
-			\gate, 1,
-			\bend, ~bend.linlin(0, 16383, -2, 2) //We need to acknowledge the value of the bend wheel in noteOn and apply the current position to the initial frequency so that if we move the wheel and then strike a note, the pitch bend will be applied (same values as in MIDIdef.bend).
+			\amp, vel.linlin(0, 127, 0.01, 0.3),
+			\gate, 1, //Gate 1 applied here.
+			\bend, ~bend.linlin(0, 16383, -2, 2) //We need to acknowledge the value of the bend wheel in noteOn and apply the current position to the initial frequency so that if we move the wheel and then strike a note, the pitch bend will be applied (same values as in MIDIdef.bend). Deviation up to 2 semitones up or down (-2 to 2, see MIDIDef.bend below).
 		]
 	)
 });
@@ -94,8 +100,9 @@ MIDIdef.noteOff(\noteOffTest,{
 MIDIdef.bend(\bendTest{
 	arg val, chan;
 	[val, chan].postln;
+
 	~bend = val;  //This is just to keep track on the bend value from the global variable.
-	~note.do({ arg synth; synth.set(\bend, val.linlin(0, 16383, -2, 2)) })  //Now, we need to map the value of the bend according to each note. We can iterate this task using .do. The range of the pitch wheel will be from down a whole step to up a whole step of each pitch (-2 to 2, in semitones, then converted in the SynthDef with .midiratio and applied to the freq in Hz). The range of values of the wheel (the input of linlin) might change according to the device (check them first by posting them).
+	~note.do({ arg synth; synth.set(\bend, val.linlin(0, 16383, -2, 2)) })  //Now, we need to map the value of the bend according to each note. We can iterate this task using .do. The range of the pitch wheel will be from down a whole step to up a whole step of each pitch (-2 to 2, in semitones, then converted in the SynthDef with .midiratio and applied to the freq in Hz). The range of values of the wheel (the input of linlin) might change according to the device (check them first by printing them).
 })
 )
 
@@ -104,15 +111,18 @@ MIDIdef.bend(\bendTest{
 //MIDIdef.cc responds to continuous controller messages such as knobs, buttons, faders, sustain pedals, etc. .cc passes the same four arguments as in noteOn and noteOff.
 MIDIdef.cc(\cc16, { arg val, ccnum; ~cc16 = val}, 16); //For MIDI control (.cc): Arguments are key (\symbol), function and control number.
 
-//The second part of the before-mentioned tutorial (https://www.youtube.com/watch?v=ih2uqOaqb4c&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=19) explains how to generate MIDI data in SC and send it out to external devices instead of receiving it in from external devices (which was introduced in this document). Basically, how to connect SC to, for instance a DAW and synthesis plug-ins in order to work with MIDI data. It is usually necessary to have some kind of driver allowing the MIDI communication between both programs (such a driver should be visible when evaluating MIDIClient.init).
+//The second part of the before-mentioned tutorial (https://www.youtube.com/watch?v=ih2uqOaqb4c&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=19) explains how to generate MIDI data in SC and send it out to external devices instead of receiving it in from external devices (which was introduced in this document). Basically, how to connect SC to, for instance a DAW and synthesis plug-ins in order to work with MIDI data. It is usually necessary to have some kind of driver allowing the MIDI communication between both programs (such a driver should be visible when evaluating MIDIClient.init). Coming up next in this document, I will give this a try using SC and Reaper:
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////
+//CONNECTING TO OTHER SOFTWARE
+
 //Let's try to connect SC to Reaper (or any DAW) in order to send MIDIOut messages to some sort of virtual synthesizer (VSTi). These instructions apply to Windows.
-//I am using LoopMIDI and MIDI-OX (those are free softwares)in order to create virtual MIDI busses which serve as locations for sending and receiving MIDI data. This is the needed configuration to enable the MIDI communication:
+//I am using LoopMIDI and MIDI-OX (those are free software) in order to create virtual MIDI busses which serve as locations for sending and receiving MIDI data. This is the needed configuration to enable the MIDI communication:
 /*
 1 - Open LoopMIDI and create two ports (below, in "new port-name" and the "+" symbol (I called my new ports "SC out" and "Reaper in").
-2 - Open MIDI-OX and go to Options --> MIDI devices: select "Reaper in" as MIDI input and "SC out" as MIDI output, and click on "OK". For a more clear understanding of what is happening, you can open the "Monitor - Output" and "Monitor - Input" as floating windows to see the MIDI data in and out.
-3 - Now we can configure Reaper: I was using ASIO driver for the sound, but if using the headphones, I think "Direct sound" shouldn't pose any problem. Then I go to MIDI Devices, in the Audio Preferences in the Options menu (in there, you should be able to see the new MIDI ports created in LoopMIDI): it is necessary to enable the MIDI input devices by right clicking on each device and choosing "enable" (or "enable+control"), then Apply and Ok. Go to Track --> Insert virtual instrument on new track: the recording buttom on the track should be on (on red) and the record monitoring (the little speaker icon) should be ON. Open the "in FX" little menu and choose "Input: MIDI" --> "SC out" --> Channel 1. Last, but not least, we need an FX with a virtual instrument (I have nothing so I will use the default "ReaSynth" from Reaper and I will put some Sawtooth mix just to try).
+2 - Open MIDI-OX and go to Options --> MIDI devices: select "Reaper in" as MIDI input and "SC out" as MIDI output, and click on "OK". For a clearer understanding of what is happening, you can open the "Monitor - Output" and "Monitor - Input" as floating windows to see the MIDI data in and out.
+3 - Now we can configure Reaper: I was using ASIO driver for the sound, but if using the headphones, I think "Direct sound" shouldn't pose any problem. Then I go to MIDI Devices, in the Audio Preferences in the Options menu (in there, you should be able to see the new MIDI ports created in LoopMIDI): it is necessary to enable the MIDI input devices by right clicking on each device and choosing "enable" (or "enable+control"), then "Apply" and "Ok". Go to Track --> Insert virtual instrument on new track: the recording buttom on the track should be on (on red) and the record monitoring (the little speaker icon) should be ON. Open the "in FX" little menu and choose "Input: MIDI" --> "SC out" --> Channel 1. Last, but not least, we need an FX with a virtual instrument (I have nothing so I will use the default "ReaSynth" from Reaper and I will put some Sawtooth mix just to try).
 4 - Let's go to SC now:
 */
 
@@ -120,7 +130,7 @@ MIDIdef.cc(\cc16, { arg val, ccnum; ~cc16 = val}, 16); //For MIDI control (.cc):
 MIDIClient.init
 
 //We can communicate with a specific MIDI port in two ways:
-//Way one is to ask about the MIDI destinations, which are represented in an array. Then all we need to do is to assign the specific index from the array (we need the "Reaper in" port) to a MIDIOut object and to assign the object to a variable:
+//Way one is to ask about the MIDI destinations, which are represented in an array. Then all we need to do is to assign the specific index from the array (we need the "Reaper in" port) to a MIDIOut object and assign the object to a variable:
 MIDIClient.destinations
 m = MIDIOut(4)
 
@@ -141,6 +151,7 @@ m.latency = 0.2 //This message adds a delay to each sent message. By default, it
 Routine({
 	[35, 49, 56, 63, 66, 73].do({
 		|note|
+
 		m.noteOn(0, note, 20);
 		0.5.wait
 	})
@@ -151,13 +162,14 @@ Routine({
 Routine({
 	[35, 49, 56, 63, 66, 73].reverse.do({ //This, with noteOff, to turn the notes in the reverse order.
 		|note|
+
 		m.noteOff(0, note, 20);
 		0.5.wait //If no wait time, all notes would be released together.
 	})
 }).play
 )
 
-//REMEMBER: All tranformations of the sound itself need to be carried out in Reaper, in the virtual instrument itself (and according to its own control possibilities, which normally include at least envelope and timbre qualities). SC's audio server is not even booted as the sound synthesis is happening in  Reaper.
+//REMEMBER: All tranformations of the sound itself need to be carried out in Reaper, in the virtual instrument itself (and according to its own control possibilities, which normally include at least envelope and timbre qualities). SC's audio server is not even booted as the sound synthesis is happening in  Reaper: we are only using SC as client.
 //Also remember that anything played from SC in Reaper can be recorded as the values are being sent (the recording process happens in Reaper instead of SC).
 
 //New Routine, now turning on and off each note before the next comes, and looping the entire thing:
@@ -166,27 +178,29 @@ r = Routine({
 	inf.do({ //inf.do could be replaced by "loop"{}
 		[35, 49, 56, 63, 66, 73].do({
 			|note|
+
 			m.noteOn(0, note, 20);
 			0.1.wait;
+
 			m.noteOff(0, note, 20);
-			0.2.wait //0.2 seconds of silence between each note (try 0.1).
+			0.2.wait //0.2 seconds of silence between each note.
 		})
 	})
 }).play
 )
 
-//The r.stop does not work if a note hasn't been turned off before executing it, and comand period does not affect as the synthesis is happening in Reaper. We can use instead this message:
-m.allNotesOff(0) //With this specific synthesizer, it works, but the guy in the tutorial said that it does not always works as not all synthesizers understand this message.
+//r.stop does not work if a note hasn't been turned off before executing it, and ctrl-period does not affect as the synthesis is happening in Reaper. We can use instead this message:
+m.allNotesOff(0) //With this specific synthesizer, it works, but "the guy in the tutorial" said that it does not always work as not all synthesizers understand this message.
 //So, a better solution for this is to iterate the message .noteOff for all 128 possible note values at once:
 (0..127).do({ |note| m.noteOff(0, note) }) //This should do it.
 
 //A recommendation from the tutorial: midi.org --> Specs --> MIDI Reference Tables --> Summary of MIDI messages: you can find there, for example, the message "allNotesOff" (it is not a SC specific method, but it is comming from MIDI protocol).
 
 
-//Now moving on to .cc messages (normally triggered by a knob, a fader, etc., for general purpose controls, normally continuous ones). See in the same web page, midi.org, some specific channels for controlling specific values, which could be automatically used as a convention by some synthesizers. For example:
+//Now moving on to .cc messages (normally triggered by a knob, a fader, etc., for general purpose controls, normally continuous ones, instead of descrete keys and buttons). See in the same web page, midi.org, some specific channels for controlling specific values, which could be automatically used as a convention by some synthesizers. For example:
 m.noteOn(0, 60, 20) //We create a note.
 m.control(0, 7, 60) //Arguments are channel, control number and value. Supposedly, control number 7 should address the amplitude, but in this case, it is not being recognized by the synthesizer I am using.
-//Anyway, not all possible controls are predefined in the MIDI specifications, so we can use any of the "undefined" control number to be assigned to those parameters (for example, 20, 21, or 22 are undefined). For example, in order to control the "Sawtooth mix" fader, we can select that fader, go to "param", choose "learn", send the control message from SC and change around the fader in Reaper so they are somehow associated.
+//Anyway, not all possible controls are predefined in the MIDI specifications, so we can use any of the "undefined" control number to be assigned to those parameters (for example, 20, 21, or 22 are undefined). For example, in order to control the "Sawtooth mix" fader, we can select that fader, go to "param", choose "learn", send the control message from SC and change around the fader in Reaper so thar they are somehow associated.
 m.control(0, 20, 64) //Yes, it worked, and it is already mapped so that 0-127 turns into 0-1 ratios in the Sawtooth mix bar.
 m.control(0, 21, 64) //This one is now linked to the "Extra sine mix".
 //Of course, this is different in every MIDI instrument, but they all normally feature the learn option.
@@ -201,9 +215,11 @@ Routine({
 
 		(30, 40..100).do({ //Iterating over multiples of ten from 30 to 100.
 			|val|
+
 			m.control(0, 20, val); //Iterating different values of Sawtooth mix.
 			0.15.wait
 		});
+
 		m.noteOff(0, note); //Turning off each note with every iteration of the infinite loop.
 	})
 }).play
@@ -212,14 +228,14 @@ Routine({
 m.allNotesOff(0)
 
 
-//Though everyone knows already that Routines are not the best option for these kind of algorithmic pattern composition, so let's turn to Pbind. Also, by using Pdef, we will be able to perform some real-time manipulation.
+//Everyone knows already that Routines are not the best option for these kind of algorithmic pattern composition though, so let's turn to Pbind. Also, by using Pdef, we will be able to perform some real-time manipulation.
 //In the "Pattern Guide 08: Event types and patameters", there is a list of keys related to MIDI output.
 //(right now the amplitude values are a bit suspicious, Idk what is the problem, but anyway)...
 (
 Pdef(\djSession, Pbind(
 	\type, \midi, //The "instrument" in this case is the MIDI communication.
 	\midicmd, \noteOn,//This allows to apply all sorts of MIDI messages, such as noteOn, noteOff, allNotesOff, etc.
-	\midiout, m, //The midiout key needs to point at the MIDIOut object (here, in variable "m", as previously assigned).
+	\midiout, m, //The midiout key needs to point at the MIDIOut Object (here, in variable "m", as previously assigned).
 	\chan, 0, //The channel.
 	\midinote, Pwrand([62, 74, 86, 98], [0.1, 0.8, 0.08, 0.2].normalizeSum, inf), //The MIDI note values (can start applying patterns :3).
 	\amp, Pexprand(0.1, 0.8, inf), //amp goes to the velocity control, but in values from 0 to 1! (or can use the same MIDI values like this 63/127, which would be, for example 0.5 amp).
@@ -253,7 +269,7 @@ Pdef(\djSession_chords, Pbind(
 	\midinote, Pxrand([
 		[38, 50, 72, 77, 81],
 		[43, 55, 70, 77, 79],
-		[46, 58, 69, 74, 77, 84] //Idk why in the tutorial the last one has one more notes, but does not matter.
+		[46, 58, 69, 74, 77, 84] //Idk why in the tutorial the last one has one more note, but it does not matter.
 	], inf),
 	\amp, Pwhite(0.005, 0.01, inf), //Needs compensation because of the chords?
 	\sustain, Pxrand([1, 2, 4], inf), //This is also measured now in "bars"?
@@ -263,7 +279,7 @@ Pdef(\djSession_chords, Pbind(
 )
 
 //Now we could apply some reverb in Reaper and other effects to the track of the instrument (or routing the track to an effects track).
-//Also, Pdef will allow us to change any value at running time (with this quantization, changes will apply in the next available downbeat).
+//Also, Pdef will allow us to change any value at running time (with this quantization, changes will apply in the next available "downbeat").
 
 //Still, this does not work if I want to stop it while a note is being played:
 Pdef(\djSession_cc20).stop
@@ -272,10 +288,10 @@ Pdef(\djSession_chords).stop
 
 m.allNotesOff(0) //Just in case.
 
-//In the synthesizer I am using, the envelope's release time does not really seem to work, but anyway it is clear to me that I would need some more fancy synth if I want using Reaper to be worth while, but anyway, I can open the UI option of the synth for a "better" graphical interface.
+//In the synthesizer I am using, the envelope's release time does not really seem to work, but anyway it is clear to me that I would need some more fancy synth if I want using Reaper to be worthwhile. Anyway, I can open the UI option of the synth for a "better" graphical interface.
 
 
-//These following lines were shared by Alejandro Olarte, but now I should rearch for a better instrument, program some other cool control parameters, and create my own sequences. A nice addition could be to actually control the control parameters by using an external MIDI device (a MIDI controller).
+//These following lines were shared by Alejandro Olarte, but now I should search for a better instrument, program some other cool control parameters, and create my own sequences. A nice addition could be to actually control the control parameters by using an external MIDI device (a MIDI controller).
 
 Scale.directory //All scales here, as a reference if using the class Scale.
 

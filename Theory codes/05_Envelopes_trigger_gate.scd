@@ -1,53 +1,34 @@
 //5 - ENVELOPES, TRIGGER AND GATE
-////////////////////////////////////////////////
 
-//ENVELOPES:
-//Envelopes describe events that change over time. Two classes are needed to create an envelope: EnvGen, the Unit Generator of envelopes, and Env, which allows us to specify the characteristics of the envelope that EnvGen will create.
+/////////////////////////////////////////////////////////////////////
+//ENVELOPES
 
-Env.new(levels, times, curve) //we will use these three first arguments in Env (it is not necessary to specify the method .new, as it happens with Mix.new and many other UGens). Imagining an envelope as a waveshape: "Levels": points at the "y" axis within an array (for example, [0, 1, 1, 0], which can define frequencies, amplitudes, etc./ "Times": how many time in seconds does it takes to go from one level point to the next, written within an array as well (if indicating multiple times) --> there will be always one less time value than level value , because the time points are "in between" the level points / "Curve": how do we move from one value to the next, the so-called "interpolation" (for instance, \linear (by default), \exponential, \sine, \step (no interpolation, so it goes from one value to the next directly)). The interpolation between two levels that are equal doesn't matter (it won't "sound"). The listed curves were premade curves, but in this argument, it is also possible to define a curve using positive or negative floats (value of the curve of the segments), or an array mixing any of the former options (for example, the curve [-4, 4] is quite close to an exponential). Let's study closely all those options:
+//Envelopes describe events over time. An envelope is usually defined by a series of segments or lines from one point to another in a specific amount of time. The shape of this line can vary (it can be linear, exponential, sinusoidal, etc.): the way in which the envelope moves from one point (value) to another is called interpolation or curve. In SuperCollider, two classes are needed to create an envelope: EnvGen is the Unit Generator of envelopes, and Env is used to create an envelope specification (to specify the value of the levels, times and curves of a default envelope, or, when sent a class method different from .new ("envelope creation methods"), to create different types of envelopes):
+EnvGen.ar(Env(levels, times, curves), gate) //We will focus on this syntax and arguments for now: The arguments of Env.new are levels (an array of values in the "y" axis, defining frequencies, amplitudes or any kind of parameter the envelope is applied to), times (an array of times in seconds to go from one level to another, meaning that there will always be one less value of times than the number of level values), and curve (an array of symbols or numbers indicating the way the envelope moves from one value to the next).
 
-//LINEAR:
+//Let's study some options for the curve argument of the envelop:
 
-Env(curve: \linear)
+//Linear curve:
+Env([0, 0.5, 0.1, 0.5, 0], 1, \linear).plot //Graphical representation (straight lines).
 
-(
-Env(
-	[0, 0.5, 0.1, 0.5, 0], //Levels.
-	[1, 1, 1, 1], //Durations in seconds (can be summarized in just a 1, because it will be cyclically distributed among the level values).
-	\linear
-).plot //Graphical representation.
-)
-
-//Applying the envelope to the amplitude of a signal: when multiplying the envelope by the signal, each amplitude value (level) of the envelope is multiplied by the amplitude of the signal). Take into consideration that even if the envelope ends in amplitude = 0 and the sound is gone, the signal is still running in the server (thus, we need to kill the synth with ctrl + .):
-(
-{
-	var signal, env, envGen;
+( //Sonic result (applied to the amplitude of a sine oscillator):
+{ var signal, env, envGen;
 
 	env = Env([0, 0.5, 0.1, 0.5, 0], 1, \linear); //The time from one level to the next will always be 1 in here.
-
 	envGen = EnvGen.ar(env);
 
 	signal = SinOsc.ar;
 
-	signal * envGen
+	signal * envGen //In order to apply the envelope to the amplitude of a signal, we simply multiply the signal by the envelope.
 }.play
 )
+s.plotTree //When the envelope is done, the signal does not go away but just holds the last value given in the levels array. Here the last value is 0, so we cannot hear the sine wave anymore, but the synth is still running until we free it (see in the node tree). We will cover later some possible solutions for this in case we need the synth to behave in a different way when the envelope is done.
 
-//EXPONENTIAL: an exponential function can never reach 0, nor cross it. This is why we use here a value close to 0 (0.001, for instance):
-Env(curve: \exponential)
+//Exponential curve:
+Env([0.001, 0.5, 0.1, 0.5, 0.001], [1, 4, 6, 2], \exponential).plot //Graphical representation (curved lines). An exponential curve cannot touch nor cross 0.
 
-(
-Env(
-	[0.001, 0.5, 0.1, 0.5, 0.001],
-	[1, 4, 6, 2],
-	\exponential
-).plot
-)
-
-//Sound result, applied again to the amplitude of a sine wave:
-(
-{
-	var signal, env, envGen;
+( //Sonic result:
+{ var signal, env, envGen;
 
 	env = Env([0.001, 0.5, 0.1, 0.5, 0.001], 1, \exponential);
 	envGen = EnvGen.ar(env);
@@ -58,21 +39,11 @@ Env(
 }.play
 )
 
-//STEP: means that there is no interpolation:
-Env(curve: \step)
+//Step curve:
+Env([0, 0.5, 0.1, 0.5, 0], 1, \step).plot //Graphical representation (leaps). Notice that the first level is "lost" as the first step is to directly jump to the second level. When working with, for example, frequencies, it would make sense to repeat the first frequency in order to hear it (see also the possible use of \hold instead of \step).
 
-(
-Env(
-	[0, 0.5, 0.1, 0.5, 0],
-	1,
-	\step
-).plot //Looks like a square / pulse wave.
-)
-
-//Sound result, applied to the amplitude of a sine wave: direct sound, no transition between values. The second value will sound directly because the first "step" is to jump from the first to the second value. Therefore, if we want the first value to be heards, the trick is to repeat it in the list:
-(
-{
-	var signal, env, envGen;
+( //Sonic result:
+{ var signal, env, envGen;
 
 	env = Env([0, 0.5, 0.1, 0.5, 0], 1, \step);
 	envGen = EnvGen.ar(env);
@@ -83,21 +54,13 @@ Env(
 }.play
 )
 
-//USING FLOATS: in order to draw the envelope line ourselves. Negative floats will pull the line to the left / Positive floats will pull the line to the right. The higher the number, either positive or negative, the more accute the line, cutting distance with the looks of a square or pulse wave (just like with \step):
-(
-Env(
-	[0, 0.5, 0.1, 0.5, 0],
-	1,
-	4 //Four is a value that works quite well for the curve of the envelope, but any number might be tested. Try out -4 to see the direction change.
-).plot
-)
+//Curve defined by floats:
+Env([0, 0.5, 0.1, 0.5, 0], 1, 8).plot //Graphical representation: 0 = linear, 4 = sort of exponential, 8 = closer to step, and upwards every time sharper, although it also depends on the speed of the segment (the corresponding value from the times array). Negative and positive values change the side from which the curve is "pulled" (positive = pulled towards the right; negative = pulled towards the left).
 
-//Sound result, applying it again to the amplitude of a sine wave:
-(
-{
-	var signal, env, envGen;
+( //Sonic result (for instance):
+{ var signal, env, envGen;
 
-	env = Env([0, 0.5, 0.1, 0.5, 0], 1, -4);
+	env = Env([0, 0.5, 0.1, 0.5, 0], 1, [4, -4]); //Almost equivalent to \exponential, but we can touch or cross 0.
 	envGen = EnvGen.ar(env);
 
 	signal = SinOsc.ar;
@@ -106,12 +69,15 @@ Env(
 }.play
 )
 
-//Mixing negative and positive numbers, we can build an envelope pretty close to the premade ones, but we can control all parameters in detail:
-(
-{
-	var signal, env, envGen;
+Env([0, 0.5, 0.1, 0.5, 0], 1, [4, -4]).plot //Visualization of the previous envelope.
 
-	env = Env([0, 0.5, 0.1, 0.5, 0], 1, [4, -4]); //This one is close to an exponential (compare the sound with the previous one).
+//Array of different curves:
+Env([0, 0.5, 0.1, 0.5, 0], 1, [8, -4, \step, 0]).plot //Graphical representation, one kind of curve for each segment (also one less value than in the levels array).
+
+( //Sonic result:
+{ var signal, env, envGen;
+
+	env = Env([0, 0.5, 0.1, 0.5, 0], 1, [8, -4, \step, 0]);
 	envGen = EnvGen.ar(env);
 
 	signal = SinOsc.ar;
@@ -120,270 +86,188 @@ Env(
 }.play
 )
 
-//USING AN ARRAY: mixing different parameters:
+//See the help file of Env for a complete list of possible curves. Some of the ones we haven't touched yet are:
+Env([0, 0.5, 0.1, 0.5, 0], 1, \hold).plot //Hold: just like \step, but it actually holds the first value, although not the last one. Compare again:
+Env([0, 0.5, 0.1, 0.5, 0], 1, \step).plot
+Env([0, 0.5, 0.1, 0.5, 0], 1, \sin).plot //Sinusoidal: "S" shaped segments.
+Env([0, 0.5, 0.1, 0.5, 0], 1, \welch).plot //Welch: like sinusoidal, but the intersections are not rounded.
+Env([0, 0.5, 0.1, 0.5, 0], 1, \sqr).plot //Squared segments.
+Env([0, 0.5, 0.1, 0.5, 0], 1, \cub).plot //Cubed segments.
+
+
+//Envelope of frequencies: we can apply envelopes to parameters other than the amplitude, such as the frequency:
 (
-Env(
-	[0, 0.5, 0.1, 0.5, 0],
-	1,
-	[8, -4, \exponential, 0] //Positive and negative floats and an exponential.
-).plot
+{ var freq;
+
+	freq = EnvGen.ar(Env([39, 61, 50] + 24, 2, \linear)).midicps; //Linear distribution among MIDI values, then conversion to Hz (if the conversion happens before, an exponential distribution would be more convenient to work with Hz).
+
+	SinOsc.ar(freq, 0, 0.2) //The envelope is placed in the frequency argument of the signal. When the envelope is done, the signal holds its last level as frequency value.
+}.play
 )
 
-//Sound result:
+//Method .circle and randomness. We can "loop" the envelope by applying the method .circle to the Env class, although it just jumps to the first value from the last one (no interpolation between last and first value). In addition to this, the possible randomly chosen values will be maintained instead of being refreshed:
 (
-{
-	var signal, env, envGen;
-
-	env = Env([0, 0.5, 0.1, 0.5, 0], 1, [8, -4, \exponential, 0]);
-	envGen = EnvGen.ar(env);
-
-	signal = SinOsc.ar;
-
-	signal * envGen
-}.play
-)
-
-//Controlling the frequency with the envelopes: envelopes can be used to modulate any parameter such as amp / freq / density / etc.
-//Using linear here, for instance (no need to specify it because Env is linear by default):
-({
-	var freq;
+{ var freq;
 
 	freq = EnvGen.ar(
-		Env([39, 61, 50] + 12, 2, \linear) //Using MIDI numbers, then converting (after the envelope is created, as the interpolation is linear).
-	).midicps;
-
-	SinOsc.ar(freq, 0, 0.5)
-}.play
-)
-
-//The method .circle is applied to Env to repeat the envelope in sort of a loop:
-({
-	var freq;
-
-	freq = EnvGen.ar(
-		Env([39, 61, 50] + 12, 2, \linear).circle //There is no interpolation from the last value to the first one: it is not a real loop, but a simple repetition.
-	).midicps;
-
-	SinOsc.ar(freq, 0, 0.3)
-}.play
-)
-
-//Mixing here all we have studied:
-({
-	var freq;
-
-	freq = EnvGen.ar(
-		Env(Array.fill(5, {rrand (60, 104)}), //Array.fill for aleatoric frequencies.
-			Array.fill(4, {rrand(0.2, 1)}), //Random values of duration for each transition (one less value than in the array of freqs).
+		Env(
+			Array.fill(5, { rrand (60, 104) }),
+			Array.fill(4, { rrand(0.2, 1) }),
 			\linear
-		).circle //The random selection is fixed for all repetitions (it will change when evaluating the function again).
+		).circle //Method .circle applied to Env.
 	).midicps;
 
-	SinOsc.ar(freq, 0, 0.2)
+	SinOsc.ar(freq, 0, 0.1)
 }.play
 )
 
-//Applied to a filter bank: the root of the filter bank is controlled by an envelope. The 10 BPF created by the array of frequencies describe a parallel motion.
-
+//Last example: filter bank (envelope applied to the grow argument) and possible trick for .circle:
 (
-{
-	var root, freq;
+{ var grow, freq;
 
-	root = EnvGen.ar(
-		Env([30, 31, 29.5], [4, 2]).circle
-	).midicps;
+	grow = EnvGen.ar(Env([2/1, 3/2, 7/4, 2/1], [2, 3, 2], \exponential).circle); //If the envelope finishes in the same value as it starts, the method .circle will seem to include an interpolation between both values (possible trick for now).
 
-	freq = Array.geom(10, root.poll(4), 7/4); //.poll shows us the value of the root in the postwindow 4 times per second. The interval of the bank is a minor 7th.
-
-	{Mix(
-		BPF.ar(
-			PinkNoise.ar,
-			freq,
-			0.01,
-			1
-		)
-	)} !2
-}.play
-)
-
-//Here, the envelope is controlling the interval of the filter bank (the "grow"). Take care of the frequency limits of each interval within the given array:
-
-(
-{
-	var grow, freq;
-
-	grow = EnvGen.ar(
-		Env([2/1, 3/2, 7/4], [8, 4], \exponential).circle //Try using 1 as time value.
-	);
 	freq = Array.geom(10, 35, grow);
 
-	{Mix(
+	{ Mix(
 		BPF.ar(
 			PinkNoise.ar,
 			freq,
 			0.01,
 			1
 		)
-	)} !2
+	) } !2
 }.play
 )
 
-//Envelope methods (premade envelopes): .TRIANGLE, .SINE, .PERC can be applied to Env.new:
 
-Env.triangle //Arguments: duration and level.
-Env.triangle(1, 0.3).plot
+//"Standard shape envelope creation methods" (these are also class methods): we can use different methods to create specific envelope shapes such as:
+//Triangle envelope:
+Env.triangle(1, 0.3).plot //Graphical representation.
+{ SinOsc.ar * EnvGen.ar(Env.triangle(1, 0.3).circle) }.play //Sonic result.
 
-{SinOsc.ar * EnvGen.ar(Env.triangle(1, 0.3))}.play
-{SinOsc.ar * EnvGen.ar(Env.triangle(1, 0.3).circle)}.play //Applying .circle.
-
-Env.sine //Arguments: duration and level. Very useful for future granular synthesis.
+//Sine envelope (usually used for granular synthesis, for instance):
 Env.sine(1, 0.3).plot
+{ SinOsc.ar * EnvGen.ar(Env.sine(1, 0.3).circle) }.play
 
-{SinOsc.ar * EnvGen.ar(Env.sine(1, 0.3).circle)}.play
+//Percussive envelope:
+Env.perc(0.01, 0.25, 0.3, -4).plot //The curve of a percussive envelope cannot be exponential because it will always touch 0.
+{ SinOsc.ar * EnvGen.ar(Env.perc(0.01, 0.5, 0.3, -4).circle) }.play
 
-Env.perc //Arguments: attackTime, releaseTime, level and curve (the curve can't be exponential because it has to reach zero due to its percussive utility).
-Env.perc(0.01, 0.25, 0.3, -4).plot
+//Trapezoidal envelope:
+Env.linen(0.01, 1, 0.3, 1, \linear).plot //Includes an attack, sustain and release time, and the curve can be modified as well.
+{ SinOsc.ar * EnvGen.ar(Env.linen(0.01, 1, 0.5, 0.3, \linear).circle) }.play
 
-{SinOsc.ar * EnvGen.ar(Env.perc(0.01, 0.25, 0.3, -4).circle)}.play
+//Example:
+//Nice "punchy" bass XD (only for good loudspeakers): a very sharp envelope is applied to the frequency, and a percussive envelope is applied to the amplitude:
+{ SinOsc.ar(EnvGen.ar(Env([400, 40], 0.05)), 0, EnvGen.ar(Env.perc(0, 4))).dup(2) * 0.2 }.play
 
-/////////////////////////////////////////////////////////////////////////////
-//SECOND ARGUMENT OF EnvGen (the first one was the type of envelope, Env):
-//GATE: its value by default is 1 (a single impulse) --> using an Impulse in the argument gate will run again the envelope from its beginning one time per second. If the duration (frequency) of Impulse (or any other trigger being used) is less than the total duration of the envelope, the envelope will be triggered from the beginning from that point (as if we repeated a note on the piano using the sustain pedal at the same time, before it totally extinguishes).
-//Gate is a signal: when it is higher than zero, EnvGen initiate or reinitiate the envelope:
+//Some other Env instance methods (apart from .circle and .plot, already studied):
+e = Env([0, 0.5, 0.1, 0.5, 0], [1, 4, 6, 2], \linear)
+e.duration //Returns the total duration of the envelope (the sum of the times array).
+e.duration = 15 //Sets a new total duration of the times array by stretching them.
 
+a = Env.adsr; //We will study this kind of envelope later (sustained envelope creation methods), but used here as an example.
+a.levels; //Shows the current levels of the Env in "a".
+a.range(42, 45).levels; //Returns a copy of the Env whose levels have been mapped onto the given linear, exponential or curve range.
+a.exprange(42, 45).levels;
+a.curverange(42, 45, -4).levels;
+
+{ SinOsc.ar(EnvGen.ar(Env.perc(0.01, 0.7).exprange(80, 10000), doneAction: Done.freeSelf).poll(30)) * 0.2 }.play// Mapping an Env to an exponential frequency range (possible use of the previous methods). We will talk about the argument doneAction later on.
+{ EnvGen.ar(Env.perc(0.01, 0.7).exprange(80, 10000)) }.plot(0.5) //Visualization of the previous envelope.
+
+
+/////////////////////////////////////////////////////////////////////
+//TRIGGER
+
+//The second argument of EnvGen is "gate". Gate is 1 by default as, as far as it is 1, it will trigger the envelope and hold it open. Though in order to use the argument gate as a real gate we need a different kind of envelope that can be sustained. Gate can be used as a trigger for those envelopes that cannot be sustained in order to "reboot" the envelope every certain amount of time (this is equivalent to the method .circle, but now we don't depend on the duration of the envelope but on the frequency of the trigger):
 (
-{
-	var trigger, signal, env;
+{ var trigger, signal, env;
 
-	trigger = Impulse.ar(1); //Triggering the envelope once per second.
+	trigger = Impulse.ar(1); //Impulse will trigger the envelope 1 time per second (try with freq of 2 and with Dust).
 	signal = SinOsc.ar;
-	env = EnvGen.ar(Env.perc (0.01, 0.5, 0.3), trigger);
-	signal * env
-}.play
-)
-
-(
-{
-	var trigger, signal, env;
-
-	trigger = Impulse.ar(2); //The trigger is now a bit shorter than the envelope, so the silence is never reached.
-	signal = SinOsc.ar;
-	env = EnvGen.ar(Env.perc (0.01, 0.5, 0.3), trigger);
-	signal * env
-}.play
-)
-
-(
-{
-	var trigger, signal, env;
-
-	trigger = Dust.ar(1); //Using dust: aleatoric trigger (but still once per second).
-	signal = SinOsc.ar;
-	env = EnvGen.ar(Env.perc (0.01, 0.5, 0.3), trigger);
-	signal * env
-}.play
-)
-
-//Another mixed example:
-
-(
-{
-	var trigger, signal, env;
-
-	trigger = Dust.ar(5);
-
-	signal = LFPulse.ar(
-		100,
-		0,
-		LFDNoise0.ar(500, 0.3, 0.5), //Do not take this "modulation of the width" as an example or reference.
-		0.2 !2
-	);
-
-	env = EnvGen.ar(Env.perc(0.05, 0.05, 0.3), trigger);
+	env = EnvGen.ar(Env.perc(0.01, 0.5, 0.3), trigger); //If the release of .perc is longer than the frequency of the impulse, we will never hear silence between the envelopes (try with release = 2).
 
 	signal * env
 }.play
 )
 
-//Example of the use of randomness for the envelope parameters: compare these two similar codes:
+//A trigger is anything that causes a reaction. In SC, a trigger is produced when zero is crossed in the input of the trigger. This is why we usually use Impulse (or Dust) or a Pulse oscillator for this.
 
+//Randomness: same random values (times and freqs) will be kept every time the envelope is retriggered:
 (
-{ var freq, trigger, signal;
+{ var freq, trigger, time, signal;
 
-	trigger = Impulse.ar(1/4); //One trigger each four seconds.
+	trigger = Impulse.ar(1/4); //It does not matter if the envelope is completed: every four seconds it is rebooted (if longer than 4 seconds, it is cut, and if shorter than 4 seconds, last value is sustained until next trigger).
+	time = [rrand(0.5, 3)]; //Random time chosen between 0.5 and 3 seconds. If the random choice was made directly into the expanded envelope, each envelope would feature a different time value. This will also happens if the rrand is sent within a function (between curly brackets), as several instances of the function will be executed (instead of duplicating the same array).
 
-	freq = Array.fill(5, { //This outer Array.fill duplicates the entire envelope, creating 5 arrays at the same time (thus, an envelope of 5 random chords).
-		EnvGen.ar(Env(Array.fill(5, {exprand (60, 78).midicps}), [rrand(0.5, 3)], \step), trigger)
-	}); //The Array.fill creates an envelope of 5 random notes, one after another. The step provokes that the first frequency is not heard because it jumps directly to the second (it is not a loop, but an envelope triggered each 4 seconds, thus it always misses the first frequency).
-
-	//The times of the envelope are randomly chosen inside the envelope, so the multichannel expansion brings about a different rrand for the times for each of the five envelopes, thus each envelope will change at its own pace.
-
-	signal = Mix.ar(
-		SinOsc.ar(
-			freq,
-			0,
-			0.1)
-	) !2;
-
-	signal * 0.5
-
-}.play
-)
-
-(
-{ var freq, trigger, times, signal;
-
-	trigger = Impulse.ar(1/4);
-	times = [ rrand(0.5, 3)]; //In this second example, the random times of the envelope are placed in a variable outside the array, which will provoke that all 5 created envelopes will change their frequency at the same time (bringing about clear chords).
-
+	//Array of five envelopes (each envelope features five random levels used as frequencies in the SinOsc), bringing about five sine oscillators. A further note about Env multichannel expansion: in here we are directly creating an array of EnvGen, but another option is to simply assign an array to one of the values in any argument of Env, as the Help file explains: "If one of the values within either levels, times, or curves is itself an array, the envelope expands to multiple channels wherever appropriate. This means that when such an envelope is passed to an EnvGen, this EnvGen will expand":
 	freq = Array.fill(5, {
-		EnvGen.ar(Env(Array.fill(5, { exprand (60, 78).midicps}), times , \step), trigger)
+		EnvGen.ar(Env(Array.fill(5, { exprand(60, 78).midicps }), time, \step), trigger) //Because of the step curve, we only hear four frequencies (if the trigger allows them to be heard before rebooting).
 	});
 
 	signal = Mix.ar(
 		SinOsc.ar(
 			freq,
 			0,
-			0.1)
+			0.1
+		)
 	) !2;
 
-	signal * 0.5
+	signal * 0.3
 
 }.play
 )
 
-//////////////////////////////////////////////////
-//USING GATE AS A GATE AND NOT AS A TRIGGER:
-//The difference is that the gate stays open until it receives a zero: gate = 1 --> gate open / gate = 0 --> gate closed. In order to use this option, we need an envelope with a sustain value to be maintained for a certain time, instead of a single action or impulse:
-
-
-Env.adsr (attackTime, decayTime, sustainLevel, releaseTime, peakLevel, curve) //Arguments of the method .adsr (attack-decay-sustain-release): "attackTime", time taken from silence to the peakLevel (max level) / "decayTime", time taken from the peak level to the sustain level / "sustainLevel", level of the sustain as a ratio compared to the peakLevel: by default, it is half of the peakLevel (using 1, it would be equal, so the decay segment wouldn't be noticed) / "releaseTime", time taken from the sustain level to silence again / "peakLevel", maximum level value / "curve", type of curve, as studied before (do not use \esponential because this envelope will touch the zero, you can imitate the exponential using [4, -4]):
-
-{ EnvGen.ar(Env.adsr, LFPulse.ar(1)) }.plot(2) //Two repetitions of the .adsr envelope using the default values (takes some time to plot).
-{ EnvGen.ar(Env.asr, LFPulse.ar(1)) }.plot(2) //The envelope .asr does not feature peak level or decay time. The sustain level is the max level.
-
-//As mentioned before, gate = 1 (deafult value) will run the envelope directly: plays the attack and decay, and maintains the sustain level. When gate receives a value = 0, the envelope performs the release and turns off. BUT although the gate is turned off, the envelope is still running in the audio server until we stop it using shift + full stop (show node tree in the menu "server" to see the synth, still active):
-
+//Next example uses the SoundIn signal from the mic as a trigger (including a threshold of amplitude, here 0.05). Try clapping or speaking close to the computer's mic:
 (
-a = {arg gate = 1;
-	var env;
+{ var trigger = SoundIn.ar(0) > 0.05; //Amplitude coming through the mic has to be over 0.05 (change this threshold as needed).
 
-	env = EnvGen.ar(
-		Env.adsr(0.1, 0.2, 0.5, 1, 0.6, -4),
-		gate
-	);
-	SinOsc.ar * env
-}.scope
+	SinOsc.ar(
+		//TChoose.ar(trigger, K2A.ar(Scale.minor.ratios * 72.midicps)), //Another possibility (using K2A to turn control to audio signals, as the postwindow tells us that the "Select input was not audio rate". TChoose expects an array of signals, that is why it complains when receiving numbers. There is also A2K object). Using random frequencies from a minor scale within the octave of C5.
+		TRand.ar(262, 1200, trigger), //Random frequency produced by TRand every time it receives a trigger.
+		0,
+		EnvGen.ar(Env.perc(0.01, 1), trigger) //Percussive envelope sharing the same trigger as the random frequency choice.
+	).dup(2) * 0.3 //Multichannel expansion and amplitude balance.
+
+}.play
 )
 
-a.set(\gate, 0) //The method .set allows us to change values of arguments in UGens that are currently running into the server.
-a.set(\gate, 1) //If not using "shift + .", then we can turn it on again evaluating this line.
 
-//We can use a square wave (the non-filtered version, LFPulse) to send 1 and 0 to the gate in order to turn it on and off periodically (using 0.5 in the width for an equal duration of the on and off. A frequency of 0.2 means a total duration of the envelope of 5 seconds long (2.5 on, 2.5 off). The square wave functions as a switch:
+/////////////////////////////////////////////////////////////////////
+//GATE
 
+//In order to use the argument gate as a real gate, we need an envelope with sustain time, that is to say, any of the so-called sustained envelope creation methods (.adsr, .asr, .dadsr, etc., see the help file of Env for more). When gate receives a 1, the attack (and possible decay) of the envelope is triggered and the envelope hold at its sustain level, and when gate receives a 0, the release segment of the envelope is triggered.
+
+//Basic syntax of method .adsr:
+Env.adsr(attackTime, decayTime, sustainLevel, releaseTime, peakLevel, curve) //Arguments are the attack time (from silence to peak level), decay time (from peak level to sustain level), sustain level (ratio of level depending on the peak level: if sustain level = 1, then it will be equal to the peak level and the decay segment won't be heard, if sustain level = 0.5, it will be half of the peak level), release time (from sustain level to silence), peak level (maximum amplitude peak), and curve (excluding exponential as it will touch 0, but which can be imitated with floats [4, -4], for example).
+
+//Graphical representation:
+{ EnvGen.ar(Env.adsr, LFPulse.ar(1)) }.plot(1) //When LFPulse's width = 0.5, and freq = 1, the envelope will feature 0.5 seconds of ads and 0.5 seconds of release (and possible silence depending on the release time).
+{ EnvGen.ar(Env.asr, LFPulse.ar(1)) }.plot(1) //Same here (using method .asr), although there is no decay time.
+//Other sustained envelope creation methods simply feature a different arrangement of segments.
+
+//Applying gate:
 (
-{
-	var gate, signal, env;
+a = { |gate = 1| //Default value (envelope is immediately triggered by default when executing the function).
+	var env;
+
+	env = EnvGen.ar(Env.adsr(0.1, 0.2, 0.5, 1, 0.2, -4), gate);
+
+	SinOsc.ar !2 * env
+}.play
+)
+
+//We can use the method .set to change the arguments of a signal running in the server (the arguments are called through symbols):
+a.set(\gate, 0) //Gate = 0 triggers the release of the envelope.
+a.set(\gate, 1) //Gate = 1 triggers a new attack, decay and sustain of the envelope.
+a.set(\gate, -1) //Gate = -1 cuts the envelope (if open) with no release time (produces a click).
+//Meanwhile, the envelope continues running in the server even when there is no sound (see node tree). The synth is the same, gate = 1 does not produce a new instance of the envelope, it just retriggers the one already running in the server.
+
+//Other examples:
+//Using a pulse oscillator to automatize opening and closing the envelope (as it sends 1 and 0 to the gate periodically). As mentioned before, the width argument in LFPulse can be used to change the ratio between the time the gate is open and closed (here, when using 0.5 of width, as the pulse's trigger happens every 5 seconds, there is 2.5 seconds of open gate and 2.5 of closed gate).
+(
+{ var gate, signal, env;
 
 	gate = LFPulse.ar(0.2, 0, 0.5);
 
@@ -398,11 +282,9 @@ a.set(\gate, 1) //If not using "shift + .", then we can turn it on again evaluat
 }.play
 )
 
-//Controlling the gate using the mouse buttom: gate will be 1 as far as the buttom is pressed. Then it turns off as soon as we release the buttom:
-
+//We can also use MouseButton to open and close the envelope: when clicking, the gate will receive 1 and the envelope will be triggered. The sustain level will be sustained as far as we hold the button pressed. Then, when the button is released, the release segment is triggered.
 (
-{
-	var gate, signal, env;
+{ var gate, signal, env;
 
 	gate = MouseButton.kr(0, 1);
 
@@ -418,23 +300,62 @@ a.set(\gate, 1) //If not using "shift + .", then we can turn it on again evaluat
 )
 
 
-//IGNORE THIS:
-//Bonus code (so GitHub doesn't turn my file into markdown:
+/////////////////////////////////////////////////////////////////////
+//DONE ACTION
+
+//doneAction is the last argument of EnvGen (see in the help file of EnvGen, information about the argument doneAction: open the documentation about Done. At the end of that document, https://doc.sccode.org/Classes/Done.html, there is a list of actions that can be implemented with doneAction). doneAction = 0 means "do nothing when the UGen is finished" (by default, what happens in our envelopes), and doneAction = 2 means "free the enclosing synth" (meaning that the synth will stop running in the server, and disappear from the node tree). The class Done itself can be used as well when applied methods such as Done.freeSelf (as seen in a previous example in this document), which would fulfill the same function as number 2 in doneAction.
 
 (
-SynthDef(
-	\filters,
-	{
-		var noise, signal;
+a = { |gate = 1|
+	var env;
 
-		noise = WhiteNoise.ar(0.0001);
+	env = EnvGen.ar(Env.adsr(0.1, 0.2, 0.5, 1, 0.6, -4), gate, doneAction: 2); //Usually applied using keyword assignment as it is the last argument.
 
-		signal = Array.fill(18, { Ringz.ar(noise, ExpRand (100, 3000)) });
-		signal = Mix(signal);
-		signal = Pan2.ar(signal, 0);
+	SinOsc.ar !2 * env * 0.3
+}.play
+)
 
-		Out.ar(0, signal)
+a.set(\gate, 0) //When sending 0 to the gate, the envelope is finished and doneAction 2 frees the synth in the server (check the node tree: the synth is gone).
+a.set(\gate, 1) //Sending 1 to the gate again is no longer possible because the synth does not exist anymore.
+//This will be beneficial when creating several instances of a SynthDef (synth definition) later on, so that those instances do not silently accumulate in the server and consume CPU power.
+
+
+/////////////////////////////////////////////////////////////////////
+//ADDITIONAL ENVELOPE RESOURCES
+
+//Line generators:
+//Line and XLine are line generators (similar result in the following two examples). The arguments are the starting value, end value and time in seconds:
+{ SinOsc.ar(Line.ar(60, 84, 2).midicps, 0, 0.1 !2) }.play //Linear line generator (if applied to frequency, works better with MIDI values).
+{ SinOsc.ar(XLine.ar(260, 1046, 2), 0, 0.1 !2) }.play //Exponential line generator (if applied to frequency, works better with Hz).
+
+{ LPF.ar(LFSaw.ar(40), XLine.ar(600, 40, 2)).dup(2) * 0.1 }.play //Example: nice bass beat, but the sound does not go at the end (Line holds the last value, just like any other envelope).
+{ LPF.ar(LFSaw.ar(40), XLine.ar(600, 40, 2, doneAction: 2)).dup(2) * 0.1 }.play //Now the signal is gone after the line, but causing a click. Solution:
+{ LPF.ar(LFSaw.ar(40), XLine.ar(600, 40, 2, doneAction: 0)).dup(2) * Line.ar(0.2, 0, 2, doneAction: 2) }.play //Another line is applied to the amplitude and doneAction is applied to the amplitude envelope to cut the filter properly with no clicks.
+
+
+//##############################################################
+//Advanced example (for SynthDefs):
+
+//The Env class method .newClear creates an "empty" envelope with a specific number of segments and channels, so that it can be filled in later:
+Env.newClear(numSegments: 8, numChannels: 1) //Arguments.
+
+//According to the Env help file, "this can be useful when passing Env parameters as args to a Synth. Note that the maximum number of segments is fixed and cannot be changed once embedded in a SynthDef" (once the SynthDef is compiled). Example from the help file:
+(
+SynthDef(\help_Env_newClear, {
+	|out = 0, gate = 1|
+    var env, envctl;
+
+    //Empty 4-segment envelope:
+    env = Env.newClear(4);
+
+	//Control argument array (see .kr as an instance method of Env in the Help file):
+    envctl = \env.kr(env.asArray); //.asArray converts the Env to an Array in a specially ordered format. This allows for Env parameters to be settable arguments in a SynthDef.
+
+    Out.ar(out, SinOsc.ar(EnvGen.kr(envctl, gate)) * -12.dbamp) //Balancing the amplitude.
 }).add
 )
 
-Synth(\filters)
+Synth(\help_Env_newClear, [\env, Env([700, 900, 900, 800], [1, 1, 1], \exp)]); //Remember, the number of levels is fixed in the SynthDef.
+
+Synth(\help_Env_newClear, [\env, Env({ rrand(60, 70).midicps } !4, [1, 1, 1], \exp)]); //Random levels.​
+//#####################################################

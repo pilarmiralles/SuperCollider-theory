@@ -1,6 +1,6 @@
 //4 - MULTICHANNEL EXPANSION, FILTER BANKS, KLANK
 
-////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 //MULTICHANNEL EXPANSION
 
 //In SuperCollider, multiple channels of audio are represented as Arrays. Each channel of the array of output channels will go out through a different loudspeaker and, therefore, the limit of output channels is limited by what our audio interface supports. A single signal will be played by default through channel 0 (left), whereas an array of two signals will be played through channels 0 and 1 (left and right, stereo). A stereo signal, for instance, is therefore an array of two elements (two signals).
@@ -60,7 +60,7 @@ a + b + c
 
 { Mix(SinOsc.ar({ exprand(30, 8000) } !100, 0, 1/500)) }.scope //Equivalent function using the duplicator.
 
-//Array do not cause Mix to create copies of itself. If Mix receives an array of arrays, it will only reduce one layer of arrays (for instance, if receiving an array containing an array of sine waves and an array of sawtooth waves, it will mix the sine waves in one channel and the sawtooth waves in another channel: in each array, signals will mix in each available output channel). This is the layering limit, as Mix cannot be used on arrays of arrays of arrays. In conclusion, Mix only clears one level of arrays:
+//Array do not cause Mix to create copies of itself. If Mix receives an array of arrays, it will only reduce one layer of arrays (for instance, if receiving an array containing an array of sine waves and an array of sawtooth waves, it will mix the sine waves in one channel and the sawtooth waves in another channel: in each array, signals will mix in each available output channel). This is the layering limit, as Mix cannot be used on arrays of arrays of arrays. In conclusion, Mix only clears one level of arrays (see an important detail about this in the second case study at the end of this document):
 (
 {
 	Mix(
@@ -199,7 +199,7 @@ a + b + c
 )
 
 
-////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 //FILTER BANKS
 
 //One application of multichannel expansion that I like is the creation of filter banks. This consists of stacking a series of filters at specific intervalic distance (based on overtone ratios or equal intervalic raios). Array.geom is the best way to attain this: the fundamental frequency will be set at the "start" argument, whereas the "grow" argument will determine the intervalic ratio:
@@ -370,7 +370,7 @@ octave - 2
 //##############################################################
 
 
-////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 //KLANK FILTER
 
 //Klank is a bank of fixed frequency resonators (that is to say, a bank of Ringz filters). Let's explain its main arguments:
@@ -426,6 +426,31 @@ octave - 2
 		],
 		{ Dust.ar(3, 0.1) } !2
 	)
+}.play
+)
+
+//Additional example of applying the duplicator in Klank (this example involves ring modulation, which will be studied in theory file 7.1). Applying the duplicator to the whole LPF does not bring about different randomness on each channel, nor does duplicating the whole Klank, applying the duplicator to Dust's mul directly, or to the PinkNoise or the final signal after the ring modulation. Only applying it to the Dust as function brings about different randomness on each side (not even with .dup(2) applied to Dust!):
+(
+{ var dust, signal1, signal2, modulation;
+
+	dust = { Dust.ar(3, 0.5) } !2; //Dust here works as both input signal of Klank (within a LPF) and as "trigger" of the PinkNoise (so that the Pink Noise and the Dust as sound are heard at the same time: using the noise to enrich the attack of the signal).
+	//dust = { Dust.ar(3, 0.5) }.dup(2); //Of course, this option is equivalent.
+
+	signal1 = Klank.ar(
+		`[
+			[117, 223, 257, 464, 727, 1002],
+			[0.04, 0.08, 0.07, 0.08, 0.1, 0.07],
+			Array.fill(6, {exprand (0.1, 0.8) * 16})
+		],
+
+		LPF.ar(dust, 300)
+	);
+
+	signal2 = PinkNoise.ar(Decay.ar(dust, 0.07));
+
+	modulation = signal1 ring1: signal2;
+	modulation * 1.2 //Adjusting the volume a bit.
+
 }.play
 )
 
@@ -504,5 +529,141 @@ octave - 2
 			)}
 		)
 	) } !2
+}.play
+)
+
+//##############################################################
+//And yet another case study (involving multichannel expansion, duplication, and envelopes: these will be studied in the next theory file):
+//The objective of the following codes is to get five different frequencies on each side of the stereo. Those frequencies will be changing according to an envelope. Let's take a look at the first bunch of frequencies printed on the post window in each example, and the array index indicated next to them:
+
+//In this first example, we only obtain a few frequencies, although ten different frequencies appear on the post window: Mix is receiving an array of two arrays, this is why we hear sound through both speakers even though Mix is not duplicated. However, it seems that on each channel there are just 2 frequencies mixed. See examples below to understand why:
+(
+{ var freq, trigger, times, signal;
+
+	trigger = Impulse.ar(1/4);
+	times = rrand(0.5, 2.5);
+
+	freq = { Array.fill(5, {
+		EnvGen.ar(Env(Array.fill(5, { exprand(52, 94).midicps }), times, \step), trigger)
+	}) } !2;
+
+	signal = Mix(
+		SinOsc.ar(
+			freq.poll(0.5),
+			0,
+			0.1)
+	);
+
+	signal * 0.5
+
+}.play
+)
+
+({ Array.fill(5, { Env(Array.fill(5, { exprand(52, 94).midicps }).postln, 1, \step).plot(5) }) } !2); //Just like in here, I obtain 10 different envelopes, or two different arrays of 5 distinctive envelopes (graphs).
+
+//So, this is how Mix puts together the signals from an array of arrays:
+(
+{ var signal;
+
+	signal = Mix(
+		[
+			[BrownNoise.ar(0.05), SinOsc.ar(880, 0, 0.05), Pulse.ar(LFDNoise0.ar(1, 300, 800), 0.5, 0.01)],
+			[Dust.ar(50, 0.1), Saw.ar(LFDNoise3.ar(1, 3000, 4000), 0.05)]
+		]
+	) * 0.5;
+
+	//signal[0] //First channel, we hear BrownNoise + Dust (first index of each array).
+	signal[1] //Second channel we hear SinOsc + Saw (second index of each array).
+	//Because there are only two channels, the third index of the first array (the Pulse wave) is not heard. This is what happens in the previous code, the reason why we only obtain 2 frequencies on each channel.
+
+}.play
+)
+
+(
+{ var signal;
+
+	signal = Mix(
+		[
+			[BrownNoise.ar(0.05), SinOsc.ar(880, 0, 0.05)],
+			[Dust.ar(50, 0.1), Saw.ar(LFDNoise3.ar(1, 3000, 4000), 0.05)],
+			[Pulse.ar(LFDNoise0.ar(1, 300, 800), 0.5, 0.01)]
+		]
+	) * 0.5;
+
+	signal[0] //First channel we hear BrownNoise + Dust + Pulse.
+	//signal[1] //Second channel we hear SinOsc + Saw + Pulse.
+	//In this case, being the Pulse in a third array (first index), it is distributed to both channels (the arrays are summed, so the small array loops and ends up in both resultant arrays).
+
+}.play
+)
+
+//Let's see if taking this into account we can trick the earlier code to get through the stereo output:
+(
+{ var freq, trigger, times, signal;
+
+	trigger = Impulse.ar(1/4);
+	times = rrand(0.5, 2.5);
+
+	//We had an array of two arrays of five elements each. We need an array of five arrays of two elements each:
+	freq = ({ Array.fill(5, {
+		EnvGen.ar(Env(Array.fill(5, { exprand(52, 94).midicps }), times, \step), trigger)
+	}) } !2).flat.clump(2); //There you go, now it works:
+
+	signal = Mix(
+		SinOsc.ar(
+			freq.poll(0.5),
+			0,
+			0.1)
+	);
+
+	signal * 0.2 //Reduce a bit more the amplitude now that we have more signals.
+
+}.play
+)
+
+
+//Easier than that, of course, is to approach the multichannel expansion and duplication in a different way. Let's see then other solutions, sending Mix a single Array of envelopes and applying the duplicator afterwards:
+
+//In this example, we are indeed obtaining five frequencies on each channel, but the frequencies on both channels are the same five. This happens because the Array of envelopes is created before the Mix, so wrapping the Mix with parenthesis or braces brings about the same result:
+(
+{ var freq, trigger, times, signal;
+
+	trigger = Impulse.ar(1/4);
+	times = rrand(0.5, 2.5);
+
+	freq = Array.fill(5, {
+		EnvGen.ar(Env(Array.fill(5, { exprand(52, 94).midicps }), times, \step), trigger)
+	});
+
+	signal = { Mix(
+		SinOsc.ar(
+			freq.poll(0.5),
+			0,
+			0.1)
+	) } !2;
+
+	signal * 0.2
+
+}.play
+)
+
+//Last example, this time including the Array of envelopes within Mix. Now the envelopes are duplicated differently on each side of the stereo, bringing about 5 different frequencies on each side:
+(
+{ var freq, trigger, times, signal;
+
+	trigger = Impulse.ar(1/4);
+	times = rrand(0.5, 2.5);
+
+	signal = { Mix(
+		SinOsc.ar(
+			Array.fill(5, {
+				EnvGen.ar(Env(Array.fill(5, { exprand(52, 94).midicps }), times, \step), trigger)
+			}).poll(0.5),
+			0,
+			0.1)
+	) } !2;
+
+	signal * 0.2
+
 }.play
 )

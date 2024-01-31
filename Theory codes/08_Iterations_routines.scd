@@ -1,20 +1,26 @@
 //8 - ITERATIONS AND ROUTINES
-////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //METHOD .DO
-//The method .do evaluates a function for each element of the collection to which the method is applied. It's receiver (left side) is a collection and its message (right side) is a function:
-//Syntax of .do: [element1, element2, ...].do( arg item, i; {function}). Two arguments can be sent to the function: the element of the array (item) and the index (iteration) of each element (or number of repetitions of the function assigned).
 
-//First example for illustration: this function gives back each element of the array and its index in separated arrays. In addition, the method .do always gives back its receiver (the original array in this case). The method .do does not give back (collect) the result of the function, it just performs it. Therefore, if we want to see the result of the function, we need the method .postln (other options are locating the result into a variable or making the result sound). If .do was contained in the variable "a", "a" would be equal to .do's receiver. The method .collect works in a similar way, but giving back the results of the function into an array, that is to say, collecting the results.
+//There are many methods for iteration. Some of them can be found in the Collection help file --> Iteration paragraph: https://depts.washington.edu/dxscdoc/Help/Classes/Collection.html (we mentioned some of this in the theory file 2). Iteration will eventually allow us to automatize the creation of multiple or successive instances (synths) of a SynthDef and customize their behavior over time.
 
-(
-[\Feldman, \Ustvolskaya, \Xenakis].do({|surname, index|
+//The method .do evaluates a function for each element of the collection to which the method is applied (it's receiver). The function passes two arguments: the item of the correction, and the iteration number (from 0 to the last index of the collection):
 
-	[surname, index].postln
-})
-)
+//Syntax:
+[element1, element2, ...].do({ |item, iteration| function })
 
-//Another example: locating into a sentence the elements (concatenation of the strings of text and the symbols from the array) and repeating this action for each element of the array. The parenthesis are necessary to get the .postln affecting the entire sentence:
+//Example: .do executes the function as many times as items in the receiver collection. This method does not return the results of the function unless we print them though, just like in this example (it only executes the function). What .do always returns at the end is the receiver (the collection):
+[\dog, \cow, \chicken].do({ |animal, index| [animal, index].postln })
+
+//The method collect works similarly, although results are collected within an array and printed (no need to use .postln). In any case, let's focus on .do for now:
+[\dog, \cow, \chicken].collect({ |animal, index| [animal, index] })
+
+
+//##############################################################
+//Playing with strings (a very unnecessary section):
+
+//Another example of .do, this time placing into a sentence the elements of the collection (concatenation of strings and symbols):
 (
 [\dog, \cat, \horse].do({|animal, index|
 
@@ -27,10 +33,10 @@
 "hello" ++ "you" //No space.
 "hello" + "you" //Space in between.
 
-//A possible solution I have found is this: .scatArgs concatenates a string with the following args with spaces in between:
-"These are some args: ".scatArgs(\fish, SinOsc.ar, {4 + 3}).postln;
+//A possible solution I found is this: .scatArgs concatenates a string with the following args with spaces in between:
+"These are some args:".scatArgs(\fish, SinOsc.ar, {4 + 3}).postln;
 
-//Applied to our function: it does work really well:
+//Applied to our function, it does work really well:
 (
 [\dog, \cat, \horse].do({|animal, index|
 
@@ -39,128 +45,75 @@
 
 })
 )
+//##############################################################
 
-//This function changes the range of rrand: the high limit is modified with each iteration of the .do:
 
-([ 10, 20, 30, 40, 50 ].do({| num | rrand(0, num).postln})) //It will post 5 random values within the new limits imposed by the elements of the array.
+//Example using the item argument: the upper limit of the rrand method will be higher with each iteration:
+[10, 20, 30, 40, 50].do({ |num| rrand(0, num).postln })
 
-//Taking the former code as a point of departure, the numbers of the array in "a" are used as lower limit of rrand, and the following number of the array is used as top limit. The function is repeated only 5 times, excluding the last item of the array in "a" becuase that value shouldn't be stablished as lower limit:
-
+//Example using the iteration (or index) argument:
 (
-a = [0, 10, 20, 30, 40, 50];
+a = [0, 10, 20, 30, 40, 50]; //The variable "a" contains the receiver array of .do.
 
-a[..4].do({|num, i| rrand(a[i], a[i + 1]).postln}) //As in the former code, it print five random values between the limits imposed by the function.
+a[..4].do({ |num, i| rrand(a[i], a[i + 1]).postln }) //We execute the function to only indexes 0 to 4 from the array in "a", as we are using "i + 1" in the function and it would point already to the index 5. With each iteration, the range of rrand moves between the next two consecutive indexes (0-10, 10-20, 20-30, and so on).
 )
 
-//The receiver of .do can be a single number instead of an array: the function will be evaluated as many times as the receiver value indicates (as it happens with Array.fill but without creating an array). It still gives back the receiver:
+//When receiving a single number (an integer), .do executes the function as many times as the number indicates, that is to say, it actually iterates from 0 up to such a number (thus, the receiver is equivalent to a collection of integers from 0 to the last index -that number- and, for this reason, the item argument and the iteration argument are equal, so we only use one argument in this case):
+100.do({ rrand(1, 64).postln })
 
-100.do({rrand(1, 64).postln}) //100 random values between 1 and 64.
-
-//When using a number istead of an array as the receiver of .do, the only argument we can use is the iteration:
-
-100.do({|i| iteration.postln}) //Printing the iteration value.
-
-//Here a brownian type of aleatoric movement is created when reassigning the value of the variable: "a" = 0 as a default value, but with every iteration of the function it is reassigned adding a random value from -1 to 1. Then, "a" is printed:
-
+//Example: Brownian movement model. We obtain 100 values at once:
 (
-a = 0;
-100.do({a = a + rrand(-1.0, 1.0); a.postln}) //The range -1 to 1 is the range of possible deviation from the current value of "a" in each iteration.
+a = 0; //Initial value.
+100.do({ a = a + rrand(-1.0, 1.0); a.postln }) //In each iteration, the value of "a" is reassigned to "a" plus a random number within the range of deviation.
 )
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 //ROUTINES
-//Functions have an "eager" evaluation because all their instructions are evaluated in one shot and at the end they give back the result of the last line of the text by default:
 
+//More on Routines (and an alternative called "Task") here: https://doc.sccode.org/Tutorials/Getting-Started/15-Sequencing-with-Routines-and-Tasks.html
+//In order to automatize the iteration process of .do, we need a Routine. Let's first understand the difference between "eager" and "lazy" evaluation or execution in SuperCollider (difference between Function and Routine):
+
+//Function (eager): all instructions are run at once (from top to bottom). The postwindow only shows the result of the last line of the function:
 (
 f = {
 	var result;
 
 	result = 1 + 1;
 	result = result * 1000;
-	result = rrand(0, result)
-
-}
-)
-f.value //Giving back only the last line of the operations (having performed the rest of the operations before).
-
-//Now the operations are evaluated, but the result is "hi" because the string is placed at the last line of the function:
-(
-g = {
-	var result;
-
-	result = 1 + 1;
-	result = result * 1000;
-	result = rrand(0, result);
-	"hi"
-
-}
-)
-g.value
-
-//Now the result given in the postwindow is still "hi" because it occupies the last line of the code, but the variable "z" contains the result of the former operations. Therefore, we can reach the result of the operations through the variable "z" (and demonstrate that, despite the value of the function is "hi", all the operations it contains are performed):
-(
-h = {
-	var result;
-
-	result = 1 + 1;
-	result = result * 1000;
 	z = result = rrand(0, result);
-	"hi"
-
+	"hi" //Last line of the function: the only one returned to the postwindow.
 }
 )
-h.value //Giving back the last line of the code.
-z //The variable "z" still contains the result of the operations within the function, although their result is not shown as the value of the function (though we need to use the method .value before for "z" to contain this value.
+f.value
+z //This variable contains the result of its line in the function anyways.
 
-//On the contrary, the evaluation of a Routine is lazy instead of eager, the lines are evaluated one at a time when it is ordered to do so. The message .yield separates the instructions and gives back the result up to that point of the function as if the line it is sent to was the last line of such a function. Then, we can continue evaluating the routine from that line onwards. In order to evaluate the routine, we use the method .next instead of .value: when evaluating .next, the results of each block of code up to a .yield will be evaluated each time in order from top to bottom within the function:
-
-//Simple example with numbers:
-(
-r = Routine({ //The first argument of a Routine is a function, hence we need the curly brackets.
-
-	1.yield;
-
-	15.yield;
-
-})
-)
-
-r.next //Result of the operations up to the first .yield of the routine. Keep evaluating for obtaining the rest of the values. When there are no more values next, "nil" ("empty") is printed in the post window.
-
-r.reset //Gives back the reseted routine, to be evaluated from its top again.
-
-//Example with more elements: strings, something that sounds, something that turns off the sound, etc.:
+//Routine (lazy): the class Routine allows the lazy evaluation of a function: each instruction is executed when it is asked to:
 (
 r = Routine({
 
-	"hello".postln;
-	a = {SinOsc.ar(1000, 0, 0.1)}.play;
-	1.yield;
+	1.yield; //The method .yield indicates each instruction or group of instructions to be executed at a time (as if this was the "last line of a function").
 
-	"here".postln;
-	a.release(1);
 	15.yield;
-
 })
 )
+r.next //The method .next asks the Routine to execute instructions up to each .yield (from top to bottom). When all instructions are executed, the Routine returns "nil" ("empty").
+r.reset //Reset allows us to come back to the beginning of the function, so that we can run it again directly by using .next.
 
-r.next //First evaluation: give back "hello", the sound of the SinOsc and the number 1 (receiver of .yield) / Second evaluation (without stopping the server): gives back "here" and the number 15, and turns off the SinOsc in "a" (using .release, with 1 second of decay) / If it is evaluated for the third time, it gives back "nil", which means "empty", because there are no more instructions to be evaluated within the routine unless it is reseted.
-r.reset
-
-//Another example (the string as a receiver of .yield does not need to be printed with .postln because .yield gives back the string as if it was the last line of a function. However, the other string contained within the first block of instructions needs to be printed with .postln to be visible in the postwindow):
+//More complex example:
 (
 r = Routine({
 	var synth1, synth2, synth3;
 
-	"hello".postln;
-	synth1 = {SinOsc.ar(1000, 0, 0.05)}.play;
-	"synth1 created".yield;
+	//Each of these blocks (until next .yield) will be executed at once:
+	"hello".postln; //Needs .postln because it is not the line of the .yield.
+	synth1 = { SinOsc.ar(1000, 0, 0.05) }.play;
+	"synth1 created".yield; //No need for .postln as this is the "last line of the function".
 
-	synth2 = {BrownNoise.ar(0.1)}.play;
+	synth2 = { BrownNoise.ar(0.1) }.play;
 	"synth2 created".yield;
 
-	synth3 = {Ringz.ar(Impulse.ar(1), 1500, 0.2, 0.1)}.play;
+	synth3 = { Ringz.ar(Impulse.ar(1), 1500, 0.2, 0.1) }.play;
 	"synth3 created".yield;
 
 	synth1.release;
@@ -174,34 +127,22 @@ r = Routine({
 
 })
 )
+r.next
+r.reset
 
-r.next //Follow the steps of each block of instructions up to each .yield.
 
-/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+//ROUTINES AND .DO: ITERATION
 
-//LOOPS WITH ROUTINES
-//Now we can apply .do to the routines in order to create loops (iterative operations):
+//Combining .do and Routine allows us to automatize iteration processes. These two examples show how .do can perform an iterative process much more efficiently:
 
+//Without .do:
 (
 r = Routine({
 	var options;
 
 	options = [\green, \black, \white];
 
-	5.do({options.choose.yield})
-})
-)
-
-r.next //With the message .next, the routine is activated, the three symbols go into the variable "options", and a first choice from "options" is asked to .do. It only gives back one result each time because .yield is included in the function of .do. The routine can be evaluated up to 5 times before it gives back "nil" (with no .yield, the 5 results would be calculated at the same time, but .postln would be necessary to print them in the post window. Remember that .yield prints the result as if it was the last line of a function).
-
-//This is how the former code works without .do:
-(
-r = Routine({
-	var options;
-
-	options = [\green, \black, \white];
-
-	//5.do({opciones.choose.yield})
 	options.choose.yield;
 	options.choose.yield;
 	options.choose.yield;
@@ -209,63 +150,91 @@ r = Routine({
 	options.choose.yield;
 })
 )
-
 r.next
 
-//We can create an infinite loop so it will always give back values instead of giving back "nil" after a specific number of iterations. Be aware of .yield: when inf is sent to .do, .yield is essential in order to stop the infinite loop, which would otherwise make the interpreter collapse (in such a case, try patiently to open the menu "language" above and press "quit interpreter". Later on you can "boot interpreter" again. Until the interpreter is quitted, there will be a great lag):
-
+//Using .do:
 (
 r = Routine({
 	var options;
 
 	options = [\green, \black, \white];
 
-	inf.do({options.choose.yield})
+	5.do({ options.choose.yield })
 })
 )
+r.next
 
-r.next //Now we can obtain all the results we want.
+//Creating an infinite loop: .do can receive "inf" as a receiver in order to create an infinite loop or iteration. Though in this case the method .yield is essential in order not to make SC crash because of the infinite number of iterations executed at once:
+(
+r = Routine({
+	var options;
 
-//If the routine is controlled by .play, then a clock ask the routine for results automatically (without having to send the message .next). The routine is evaluated automatically each certain amount of time. This amount of time is indicated through a number next to .yield (its receiver). If the routine is controlled by a clock, .yield cannot receive any other kind of objects as receivers but numbers.
+	options = [\green, \black, \white];
 
+	inf.do({ options.choose.yield }) //Use .yield!
+})
+)
+r.next //Now we can obtain an infinite number of results.
+
+//The method "loop" is equivalent to inf.do:
+(
+r = Routine({
+	var options;
+
+	options = [\green, \black, \white];
+
+	loop({ options.choose.yield })
+})
+)
+r.next
+
+
+/////////////////////////////////////////////////////////////////////
+//USING CLOCKS: ROUTINE.PLAY
+
+//In order to automatize the Routine instead of using the method .next repeatedly, we need to make Routine depend on a clock. This is done by sending it the method .play: when a Routine receives the method .play, it is controlled by a clock. The number assigned to .yield will represent now the time between each iteration of the Rotuine (counted in beats, not necessarily in seconds).
+//The topic of clocks in SC is quite heavy and here I will just touch the surface. The following link might be useful to deepen into this: https://depts.washington.edu/dxscdoc/Help/Tutorials/Getting-Started/14-Scheduling-Events.html
+
+//Routine is controlled by a clock:
 (
 r = Routine({
 
+	inf.do({
+		[\paper, \scissors, \rock].choose.postln;
+		1.yield //The receiver of .yield is the time between each iteration of the Routine (by default: 1 = 1 sec, or 1 beat at 60bpm).
+	})
+})
+)
+r.play //We obtain one result per second.
+r.stop //This is the proper way to stop a running routine, avoid using ctrl-period.
+
+//The control of Routines with clocks can be also carried out by the method .fork (equivalent to the previous code). According to the Help file, "fork returns a Routine using the receiver as it's function, and plays it in a TempoClock" (we will talk later about this specific clock). As with "play" (when applied to a stream - more on streams in theory file 11), it also receives the arguments "clock" and "quant" (see .play in the help file of Routine):
+(
+f = {
 	inf.do({
 		[\paper, \scissors, \rock].choose.postln;
 		1.yield
 	})
-})
+}
 )
+f.fork
+f.stop
 
-r.play //A value is selected and printed every second.
-r.stop //This is the proper way to stop a Routine (avoid using ctrl + period).
+//Understanding clocks in SC:
+r.clock //The clock of "r" is "a TempoClock" (the clock by default in SC, measured in beats according to a specific tempo, 60 bpm by default). Other clocks in SuperCollider are SystemClock and AppClock. SystemClock always runs in seconds, so for musical events, it is less flexible than TempoClock. SC resorts to AppClock for lower system priority processes (everything that is not related to sound synthesis, such as graphical interfaces and other non-time-critical tasks, such as anything carried out in the language). TempoClock is the most flexible clock for musical events as its unit can depend on different tempos (not just seconds).
+r.clock.tempo //The tempo of "r" is 1.
+r.clock.tempo = 100/60 //We can ask "r" to change it's tempo to 100 bpm.
+r.clock.tempo //Now the tempo of "r" has changed (try out the previous Routine and compare its pace).
+r.clock.tempo = 1 //= 60/60 //Setting the tempo back to 60 bpm (second as a referential time unit).
+//By changing the "tempo" in this way, we are changing the default TempoClock of SC, so that all Routines will be subjected to this tempo.
+r.clock === TempoClock.default //Proof of identity between the clock of "r" and the default TempoClock (returns true).
 
-//Controlling the clock in SC:
-r.clock //We open the communication with the clock, called "TempoClock".
-r.clock.tempo //We ask about the tempo of the clock ("getter" message, because it gives back a value), which is 1 by default.
-r.clock.tempo = 100/60 //We assign 100 bpm to the clock (as the default is 60 bpm = 1 sec), ("setter" message, because it changes the value of an object).
-
-//Syntax of the clock control (if the clock is not specified, the default clock will be used):
-
-Routine.new(function).play(clock)
-
-//There are different types of clocks in SC: TempoClock is used by default. It understands the time as pulses within a unit (which can be seconds) / SystemClock is not set by default. It understands the time only in seconds, thus it is less flexible than TempoClock / AddClock is used for operations that are not a priority, meaning that they are not related to audio synthesis (such as graphic content or midi operations), for example (if the program is reaching the CPU limit, the priority is given to TempoClock and SystemClock, rather than processes controlled by AddClock).
-
-TempoClock.new(tempo) //Syntax: tempo is specified in bpm ratios (like metronomic tempo):
-/*
-1 = 60 bpm (60/60 is the ratio)
-3 = 180 bpm (180/60)
-0.66 = 40 bpm (40/60)
-And so on. Writing the ratios is easier and clearer.
-*/
-
-//If we change the clock of a routine, this clock is == (equal) and === (identic) to TempoClock.default, which is the master clock of SC --> All clocks will be modify within the whole code. This is why we use TempoClock.new to create an independent clock to change only the clock of a specific routine:
+//Independent clocks: in order to avoid changing the default TempoClock, we can create our own independent clock for a specific Routine:
 (
 r = Routine({
 	inf.do({
 		[\paper, \scissors, \rock].choose.postln;
-		1.yield //The number 1 is now interpreted as 1 unit of time within the 180 units of time per minute that will be produced by the clock (see below).
+		1.yield //Number 1 is understood as one unit (beat) within the 180 bpm set below in the new clock.
 	})
 });
 
@@ -277,72 +246,30 @@ z = Routine({
 });
 )
 
-//Evaluating both routines at the same time, there is a polyrhythmia created because each routine features a different tempo:
+//Setting different clocks for each Routine by using the class TempoClock (and the method .new, although it can be omitted):
 (
-r.play(TempoClock(180/60));
+r.play(TempoClock(180/60)); //Three times faster than "z": check what is returned in the post window (one result of "z" every three results of "r").
 z.play(TempoClock(60/60))
-)
-
+)s
 r.stop; z.stop
 
-//Example with sound:
+//If we run the previous "r" routine (line 199), then we can check that its "tempo" hasn't been affected by these clocks.
+
+TempoClock.tempo = 1 //Let's reset this for the rest of the session (just in case).
+
+//Anyway, in some situations, creating new clocks and assigning different tempos can be replaced by working with the second as a unit by default and adjusting the waiting time using floats if needed.
+
+
+//First example of the instrument-score relationship (SynthDef-Routine): the automatized iteration process will consists of the successive creation of instances (synths) of a SynthDef:
 (
 SynthDef(
-	\sawtooth,
-	{| freq |
+	\sawtooth, { //Simple SynthDef: a sawtooth oscillator with two frequencies is multiplied by a sine envelope.
+		|freq|
 		var signal;
 
-		signal = Saw.ar(freq * [1, 1.1]) //The product of the frequency will bring about two freqs slightly detuned.
+		signal = Saw.ar(freq * [1, 1.1], 0.1)
 		*
-		EnvGen.ar(Env.sine(0.1, 0.125), doneAction: 2); //doneAction = 2 is essential so the envelopes do not accumulate with each iteration of the loop.
-
-		Out.ar(0, signal)
-}).add
-)
-
-(
-r = Routine({
-	var overtones;
-
-	overtones = 400 * (1..11); //Natural overtones from 400 Hz.
-
-	inf.do({ //The Synth is created within the .do loop.
-		Synth(\sawtooth,
-			[\freq, overtones.choose.postln] //The overtone is chosen and sent to the frequency of the sawtooth wave.
-		);
-		[1, 0.25, 0.125].wchoose([0.1, 0.4, 0.5]).yield //This will create random units of tempo (within the default clock, 60 bpm).
-	})
-}).play
-)
-
-r.stop //DoneAction 2 already kills every synth, so it is not necessary to free it.
-
-//#####################################################
-//Extra (and unnecessary) information: with this code, an envelope is created within the routine to modulate the number of beats over 60 (per minute), from 120 to 130 (.asStream in combination with .next will be studied in future chapters). This would need to be implemented in a routine that sounds (featuring any Synth):
-
-(
-Routine({
-	e = Env([120, 130], 60).asStream; //.asStream turns something that is not a stream (an envelope) into a stream (that is so say, something with "lazy" evaluation).
-
-	inf.do({
-		TempoClock.default.tempo = (e.next/60).postln; //.postln will show the values (10 times per second as 0.1.wait indicates).
-		0.1.wait;
-	})
-}).play
-)
-//######################################################
-
-//When using automatic evaluation in the routines, the message .wait is usually used instead of .yield, but both messages are equivalent.
-//Another example applied to sound: here there is a bigger loop containing two smaller loops which alternate between each other thanks to the bigger loop: the first one contains the Synth, and the second one creates its own synth with .play:
-(
-SynthDef(
-	\sawtooth,
-	{| freq |
-		var signal;
-
-		signal = Saw.ar(freq * [1, 1.1])
-		*
-		EnvGen.ar(Env.sine(0.1, 0.125), doneAction: 2);
+		EnvGen.ar(Env.sine(0.1), doneAction: 2); //DoneAction: 2 is essential here in order to avoid that the synths accumulate in the server with each iteration.
 
 		Out.ar(0, signal)
 }).add
@@ -354,28 +281,50 @@ r = Routine({
 
 	overtones = 400 * (1..11);
 
-	inf.do({ //The bigger loop (provoking the alternation between the two small loops) is infinite.
+	//Nested or embedded loops:
+	//Outer .do (loops the alternation between the two inner loops, and depends on their waiting times):
+	inf.do({
 
-		([5, 7, 10, 3].choose).do({ //The first small loop will produce 3, 5, 7 or 10 sawtooth freqs, one each one tenth of a second.
+		//First inner .do (chooses 5, 7, 10 or 3 frequencies from the array of overtones and send them to the SynthDef, creating different instances of it):
+		([5, 7, 10, 3].choose).do({
 			Synth(\sawtooth,
 				[\freq, overtones.choose.postln]
 			);
-			0.1.wait;
+			0.1.wait //When using .play with Routines, it is common to use the method .wait instead of .yield (although they are equivalent).
 		});
 
-		4.do({ //The second small loop will always produce 4 sine wave freqs, one each second.
-			{SinOsc.ar(
+		//Second inner .do (creates four instances of the sine oscillator choosing a different random frequency each time). This synth in independent from the one in the SynthDef:
+		4.do({
+			{ SinOsc.ar(
 				exprand(1000, 8000),
 				0,
-				0.1
+				0.05 !2
 			) * EnvGen.ar(Env.sine(1), doneAction: 2)
-			}.play;
+			}.play; //This .play is not applied to the Routine, but to a function, so its result is to create an instance of a synth out of the function it is applied to.
 
 			1.wait
 		})
 	})
+}).play //This .play is sent to the Routine so that it is controlled by a clock.
+)
+r.stop //doneAction 2 already frees every synth, so there is no need to free it separately.
+
+//The relationship between SynthDef and Routine is very efficient because it allows us to clearly separate the two sides of SuperCollider (although the former example is not the best for this, it can be taken as a reference if we disregard that inner synthesis process within the sine oscillator loop): Routine operates on the Client side while SynthDef works on the Server side. Once SynthDef is compiled, its structure is fixed in the server, but Routine allows us to define different instances of the SynthDef over time, turning SynthDef into a flexible and versatile instrument to follow the "score" defined in Routine.
+//In the theory file 10, we will take this idea further creting cross-fade and overlap routines.
+
+
+//##############################################################
+//Additional information about streams (lazy evaluation):
+
+//Using the method .asStream applied to an envelope. In this code, an envelope is created within a Routine to modulate the number of beats over 80 (per minute) from 50 to 130. The method .asStream needs to be used in combination with .next (this relationship will be studied when talking about patterns). This could be then implemented to something that makes sound:
+(
+Routine({
+	e = Env([50, 130], 15).asStream; //.asStream turns something that is not a stream (an envelope) into a stream (that is so say, something with "lazy" evaluation). I am guessing that the 15 are actually seconds.
+
+	inf.do({
+		TempoClock.default.tempo = (e.next/60).postln; //.postln will show the values (5 times per BEAT as 0.2.wait indicates, although the beat in this case is much shorter than a second: you can actually see in the post window how the process speeds up).
+		0.2.wait;
+	})
 }).play
 )
-
-r.clock.tempo = 60/60 //In case the default clock was changed at some point of this document, you can evaluate this line to put it back to 60 bpm.
-r.stop //It does not suddenly cut whatever is sounding, but the synth in play does end normally and then no other synth is created.
+//##############################################################

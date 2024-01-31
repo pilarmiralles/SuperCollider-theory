@@ -1,7 +1,8 @@
 //2 - VARIABLES, FUNCTIONS, ARRAYS, METHODS
 
 /////////////////////////////////////////////////////////////////////
-//VARIABLES:
+//VARIABLES
+
 //Variables are data containers. They represent the data that is assigned to them. Then, operations can be applied to the data through the variables.
 
 //Each variable can contain one value at a time only:
@@ -590,7 +591,7 @@ SinOsc.ar(mul: 0.1, freq: 330)
 )
 //The duration of each step is not equal because of the curve of the sine wave that is the modulating signal. If we used a triangle wave, the wave shape would be completely linear and each step would feature the same duration. In addition to this, steps of equal number of Hz mean that in higher frequencies there is a smaller freq difference between steps and in lower frequencies there is a larger difference (as frequency in Hz behaves exponentially: for instance, each octave is calculated by multiplying the current frequency by 2).
 
-//Stereo signal two ways: these are a couple of quick solutions for now in order to get a stereo signal:
+//Stereo signal two ways: these are a couple of quick solutions for now in order to get a stereo signal (in the next theory file we will deal with the differences between a mono-duplicated signal and a duplicated function):
 (
 { var modulating, carrier;
 
