@@ -173,7 +173,7 @@ a.range(42, 45).levels; //Returns a copy of the Env whose levels have been mappe
 a.exprange(42, 45).levels;
 a.curverange(42, 45, -4).levels;
 
-{ SinOsc.ar(EnvGen.ar(Env.perc(0.01, 0.7).exprange(80, 10000), doneAction: Done.freeSelf).poll(30)) * 0.2 }.play// Mapping an Env to an exponential frequency range (possible use of the previous methods). We will talk about the argument doneAction later on.
+{ SinOsc.ar(EnvGen.ar(Env.perc(0.01, 0.7).exprange(80, 10000), doneAction: Done.freeSelf).poll(30)) * 0.1 }.play// Mapping an Env to an exponential frequency range (possible use of the previous methods). We will talk about the argument doneAction later on.
 { EnvGen.ar(Env.perc(0.01, 0.7).exprange(80, 10000)) }.plot(0.5) //Visualization of the previous envelope.
 
 

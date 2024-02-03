@@ -11,7 +11,7 @@ a.key
 a.value
 
 //As we already know, there are other kinds of collections besides Array: A Dictionary is an associative (unordered) collection mapping keys to values. In a Dictionary, two keys match if they are equal (==), that is to say, strings and symbols can be both equally used as keys because the matching is done by equality and not identity:
-d = Dictionary[ \freq -> 440, \amp -> 0.1 ]
+d = Dictionary[\freq -> 440, \amp -> 0.1]
 
 //We can ask "d" about the value in any of the keys contained within the dictionary (the keys within the dictionary are used as indexes: as mentioned, the order within the dictionary is not important unlike in an array, where we can use numbers as indexes):
 d[\freq]
@@ -30,10 +30,10 @@ d[\amp]
 Collection --> Set (set according to equality) --> Dictionary (associative collection mapping keys to values) --> IdentityDictionary (dictionary based on identity / symbols) --> Environment (a dictionary which can serve as a 'name space' for functions) --> Event (an environment that represents an action)
 
 //Next, we will focus on that last subclass named Event (usually used as a shortcut for an IdentityDictionary), with which we can created sonic events, that is to say, something with frequency, amplitude, duration, etc. It works with .play:
-Event[ \midinote -> 61, \amp -> 0.1, \dur -> 1 ] //Here is an event with some values associated to some keys.
+Event[\midinote -> 61, \amp -> 0.1, \dur -> 1] //Here is an event with some values associated to some keys.
 
 //In order to make it sound according the given values (associations), we need to sent the message .play:
-Event[ \midinote -> 61, \amp -> 0.1, \dur -> 1 ].play //The default sound in SC is a very ugly and cheap piano sampler (although it has an interesting envelope if sustained).
+Event[\midinote -> 61, \amp -> 0.1, \dur -> 1].play //The default sound in SC is a very ugly and cheap piano sampler (although it has an interesting envelope if sustained).
 
 (midinote: 61, amp: 0.1, dur: 1, pan: 1).play //When the Event is already created, we can change the values in this other way (like a shortcut). All values can be replaced or reassigned as with variables. All defined keys have their own default value. It is also possible to define new associations apart from the default ones.
 
@@ -53,208 +53,186 @@ Event.default.parent.associationsDo(_.postln);"" //The empty string "" at the en
 /////////////////////////////////////////////////////////////////////
 //PBIND
 
-//Most popular class in SC :)
-//Pbind sequences events (the syntax here is behind the class and not exposed as when we build our own routines, but many processes are much more doable and efficient using Pbind. As we will see later on, Pbind can be connected to our own SynthDef, but for now we will use the piano sound of SC, which is actually a default SynthDef called "default" (this is a reason for not using that name in any other SynthDef, as we would lose the communication with this default SynthDef). Pbind is also based on key-value associations:
+//Pbind is one of the most popular classes in SC. According to the Help file, it "combines several value patterns to one event stream by binding keys to values". That is to say, in Pbind we can create a stream (a sequence) of sonic events, whose characteristics are defined by pairs key-value (normally, those used for Event by default and those defined to control the SynthDef to be played, we will see this later on). Because Pbind creates a stream, its keys can receive patterns (value streams).
+//Pbind's implementation might seem to be more hidden than, for instance, a Routine (that is, might seem to be built at a higher level of coding, just like any pattern). Nonetheless, many processes will be much more efficient using Pbind instead of building the equivalent Routine. As with Routines, Pbind can be connected to our own SynthDef, but for now we will focus on Pbind itself, leaving the synthesis part to SC's ugly piano synth (which is a hidden SynthDef called "default", hence a reason not to use this name for any of our SynthDefs).
 
 Event[].play //A single sonic event (default parameters).
-Pbind().play //A stream of sonic events.
+Pbind().play //A stream of default sonic events.
 
 //For example:
-
-p = Pbind(\midinote, 60, \dur, 1).play //It is going to play successively the event defined by the keys: a middle C every second. It is a stream of sonic events.
-p.mute //Keeps playing, replacing notes by rests (which will be studied later on).
+p = Pbind(\midinote, 60, \dur, 1).play //The event defined by the keys is played successively (a middle C every second, this is equal to the default parameters). If we open the node tree, we'll see a succession of synths one after another.
+//We can apply some methods right away:
+p.mute //Mutes the Pbind (there are no synths anymore in the node tree). In the help file it says: "keeps playing, but replaces notes with rests" (we'll see rests later on).
 p.unmute //Resumes playing normally.
-p.stop //Stops playing (just like with Routine).
+p.stop //Stops playing after the current event is finished (just like with Routine): as with anything that is not a function.play, try to get used to stopping the sound by using the method .stop instead of ctrl-period.
+p.play //We can play again the Pbind.
+p.reset //As in Routine, there is also the option of resetting (not possible to perceive in here as the events are all the same). I think after .stop, the stream is also reset.
+p.pause //Can pause the stream (unlike mute, it does not keep running).
+p.resume //And can resume from that point.
 
-//Now the fun part is that the keys do not only receive fixed numbers, but they can also be defined by patterns. The method .asStream is no longer needed because Pbind is already turning the patterns into streams (like an embedded or nested pattern):
-
+//Now for the fun part, as mentioned before, we can assign patterns to the keys instead of fixed numbers. The method .asStream is no longer needed because Pbind is already creating an event stream combining all patterns into it (as in a nested or embedded pattern):
 p = Pbind(\midinote, Pseq([60, 62], inf), \dur, 1).play //Alternating between two pitches with a Pseq.
 p.stop
 
-//This would be the equivalent routine to the Pbind above, just to show the shortcut Pbind provides us with (for certain algorithmic processes, making your own routines could be more effective though, it all depends on the result you pursue):
+//This would be the (almost) equivalent routine to the Pbind above, just to show the shortcut Pbind provides us with (for certain algorithmic processes, making our own routines could be more effective though, it all depends on the result we pursue):
 (
 var note;
 
-note = Pseq([ 60, 62 ], inf).asStream;
+note = Pseq([60, 62], inf).asStream;
 
 r = Routine({
 	inf.do({
 		var synth;
 
-		synth = Synth(
+		~synth = Synth(
 			\default,
-			[ \freq, note.next.midicps, \amp, 0.1 ]
+			[\freq, note.next.midicps, \amp, 0.1]
 		);
 
 		1.wait;
-		synth.release //In order to free the synth every second (as we don't have doneAction in the SynthDef by default?).
+		~synth.release //In order to free the synth every second (the default synth does not seem to have doneAction 2).
 	})
 }).play
 )
+
 r.stop
+~synth.free //Cannot really control much of the default synth because it is hidden.
 
-//Let's understand how to replace / reassign values in sonic events:
+//Before continuing, let's understand how to replace / reassign values in sonic events:
+p = Pbind(\a, 1, \b, 2, \z, 789).asStream //Using .asStream instead of .play avoids the control of the clock over the events: now it is just a stream, which needs a .next to be asked for values (when executing it, the post window says we got a Routine). We are going to use an empty Event as .next for our Pbind, and which will be filled up with the values we wrote inside "p" before:
 
-p = Pbind(\a, 1, \b, 2, \z, 789).asStream //Using .asStream instead of .play avoids the control of the clock over the events: now it is just a stream. We are going to use an empty event which will act as a .next for our Pbind, and which will be filled up with the values we wrote inside "p" before:
+p.next(Event[]) //Remember that the order of the keys does not matter. We get the previous values in "p" in the post window.
 
-p.next(Event[]) //Remember that the order of the keys does not matter.
+p.next(Event[\a -> 0, \b -> 0, \c -> 1000]) //We can use a non-empty event, but the values in identical keys will be replaced with those in the Pbind (they are reassigned from the Pbind to the Event and not vice-versa), new keys will be added to the collection and keys only present in Pbind will appear too.
 
-p.next(Event[ \a -> 0, \b -> 0, \c -> 1000 ]) //We can use a non-empty event, but the values in identical keys will be replaced with those in the Pbind (they are reassigned from the Pbind to the Event and not vice-versa), new keys will be added to the collection and keys only present in Pbind will appear too.
-
-//Las example: you can evaluate the event multiple after running the Pbind and see the successive values:
-p = Pbind(\a, Pseq([ 0, 1 ], inf), \b, Prand([ 100, 200 ], inf)).asStream
+//Just like in any other pattern, we can obtain the successive values from Pbind's patters by successively executing the Event below:
+p = Pbind(\a, Pseq([0, 1], inf), \b, Prand([100, 200], inf)).asStream
 p.next(Event[])
 
 
 /////////////////////////////////////////////////////////////////////
-//KEYS
+//FIRST PART: KEYS
 
-//Keys listed in the Pbind help file show a certain hierarchy worth of following by using the same key names in our Pbind (and as our arguments later on when using our own SynthDefs: for example, using the argument "freq" for the frequency allows us to use other keys such as "midinote" or "scale" without specifying those arguments in the SynthDef. A single level of hierarchy should be chosen nevertheless, without mixing with others: for example, "freq" can be combined with the key "detune", and "scale" will be combined with "degree" or "octave", but "freq" and "midinote" will never be combined as they are two different ways of specifying pitch).
+//Understanding keys and their hierarchy can take some time. In the help file of Pbind and Event there is a list of certain keys (we also saw a complete list before that we can print on the post window): the important part of this at the very beginning is trying to adopt these names as a convention, also as argument names, because later on these keys will allow the automatic communication between our SynthDefs and Pbind. At the end of the Event help file (https://depts.washington.edu/dxscdoc/Help/Classes/Event.html) there is a graph showing the hierarchy of keys related to frequency (or pitch). We will understand this later, but, for example, using the argument "freq" in our SynthDef will allow us to use other keys such as "midinote" or "note" in our Pbind specifying that specific key as argument (as shown in the graph, "midinote" leads to "freq", so Pbind already knows that the input value is going to be a MIDI note to be send as freq in Hz to the SynthDef. In the Help file of Pbind, https://doc.sccode.org/Classes/Pbind.html, at the end of "SynthDef and Event" section, there is an explanation of how the values from the keys are eventually converted to freq in Hz in the SynthDef).
+//The different levels of the hierarchy cannot be mixed up though: if we decide to work with midinote, they key freq is out of question, as it represents a different way of expressing pitch.
 
-//KEY DUR: it is 1 by default (in seconds).
-//Also by default, the note occupies an 80% of the duration we set (0.8 seconds if dur = 1), including a slight fade out (we will be able to change this later on):
+
+//KEY DUR: it is 1 by default (and by default, in seconds, that is, at 60 bpm):
+//The key "dur" is a sub-key of "delta", which means "the time until the next event". By default, an event occupies an 80% of the duration value (if dur = 1, an event will sound for 0.8 seconds and then fade out). These properties can be changed as well, we'll see how later, when talking about other keys related to duration:
 
 Pbind().play //A Pbind with all values by default.
 Pbind(\dur, 0.25).play //Changing the default value of duration.
-Pbind(\dur, Pseq([ 0.25, 0.5, 0.25 ], inf)).play //Using patterns.
+Pbind(\dur, Pseq([0.25, 0.5, 0.25], inf)).play //Using patterns.
 Pbind(\dur, Pseq(Array.geom(20, 1, 0.8).mirror, inf)).play //Speeding up and slowing down.
 
-//KEY AMP: it is 0.1 by default.
+
+//KEY AMP: it is 0.1 by default (normally measured as we would with a mul argument):
 
 Pbind().play //By default.
-Pbind(\amp, 0.1).play //Ideam as default.
+Pbind(\amp, 0.1).play //Idem as default.
 Pbind(\amp, 0.5).play //Louder.
-Pbind(\amp, Prand([ -36, -30, -24, -18, -12 ].dbamp, inf), \dur, 1/8).play //Using a pattern with dB values (be aware of using the method .dbamp when working with  amp in db values).
-Pbind(\db, Prand([ -36, -30, -24, -18, -12 ], inf), \dur, 1/8).play //Using key \db so the method .dbamp is not needed (same result as former line).
+Pbind(\amp, Prand([-36, -30, -24, -18, -12].dbamp, inf), \dur, 1/8).play //Using a pattern with dB values (be aware of using the method .dbamp when working with amp in db values).
+Pbind(\db, Prand([-36, -30, -24, -18, -12], inf), \dur, 1/8).play //Using the key \db (sub-key of amp) so that the method .dbamp is not needed (same result as former line).
 
 //Simple example: 90% of the notes are more likely to be soft, 10% to be loud:
-
 (
 p = Pbind(
-	\midinote, Pseq([ 61, 71 ], inf),
-	\dur, Pseq([ 0.25, 0.5, 0.25 ] / 4, inf),
-	\amp, Pwrand([ 0.01, 0.1 ], [ 0.9, 0.1 ], inf)
+	\midinote, Pseq([61, 71], inf), //We'll talk about frequency keys soon enough.
+	\dur, Pseq([0.25, 0.5, 0.25] / 4, inf), //Divided by 4 = 4 times faster that the specified values.
+	\amp, Pwrand([0.01, 0.1], [0.9, 0.1], inf)
 ).play
 )
 p.stop
 
-//KEY PAN: it is 0 by default.
+
+//KEY PAN: it is 0 by default:
 
 Pbind().play //Pan = center.
 Pbind(\pan, 1).play //Pan = right.
 
-//Same example as before, speed doubled and spread from left to center to right every three notes (synchronized with duration because both feature 3 values):
-
+//Same example as before, speed doubled and spread from left to center to right every three notes (synchronized with duration because both feature 3 values, although I think it is too fast to tell):
 (
-P = Pbind(
-	\pan, Pseq([ -1, 0, 1 ], inf),
-	\midinote, Pseq([ 61, 71 ], inf),
-	\dur, Pseq([ 0.25, 0.5, 0.25 ] / 16, inf),
-	\amp, Pwrand([ 0.01, 0.1 ], [ 0.9, 0.1 ], inf)
+p = Pbind(
+	\pan, Pseq([-1, 0, 1], inf),
+	\midinote, Pseq([61, 71], inf),
+	\dur, Pseq([0.25, 0.5, 0.25] / 8, inf),
+	\amp, Pwrand([0.01, 0.1], [0.9, 0.1], inf) //The only random value is the amplitude.
 ).play
 )
 p.stop
 
-//KEY FREQ:
-//Several ways to specify the frequency, as we saw before:
 
-\freq //In Hz.
+//KEY FREQ: as mentioned in the Help file of Event, "the pitchEvent (frequency keys) has the most complex system of functions that provide a variety of useful ways to determine pitch":
+//These are the four main keys to determine pitch:
 
-//G overtones, following the natural tunning (whole multiples of the fundamental pitch):
+\freq //Pitch as frequency in Hz (default value: 440 Hz)
+\midinote //Pitch in MIDI values (default value: 60; 69 = 440 Hz).
+\note //Pitch as a scale degree within an equal tempered scale (chromatic scale, default value: 0, middle C or 60 MIDI).
+\degree //Pitcj as scale degree within a determined scale (default value: 0 = first degree of the scale).
+
+//Let's start with the key FREQ:
+//In the following example, we obtain the overtones from a G, following the natural or Pithagoric tuning (whole multiples of the fundamental freq):
 (
 p = Pbind(
-	\freq, Pseq([ 100, 200, 300, 400, 500, 600, 700 ], inf),
+	\freq, Pseq([100, 200, 300, 400, 500, 600, 700], inf),
 	\dur, 0.1
 ).play
 )
 p.stop
 
-\detune //A key to work with \freq (also in Hz):
-
-//Each tone is detuned -50 Hz (remember that the frequency in Hz behaves exponentially):
+//We can combine "freq" with the sub-key "detune", which is also measured in Hz. In this example, each tone is detuned by -50 Hz (remember that freq in Hz behaves exponentially = smaller distances between pitches in the upper register):
 (
 p = Pbind(
-	\freq, Pseq([ 100, 200, 300, 400, 500, 600, 700 ], inf),
+	\freq, Pseq([100, 200, 300, 400, 500, 600, 700], inf),
 	\detune, -50,
 	\dur, 0.1
 ).play
 )
 p.stop
 
-//Multichannel expansion (see help document): if an array of two frequencies is sent to the key freq, two sonic events will be created in parallel. The rest of the keys are shared between both events (beware of the amplitude). A4 and its natural fifth (* 1.5), but affected by the key detune, it seems to be a sixth:
+
+//MULTICHANNEL EXPANSION IN PBIND:
+//As mentioned in the Help file of Pbind: "If we supply an array for any argument, the synth node will automatically replicate to handle the additional arguments", that is to say, if an array of, for instance, two frequencies is sent to the key freq, two sonic events will be created in parallel (that is, summed in the output, and because of this, beware the amplitude). The rest of the keys are shared between both events.
 (
 p = Pbind(
-	\freq, [ 440, 440 * 1.5 ], //The channel distribution depends on the panning within the SynthDef (which is 0 by default). Pan = 1 will put both frequencies through the right channel.
+	\freq, [440, 440 * 1.5], //An A4 and its natural fifth (* 1.5), although affected by the key detune. The channel distribution depends on the panning within the SynthDef (which is 0 by default). Pan = 1 will put both frequencies through the right channel, for example.
 	\detune, -50,
-	\dur, 0.1
+	\dur, 0.2,
+	\amp, 0.05
 ).play
 )
 p.stop
 
-//Another example with a pattern: first two frequences, then just one (notice that the amp is double when the two freqs are played at the same time):
+//Keys "dur" and "instrument" (which we will see later on) are an exception for the multichannel expansion of Pbind. Two different durs cannot be combined to expand a Pbind because events need to run in parallel (at the same time). But we will see solutions for this later on.
+//It is also not possible to send an array of patterns for multichannel expansion but only patterns that return arrays:
+Pbind(\degree, [Pseq([0, 2, 3], inf), Pseq([2, 4, 5, 6], inf)]).play; //This does not work.
+Pbind(\degree, Pseq([[0, 2], [2, 4], [3, 5], [0, 6]], inf)).play; //This would be a solution.
+//The pattern Ptuple transforms an array of patterns into a pattern that returns arrays:
+Pbind(\degree, Ptuple([Pseq([0, 2, 3], inf), Pseq([2, 4, 5, 6], inf)])).play; //Same result as before.
+
+//More examples of multichannel expansion: two freqs are played first, then just one. Here we can notice that the amp is doubled when the two freqs are played at the same time:
 (
 p = Pbind(
-	\freq, Pseq([ [ 440, 440 * 1.5 ], 220 ], inf),
+	\freq, Pseq([[440, 440 * 1.5], 220], inf),
 	\detune, -50,
-	\dur, 0.1
+	\dur, 0.2
 ).play
 )
 p.stop
 
-//Another example using the detune to create two frequencies: we can hear 3 beats per second because of the frequency difference:
+//Now we expand from the key detune, which creates two frequencies again: we can hear the 3 beats per second cause by the 3 Hz of detune between frequencies:
 (
 p = Pbind(
 	\freq, 1000,
-	\detune, [ 0, 3 ],
-	\dur, 9 //Nine seconds of duration.
+	\detune, [0, 3],
+	\dur, 9 //Nine seconds of duration (including the 20% fade out and pause).
 ).play
 )
 p.stop
 
-//KEY NOTE: another way of setting the frequency consists of using pitch class values (numbers from 0 to 11, as 12 will be C again. It is not exactly pitch class because it will add the octave difference when going beyond 12 or under 0 (-1 = lower B, 12 = higher C).
 
-//Chromatic scale: by default, 0 = C4 (middle C):
-(
-p = Pbind(
-	\note, Pseq([ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ], inf),
-	\dur, 0.2
-).play
-)
-p.stop
-
-//Key octave: to specify the octave instead of calculating the number when using \note. The middle C is the octave 5 here (because middle C is 60 midi, so 60 / 12 is 5, is the fifth octave in midi numbers from 0):
-(
-p = Pbind(
-	\octave, 5, //Try other values such as 3 or 7.
-	\note, Pseq([ 0, 2 ], inf),
-	\dur, 0.2
-).play
-)
-p.stop
-
-//Three octaves at the same time (beware the amplitude):
-(
-p = Pbind(
-	\octave, [ 4, 5, 6 ],
-	\note, Pseq([ 0, 3 ], inf),
-	\dur, 0.2
-).play
-)
-p.stop
-
-//Using Ptuple: Ptuple creates in each iteration an array with the values given by the several patterns within its list (here, a Prand duplicated). Then, those values are distributed between the two events created because of the array of two values in \octave, for instance:
-(
-p = Pbind(
-	\octave, [ 4, 6 ],
-	\note, Pseq([ 0, 2 ], inf),
-	\dur, 2,
-	\amp, Ptuple({ Prand([ 0.05, 0.1, 0.2 ], inf) } !2).trace //.trace to visualize the values coming out of a specific pattern.
-).play
-)
-p.stop
-
-//Another example with Ptuple: in this case, it directly creates two events because its output in an array of two values, one from each of the Prand of its list:
-//Also here is another key for the frequency: \midinote (in midi numbers):
+//KEY MIDINOTE: as seen before, pitch in MIDI values:
+//Another example with Ptuple:
 (
 p = Pbind(
 	\midinote, Ptuple(
@@ -262,47 +240,91 @@ p = Pbind(
 			Prand((60..84), inf),
 			Prand((60..84), inf)
 		]
-	).trace //Just to visualize the values.
+	).trace //The method .trace allows us to print the values coming from a specific pattern (here, an array of values extracted by Ptuple). We should use it only with testing purposes.
 
 ).play
 )
 p.stop
-//See line 338 for another example of Ptuple.
+
+
+//KEY NOTE: the next way of indicating frequency consists of using pitch class values, that is, integers from 0 to 11 representing (by default) semitones in a chromatic scale. It does not exactly match pitch class naming as when reaching 12, it will still count the pitch as the next octave and vice-versa (0 = middle C, -1 = lower B, 12 = higher C).
+
+//Chromatic scale: by default, 0 = C4 (middle C, MIDI = 60):
+(
+p = Pbind(
+	\note, Pseq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], inf),
+	\dur, 0.2
+).play
+)
+p.stop
+
+//Key octave: to specify the octave instead of calculating the number when using "note", we can use the sub-key "octave". The middle C is the octave 5 here (because middle C is 60 MIDI, and 60 / 12 is 5, is the fifth octave in MIDI numbers from 0):
+(
+p = Pbind(
+	\octave, 7, //Try other values such as 3 or 5 (default).
+	\note, Pseq([0, 2], inf),
+	\dur, 0.2
+).play
+)
+p.stop
+
+//Three octaves at the same time, expanded (beware the amplitude):
+(
+p = Pbind(
+	\octave, [4, 5, 6],
+	\note, Pseq([0, 3], inf),
+	\dur, 0.2,
+	\amp, 0.02
+).play
+)
+p.stop
+
+//Using Ptuple again: as Prand is duplicated (array of two Prands), Ptuple is needed to extract for each event an array with the values given by each pattern in the list. The key octave is also contributing to the expansion (the two amplitude values are assigned to the two octaves created):
+(
+p = Pbind(
+	\octave, [4, 6],
+	\note, Pseq([0, 2], inf),
+	\dur, 2,
+	\amp, Ptuple({ Prand([0.05, 0.1, 0.2], inf) } !2).trace //.trace to visualize the values.
+).play
+)
+p.stop
 
 //Last example taking advantage of a fast octave change, alternating only between two pitches:
 (
 p = Pbind(
 	\octave, Pseq([ 2, 3, 4, 5, 6, 7, 8 ], inf),
 	\note, Pseq([ 0, 2 ], inf),
-	\dur, 0.2
+	\dur, 0.15
 ).play
 )
 p.stop
 
-//Imitating Boulez's Structures for piano (but without the series): maximum level of randomness applied to pitch, duration, amplitude, octaves, etc.
+//Imitating Boulez's Structures for piano (but without the series), my teacher's joke (maximum level of randomness applied to pitch, duration, amplitude, octave, etc.):
 (
 p = Pbind(
-	\note, Pn(Pshuf((0..11))), //Random permutations using Pn and Pshuf (different from Prand as it plays the entire series of scrambled numbers from 0 to 11 instead with no repetitions until next chosen order. Prand chooses one single value from its list, so repetition may occure before all values are played.
-	\octave, Pn(Pshuf((2..9))), //(Only parameter with less than 12 different values).
-	\dur, Pn(Pshuf((1..12))) * (1/32), //From 1 to 12 units, then multiplied by 1/32 so one unit = 32nd-note and values above 1 will bring about longer durations.
-	\db, Pn(Pshuf((-6, -12..-72))), //Amplitude in dB.
+	\note, Pn(Pshuf((0..11))), //Random permutations using Pn and Pshuf (different from Prand as it plays the entire series of scrambled numbers from 0 to 11 instead with no repetitions until next chosen order. Prand chooses one single value from its list, so repetition may occure before all values are played).
+	\octave, Pn(Pshuf((2..9))), //("octave" is the only parameter with less than 12 different values here).
+	\dur, Pn(Pshuf((1..12))) * (1/32), //From 1 to 12 units of duration, then multiplied by 1/32 so that one unit = 32nd-note and values above 1 will bring about longer durations.
+	\db, Pn(Pshuf((-6, -12..-72))), //Amplitudes in dB.
 ).play
 )
 p.stop
 
-//KEY STEPSPEROCTAVE: the default value is 12. 12 steps per octave is the chromatic scale in equal temperament. We can create other divisions of the octave, bringing about microtones (and macrotones?):
+
+//KEY STEPSPEROCTAVE: this sub-key of "note" indicates the number of divisions of the octave, which, by default, is 12 (= conventional chromatic scale in equal temperament). With this key, we can create other divisions of the octave, playing with "microtones" or "macrotones":
 
 //Dividing the octave in 13 equal parts:
 (
 p = Pbind(
 	\stepsPerOctave, 13,
-	\note, Pseq(Array.series(14, 0, 1), inf), //A series of 14 steps so we have all the tones from an octave featuring our new division.
+	\note, Pseq(Array.series(14, 0, 1), inf), //A series of 14 steps so that we have all the tones from an octave featuring our new division (including the upper octave).
 	\dur, 0.2
 ).play
 )
 p.stop
 
-//Same example, divided by 11 (and adjusting the Array.series):
+//Same example, dividing in 11 parts (and adjusting the Array.series' size):
 (
 p = Pbind(
 	\stepsPerOctave, 11,
@@ -312,74 +334,67 @@ p = Pbind(
 )
 p.stop
 
-//This is an interesting example in which we use new methods: there is a melody from Bach's Invention no. 2 sequenced by the Pseq for the pitches. There are 18 notes in the melody, thus in stepsPerOctave we use a Pdup (new version of Pstutter), which is a pattern that will repeat a certain number of times each value produced by the pattern in its second argument, which in this case is augmenting by 1 the number of divisions of the octave using Pseries (functions as Array.series). This will provoke that the intervals of the melody are smaller each time it is repeated (this takes some time). The duration of each note of the melody is also sequenced in the key dur (Pn is used just to avoid repeating the same value in the Pseq's list many times) and then it is multiplied by a Pgeom (which is the equivalent of Array.geom in a pattern): this will speed up the progression every time more (the speed will increase exponentially, so the process of speeding up will reach a point when it becomes much faster in very little time):
-
-//VERY IMPORTANT: STOP THE SYNTH WHEN A CERTAIN EXTREME IS REACHED (around the 80th iteration), OTHERWISE, THE SERVER WILL COLLAPSE BECAUSE OF THE INFINITE LOOP!!! (If this happens, be patient to find the option "quit interpreter" in the Language menu).
+//Next example is an interesting one provided by my teacher: a melody from Bach's Invention no. 2 is sequenced by the Pseq for pitches and durations. There are 18 pitches in the melody: in stepsPerOctave we use a Pdup to duplicate 18 times each value produced by the Pseries, so that the stepsPerOctave value is different only when completing the melody. Intervals in the melody will therefore get subsequently smaller with each iteration of the complete sequence (this process takes some time). The duration is also synchronized with this process: the entire sequence is multiplied by a Pgeom, which is creating a geometric series of duration deviation (from half the values, to exponentially smaller values by factor 0.999). The series is infinite, thus at some point, it will be too fast for the computer to process and SuperCollider will crash (THIS WILL HAPPEN APPROX. WHEN STEPSPEROCTAVE = 80, look at the post window, in which the duration and stepsPerOctave values are printed and MAKE SURE TO STOP IT BEFORE THIS HAPPENS). In any case, to scape such a situation, just be patient when trying to drag the cursor to "quit interpreter" in the Language menu above):
 (
 p = Pbind(
-	\stepsPerOctave, Pdup(18, Pseries(12, 1, inf)).trace, //The more steps per octaves, the narrower the distances between the pitches of the melody.
-	\note, Pseq([ 2, 4, 5, 7, 9, 10, 1, 10, 9, 7, 5, 4, 5, 9, 14, 7, 13, 16 ],
-		inf),
-	\dur, Pseq([ Pn(0.25, 12), Pn(0.5, 6) ], inf)
+	\stepsPerOctave, Pdup(18, Pseries(12, 1, inf)).trace, //Pdup: first arg = number of repetitions of each value; second arg = pattern in which values are duplicated.
+	\note, Pseq([2, 4, 5, 7, 9, 10, 1, 10, 9, 7, 5, 4, 5, 9, 14, 7, 13, 16], inf), //The more steps per octaves, the narrower the distances between the pitches of the melody.
+	\dur, Pseq([Pn(0.25, 12), Pn(0.5, 6)], inf)
 	*
-	Pgeom(0.5, 0.999, inf).trace,
+	Pgeom(0.5, 0.999, inf).trace, //Each duration value is a bit smaller (unlike stepsPerOctave, this deviation changes with each value and not with each whole sequence).
 	\amp, 0.15
 ).play
 )
 p.stop
 
-//KEY SCALE Y DEGREE
 
-\scale //It works alongside the key \degree. The scale is defined with pitch classes (number of semitones within the chromatic scale from C).
-\degree //This key defines the degrees of the chosen scale but: the tonic = 0, the dominant = 4, so the numbers change a bit compared to tonal harmony (you can also use the conventional numbers and then subtract 1 to the whole list, if that is clearer). Indeed, the degrees are referring to the index of the pitches defined in the \scale key within its array.
+//KEY SCALE Y DEGREE: these two keys are commonly used together. The key "scale" defines the arrangment of degrees (either by hand or making use of the clas Scale, which we will see later), which are indicated as "notes" (that is, again, in pitch classes, taking the 12-tone chromatic scale as default reference). Then, the key "degree" allow us to access the degrees of the specified scale referring to them as indexes within the array of "scale" (so 0 = "tonic", and 4 = "dominant", if wanting to use tonal harmony terminology).
 
-//Here is a whole C major scale, but it only plays the degree 0, which is C, as stated in \degree:
+//Whole C major scale, but only playing degree 0, which is the C:
 (
 p = Pbind(
-	\scale, [ 0, 2, 4, 5, 7, 9, 11 ],
+	\scale, [0, 2, 4, 5, 7, 9, 11],
 	\degree, 0,
 	\dur, 0.2
 ).play
 )
 p.stop
 
-//This is the entire scale in order thanks to the Pseq in \degree (this can be done in many ways, for example, using Pseries):
+//Now we can play the entire scale (and upper octave) in order using Pseq with degrees 0 to 7 (could have also used Pseries):
 (
 p = Pbind(
-	\scale, [ 0, 2, 4, 5, 7, 9, 11 ],
+	\scale, [0, 2, 4, 5, 7, 9, 11],
 	\degree, Pseq((0..7), inf),
 	\dur, 0.2
 ).play
 )
 p.stop
 
-//First time: whole scale in order, second time: eight random notes from the scale:
+//Now we play the entire scale in order and then, eight random notes from it:
 (
 p = Pbind(
 	\scale, [ 0, 2, 4, 5, 7, 9, 11 ],
-	\degree, Pseq( //Note on Ptuple: if using here Ptuple instead of Pseq, two different Events would be created combining the Pseq and Prand in parallel.
+	\degree, Pseq( //Here we have a sequence of patterns, not an array of patterns. If using Ptuple here instead of Pseq, two different events would be created and Pseq and Prand would be played in parallel.
 		[
-		Pseq((0..7), 1),
-		Prand((0..7), 8)
-		], inf),
+			Pseq((0..7), 1),
+			Prand((0..7), 8)
+	], inf),
 	\dur, 0.2
 ).play
 )
 p.stop
 
-//Both keys \scale and \tuning are used to make scales, you can press ctrl + i over the class Scale in order to see all the implemented scales by default (and you can use their names instead of writing the numbers, but it is always good to think about your own scales too):
-
-Scale.scaleName //This is how this class would work: it can be put into the \scale key directly. See all the possibilities using ctrl + i (double click on "Scale" on the list and approx. from line 339).
-Scale.directory //Here it is easier to take a look at all available scales (although it does not show the degrees, only visible when looking at the implementations).
+//Let's take a look at the class Scale, with which we can create several types of scales. A complete list of the types of scale that this class supports (applied as messages) can be found in its source code (ctrl-i hovering on the class) or using this method (although it only shows the names and not the degrees):
+Scale.directory //These "pre-made" scales have their own default tunings, which can be modified using the method .tuning (take a look at the Help file).
 
 //Example of implementation of the class Scale (same code as the former one, just changing the scale):
 (
 p = Pbind(
-	\scale, Scale.pelog, //The pelog scale, that Xenakis loved so much. He especially used four notes B-C-E-F, two perfect fourths a semitone apart, good balance of tension and resolution ([0, 1, 5, 6] in pitch class).
+	\scale, Scale.pelog, //The pelog scale, which Xenakis loved so much. He especially used four notes (G-Ab-C-Db in this transposition), two perfect fourths a semitone apart, good balance of tension and resolution ([0, 1, 5, 6] in pitch class).
 	\degree, Pseq(
 		[
 			Pseq((0..4), 1), //Patterns adapted to the number of pitches of the scale (which is 5).
-			Prand((0..4), 4)
+			Pxrand((0..4), 4)
 	], inf),
 	\dur, 0.2
 ).play
@@ -390,28 +405,27 @@ p.stop
 (
 p = Pbind(
 	\scale, Scale.pelog,
-	\degree, Pbrown(0, 24, 3), //Values from 0 to 24, but the maximum step is 3, so the randomness is very organic.
-	\octave, 3, //We can also apply the key \octave to any scale from the class Scale.
+	\degree, Pbrown(0, 24, 3), //Values from 0 to 24, but the maximum step is 3, so the randomness is very organic. These degrees cover 5 octaves (as the scale features 5 degrees within each octave).
+	\octave, 3, //We can also apply the key \octave in this context (as the key scale works with pitch classes as so does the key note). In here, it acts as octave onset.
 	\dur, 0.2
 ).play
 )
 p.stop
 
-//KEYS FOR DURATION: \dur and \legato:
 
-\dur //This indicates the time between each event in seconds.
+//KEYS FOR DURATION: in Pbind, the duration of the event and the duration of the synth are different.
 
-\legato //By default, \legato has a value of 0.8: the real duration of the sound (of the sustain time of the envelope) = \dur * \legato: hence, using 0.1 of legato means making the event sound a 10% of the time between it and the next event. It is also possible to use a number higher than 1: in this case, the Events will overlap. Be aware that there will be several synths activated at the same time.
+\dur //The key "dur" refers to the time until the next event in the sequence of events: it is measured in beats (by defaul, these run at 60 bpm, so that dur can be measured in seconds, but this can be changed).
+\stretch //This is one of the possible keys changing the tempo unit of "dur". The key "stretch", according to the help file, "scales event timings", so if we assign a 2 to stretch, durations will be twice as long and vice-versa (that is, stretch is a factor that lengthens or shortens the durations proportionally).
+\legato //This key refers now to the duration of the synth, according to the help it is "the ratio of the synth's duration to the event's duration. By default, as commented earlier, it is 0.8 (an event of 1 second will be heard during 0.8 seconds, including afterwards a slight fade-out and a silence gap). This is, in fact, the duration of the sustain level of the envelope. The real duration is then \dur (* \stretch) * \legato. Numbers lower than 1 will bring about overlapping synths.
+\sustain //This last key is in fact equal to the previous operation (\dur * \stretch * \legato) and, subsequentially, to the real duration of the synth.
 
-p = Pbind(\dur, 1, \midinote, Pseq((60..66), inf)).play //The pitches are separated by 1 second, by the real duration by default is 0.8 seconds. If the SynthDef we use features some release (fade-out) then the separation will be milder (the release of the envelope would start at 0.8 seconds, being the duration = 1 and the legato by default).
-p.stop
+//Some examples:
+Pbind(\dur, 1, \midinote, Pseq((60..66), inf)).play //One pitch per second. At 0.8 seconds, the decay of the envelope is triggered.
 
-p = Pbind(\dur, 1, \legato, 5, \midinote, Prand((36..84), inf)).play //Random pitches (wider range) overlapped between them as the legato is 5.
-p.stop
+Pbind(\dur, 1, \legato, 5, \midinote, Pxrand((36..84), inf)).play //Random pitches overlapping because of the legato value (5 units of duration).
 
-\stretch //Then, \stretch is a factor for the duration: it lengthens or shortens the durations proportionally. It sets the length of the time unit.
-
-//For example, here we use our own numbers for duration (number of units), then the \stretch sets the note value (the length of the new time unit) as 8th-notes:
+//All durations in the series of the pattern are shortened proportionally by multiplying their value by 1/8:
 (
 p = Pbind(
 	\dur, Prand([3, 5, 7, 11], inf),
@@ -421,29 +435,31 @@ p = Pbind(
 )
 p.stop
 
-\sustain = \dur * \legato * \stretch //The key \sustain is equal to this operation, but it is not so recommended: it is easier to set durations using \dur and \legato, and maybe \stretch, in order to understand what is happening behind.
-
 
 /////////////////////////////////////////////////////////////////////
-//SECOND PART: USING OUR OWN SYNTHDEFS:
+//SECOND PART: USING OUR OWN SYNTHDEFS
 
-//KEY INSTRUMENT: so we can use our own Synths:
+//Now that we got to know a few of the many keys that can be used with Pbind, we can start experimenting with the instrument it is connected to (other than the rather annoying \default synth).
 
-d = Synth(\default) //This is the SynthDef we have been using until now (the cheap piano sampler from SC).
+
+//KEY INSTRUMENT: This key will allow the communication with a SynthDef.
+
+//This is the SynthDef we have been using until now (the cheap piano sampler from SC):
+d = Synth(\default) //I haven't found yet where is the source code of this SynthDef :'D
 d.free
 
-//Now we can create and implement our own "instruments": let's use this super basic SynthDef:
+//Let's create a rather simple instrument of ours:
 (
 SynthDef(
 	\newSine,
 	{ arg out, freq, amp, pan, gate = 1;
 		var signal, env;
 
-		signal = Mix(SinOsc.ar(freq * [ 1, 1.01 ], 0, 0.5)); //Two frequencies are produced with 0.01 deviation factor, then they are mixed producing this little detune or beating.
+		signal = Mix(SinOsc.ar(freq * [1, 1.01], 0, 0.5)); //Two frequencies are produced with 0.01 deviation factor, then they are mixed producing this little detune or beating.
 
 		env = EnvGen.ar(
 			Env.asr(0.01, amp * 0.5, 0.3), //Envelope with attack, sustain and release, because Pbind needs to open and close the gate.
-			gate, //Gate needs a 1 by default in order to boot up the envelope right away. Pbind sends a 0 to the gate each time it's done with a synth, then it picks up again the 1 by default set in the SynthDef.
+			gate, //Gate needs a 1 by default in order to boot up the envelope right away. Pbind sends a 0 to the gate each time it's done with a synth, then it picks up again the 1 by default in the SynthDef.
 			doneAction: 2 //doneAction = 2 is essential to keep each Synth out of the server when it is done.
 		);
 
@@ -451,9 +467,8 @@ SynthDef(
 }).add
 )
 
-//This would be the connection to the new instrument through the name of the SynthDef, and its default values (all arguments included in the SynthDef with our own default values or rather the default values of the Event keys (only replaced automatically in the keys defined by default: our own arguments that are not in that list would need default values within the SynthDef if not defined in Pbind):
-
-p = Pbind(\instrument, \newSine).play
+//Now we connect Pbind with our instrument by specifying the name of the instrument. If we don't specify the value of the arguments, those that are conventional event keys will be assigned to their default values. If any argument is created apart from those that Pbind understands by default, it needs to be assigned a default value in the SynthDef or otherwise always be specified within Pbind:
+p = Pbind(\instrument, \newSine).play //Default values.
 p.stop
 
 p = Pbind(\instrument, \newSine, \midinote, Pseq([ 72, 67, 68, 75 ], inf)).play //For example, \midinote is going to be placed automatically in the freq argument (and converted to Hz).
@@ -464,19 +479,21 @@ p.stop
 p = Pbind(
 	\instrument, \newSine,
 	\midinote, Pn(Pshuf([ 40, 42, 43, 45, 46 ] + 24, 2), inf), //Two repetitions of each order.
-	\dur, 0.5 * (60/180), //Using 8th-notes considering the 180 quarter-notes per minute.
+	\dur, 0.5 * (60/180), //Using 8th-notes considering the 180 quarter-notes per minute. This is another way of skipping the use of other duration keys (this operation is equivalent to using the stretch key).
 	//\dur, 0.5 / (180/60) //Equivalent operation.
-	\legato, 0.5, //Each note is half the duration of the space between the notes (the release of the envelope starts at half of the duration set in \dur).
-	\amp, Pwrand([ 0.1, 0.7 ], [ 0.8, 0.2 ], inf), //There are some sharper attacks.
+	\legato, 0.5, //Each event is half the duration of the space between the events (the release of the envelope starts at half of the duration set in \dur).
+	\amp, Pwrand([0.1, 0.5], [0.8, 0.2], inf), //There are some sharper attacks.
 	\pan, Pseq([ -1, -0.5, 0, 0.5, 1 ], inf)
 ).play
 )
 p.stop
 
-//In SC folder, there are some examples: in "pieces", there is this example called "Spacelab" (copied in this folder of theory files), easy to analyze and very useful regarding the use of Pbind. All layers are defined at the beginning and, at the end, everything is sequenced thanks to a Pseq.
+//As it can be observed, there is no "dur" argument in the SynthDef. This is because duration keys are understood by Pbind as triggers for the gate of the envelope to be opened and closed.
 
-//NEW SYNTHDEF: remember that gate = 1 and doneAction = 2 are essential in order to use your own instrument with Pbind:
+//I copied in the folder of theory files a file called "SpaceLab", although such a code is included in the SC folder created when installing the program (alongside other examples in a folder called "Pieces"). This code is easy to follow and a great old-school example of using Pbind connected to several instruments. It is a great exercise to analyze the code, even if certain things seem too complex.
 
+
+//Let's create yet another SynthDef (remember that the only requisites are to include an envelope with sustain time, gate = 1, and doneAction = 2):
 (
 SynthDef(
 	\klank,
@@ -491,13 +508,15 @@ SynthDef(
 				Array.fill(10, { Rand(0.01, 2) })
 			],
 			impulse,
-			freqscale //Freqscale allows us to transpose the freqs of Klank (2 = octave up, 0.5 = octave down, 7/4 = minor 7th, etc. all overtone ratios).
+			freqscale //Freqscale allows us to transpose the freqs of Klank (2 = octave up, 0.5 = octave down, 7/4 = approx. minor 7th, etc., using all overtone ratios or .midiratio).
 		);
+
 		env = EnvGen.ar(
 			Env.asr(0.01, amp, 0.01),
 			gate,
 			doneAction: 2
 		);
+
 		Out.ar(0, Pan2.ar(signal * env, pan))
 }).add
 )
@@ -505,74 +524,73 @@ SynthDef(
 (
 p = Pbind(
 	\instrument, \klank,
-	\dur, Pwrand([ 1, 0.5, 0.08 ], [ 0.7, 0.2, 0.1 ], inf) * (60/90), //The duration ratios are based on the 90 bpm applied as a factor at the end.
-	\freqscale, Pseq([ 1, 2/3 ], inf),
-	\amp, Pwrand([ 0.5, 0.1 ], [ 0.2, 0.8 ], inf),
-	\pan, Prand([ -0.7, -0.3, 0, 0.3, 0.7 ], inf)
+	\dur, Pwrand([1, 0.5, 0.1], [0.7, 0.2, 0.1], inf) * (60/90), //The duration ratios are based on the 90 bpm applied as a factor at the end.
+	\freqscale, Pseq([1, 2/3], inf),
+	\amp, Pwrand([0.3, 0.05], [0.2, 0.8], inf),
+	\pan, Pxrand([-0.7, -0.3, 0, 0.3, 0.7], inf)
 ).play
 )
 p.stop
 
-//RESTS: \rest or just a backslash "\" in any key related to the frequency is interpreted as a rest:
 
-p = Pbind(\note, Pseq([ 0, 2, \rest, 5, 6, \rest, 10, 11, \rest ], inf)).play
-p.stop
+//RESTS
+//Let's introduce a bit the concept of rest in Pbind: the key \rest, or just a backslash "\" in any key related to frequency will be interpreted as a rest:
+Pbind(\note, Pseq([0, 2, \rest, 5, 6, \rest, 10, 11, \rest], inf)).play
 
 //Here is our newSine SynthDef again:
 (
 SynthDef(
 	\newSine,
-	{|out, freq, amp, pan, gate = 1|
+	{ |out, freq, amp, pan, gate = 1|
 		var signal, env;
 
 		signal = Mix (SinOsc.ar(freq * [1, 1.01], 0, 0.5));
+
 		env = EnvGen.ar(
 			Env.asr(0.01, amp * 0.5, 0.3),
 			gate,
 			doneAction: 2
 		);
+
 		Out.ar(out, Pan2.ar(signal * env, pan))
 }).add
 )
 
-//In this example, there is a random permutation each 5 repetitions of the Pshuf pattern: there are 5 different pitches and 3 rests to be sorted randomly. This will alternate the pitches and rests quite fast, giving a similar impression as in Ligeti's studio of blocked keys:
-
+//In this example, there is a random permutation of the Pshuf pattern each 5 repetitions: there are 5 different pitches and 3 rests to be sorted randomly. This will alternate the pitches and rests quite fast, giving a similar impression as in Ligeti's studio of blocked keys:
 (
 p = Pbind(
 	\instrument, \newSine,
-	\midinote, Pn(Pshuf([ 64, 66, 67, 69, 70, \, \, \ ], 5)),
+	\midinote, Pn(Pshuf([ 64, 66, 67, 69, 70, \, \, \ ], 5)), //Using the single backslashes as shortcut of \rest.
 	\amp, 0.1,
-	\dur, 0.25 * (60/180), //Here we use 16th-notes (a quarter of a quarter-note, 0.25 from 1), at 180 bpm. This could be calculated with \stretch, but seems easier to use a single key (just \dur).
+	\dur, 0.25 * (60/180), //Here we use 16th-notes (a quarter of a quarter-note, 0.25 from 1), at 180 bpm.
 	\legato, 0.25,
 	\pan, Pseq([ -1, -0.5, 0, 0.5, 1 ], inf)
 ).play
 )
 p.stop
 
-//The rests can be also created using the class Rest() in any key: here in \amp:
-
+//The rests can be also created using the class Rest() in any key (here in \amp):
 (
 p = Pbind(
 	\note, Pseq([ 0, 2, 4, 5, 6, 7, 10, 12 ], inf), //As Rest is used in \amp, the flow of pitches is maintained here despite the silences.
 	\amp, Pseq(
 		[
-			Pseq([ 0.1, 0.1, Rest() ], 8), //We create the pattern note-note-rest. There are 8 pitches, so the pattern is displaced during 24 iterations (8 series of 3 pulses (note-note-rest)), coming back to its initial phase only after that.
-			Pn(0.1, 8) //When the 24-note period is completed, the complete series of pitches appears (8 repetitions, because 8 pitches).
+			Pseq([0.1, 0.1, Rest()], 8), //We create the pattern note-note-rest. There are 8 pitches, so the pattern is displaced during 24 iterations (8 series of 3 pulses (note-note-rest)), coming back to its initial phase only after that.
+			Pn(0.1, 8) //When the 24-note sequence is completed, the complete series of pitches appears (8 repetitions, because 8 pitches).
 		],
 		inf),
-	\pan, Pseq([ Pn(0, 3 * 8), Pseq([ -1, 1 ], 4) ], inf), //The period of the amps coincides with the pan values: it maintaines a 0 during 3 * 8 iterations, then it alternates between -1 and 1 four times (for the last 8 iterations of the complete scale).
+	\pan, Pseq([Pn(0, 3 * 8), Pseq([-1, 1], 4)], inf), //The sequence of amp values coincides with the pan values: it maintaines a 0 during 3 * 8 iterations, then it alternates between -1 and 1 four times (for the last 8 pitches after the 24-note sequence).
 	\dur, 0.1,
 	\instrument, \newSine
 ).play
 )
 p.stop
 
-//In case the class Rest is used in any of the keys related to the duration (mainly in \dur), we have to specify the duration of the Rest (in seconds):
-
+//In case the class Rest is used in any of the keys related to the duration (mainly in \dur), we have to specify the duration of the Rest (in units):
 (
 p = Pbind(
-	\note, Pseq([ 0, 2, 4, 5, 6, 7, 10, 12 ], inf),
-	\dur, Pwrand([ 0.1, Rest(0.3) ], [ 0.8, 0.2 ], inf),
+	\note, Pseq([ 0, 2, 4, 5, 6, 7, 10, 12 ], inf), //Just like before, the pitches continue running during the gaps.
+	\dur, Pwrand([0.1, Rest(0.3)], [0.8, 0.2], inf),
 	\instrument, \newSine
 ).play
 )
@@ -580,26 +598,13 @@ p.stop
 
 
 /////////////////////////////////////////////////////////////////////
-//PATTERNS FOR STOCHASTIC DISTRIBUTION: stochastic = random = chance = haphazard...
+//PATTERNS FOR RANDOM DISTRIBUTION
 
-//UNIFORM DISTRIBUTION (= rrand):
-
-Pwhite(lo, hi, length) //Arguments.
-
-//Example: in the first graph, we can see how the values are spread equally everywhere from 0 to 1, whereas in the second graph, we can see how the probability of each value is maintained around the same place:
-
-(
-a = Pwhite(0.0, 1.0).asStream; //Numbers between 0 and 1 with uniform distribution (as in white noise): also called rectangular distribution.
-b = a.nextN(100000); //It creates an array asking "a" for values 100000 times.
-b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //This is just defining the pixels of the window that will display (plot) the values in discontinuous points (discrete: true).
-([ 0 ] ++ b.histo(1000)).plot("Distribution of the values", bounds: Rect(10, 10, 520, 380), discrete: true) //The initial 0 is for the initial space, then a histogram is created for the representation of the distributions.
-)
-
-//Using a simpler SynthDef for the sonic examples (without the detuning):
+//Let's use an even simpler SynthDef for the upcoming examples:
 (
 SynthDef(
 	\simpleSine,
-	{|out, freq, atk = 0.01, amp, rel = 0.1, pan, gate = 1|
+	{ |out, freq, atk = 0.01, amp, rel = 0.1, pan, gate = 1|
 		var signal, env;
 
 		signal = SinOsc.ar(freq);
@@ -614,141 +619,57 @@ SynthDef(
 }).add
 )
 
-//Choosing notes from C1 to C8 with uniform distribution:
+//Uniform distribution (Pwhite): all values feature the same probability. Arguments are low and high limits, and number of values to be created (it is different from Prand as it chooses values from a range, instead of from a list). If both inputs are integers, all outputs will be integers, but if at least one input is float, all outputs will be floats (just like in rrand):
 (
-p = Pbind(
-	\midinote, Pwhite(24, 108),
-	\dur, 1/8,
-	\amp, 0.2,
-	\instrument, \simpleSine
-).play
-)
-p.stop
+var stream;
 
-//Small fragments of six pitches: when the 6 iterations are done, the pattern receives "nil", so the Pbind stops there. Then, you can evaluate it again (sometimes when composing algorithmic music, it is better to obtain smaller outputs):
-(
-p = Pbind(
-	\midinote, Pwhite(24, 108, 6),
-	\dur, 1/8,
-	\amp, 0.2,
-	\instrument, \simpleSine
-).play
-)
-p.stop
+stream = Pwhite(0, 100.0, 10).asStream;
 
-//Now the uniform distribution is also applied to the durations. Try out the limitation of the number of iterations as in the former code, there can be found very interesting short motives:
-(
-p = Pbind(
-	\midinote, Pwhite(24, 108),
-	\dur, Pwhite(1/8, 1.0),
-	\amp, 0.2,
-	\instrument, \simpleSine
-).play
+15.do({ stream.next.postln })
 )
-p.stop
 
-//The entire Pbind in this following code is repeated 4 times, so there are four Pbinds sounding at the same time (the amplitude should be taken into consideration). Durations and pitches are random differently for each Pbind:
+//In the following graph, we can see how values are spread equally everywhere from 0 to 1 (first graph), and how the probability of each value is maintained around the same spot (second graph):
 (
-{
-p = Pbind(
+a = Pwhite(0.0, 1.0).asStream; //Numbers between 0 and 1 with uniform distribution (as in white noise): also called rectangular distribution.
+b = a.nextN(100000); //It creates an array asking "a" for values 100000 times.
+b.plot("Values", bounds: Rect(10, 410, 520, 380), discrete: true); //We can give a name to the plot, define the pixels of the rectangle window, and specify discontinuity (true) for the display of the values.
+b.histo(1000).plot("Distribution of the values", bounds: Rect(10, 10, 520, 380), discrete: true) //The second graph is a histogram (which shows distribution of numerical data, see Help file of Collection for an explanation of its arguments), which needs to be plotted.
+)
+
+//Applied to sound: we have here a Pbind with random uniform distribution of pitches and durations, and which is duplicated up to four times. These are not parallel Pbinds (that is, a expanded Pbind) but four different Pbinds (that is why they feature different durations apart from different pitches):
+(
+p = { Pbind(
 	\midinote, Pwhite(24, 108, inf).trace,
 	\dur, Pwhite(1/16, 2.0),
-	\amp, 0.1,
+	\amp, 0.05,
 	\instrument, \simpleSine
-).play
-} !4 //Quadruplication of the whole Pbind.
+).play } !4
 )
-p.stop
+p.stop //Because an array of Pbinds is created, can't apply .stop to all of them at the same time (.stop is not understood by the array).
+p[0].stop; p[1].stop; p[2].stop; p[3].stop //Instead, .stop needs to be applied to each Pbind within the array.
 
-//A smaller range could work better sometimes (here between B6 and B7). The durations are constant now, and back to the "piano" sound:
+
+//Exponential distribution (Pexprand): lower values are more likely to be chosen. Arguments are low and high limits and number of values to be created. All outputs will be floats no matter what inputs the pattern receives (just like exprand). Also the range should not touch nor cross zero:
 (
-{
-p = Pbind(
-	\midinote, (Pwhite(95, 107, inf) - 48).trace, //Now going 4 octaves down: try other combinations.
-	\dur, 1/8,
-	\amp, 0.1,
-).play
-} !4
+var stream;
+
+stream = Pexprand(1, 100, 10).asStream;
+
+15.do({ stream.next.postln })
 )
-p.stop
 
-//EXPONENTIAL DISTRIBUTION (= exprand):
-
-Pexprand(lo, hi, length) //Arguments.
-
-//Graphical representation:
+//Graphical representation, just like before. We can see now how values are accumulated in the lower part of the range (first graph), and how the distribution is highlighted in the first values (second graph):
 (
-a = Pexprand(0.001, 1.0).asStream; //The only change here is that the range does not start at 0, as the distribution is exponential (0 can't be touched, nor crossed).
+a = Pexprand(0.001, 1.0).asStream; //Avoiding the 0 as lower limit, as exponential distribution cannot reach it.
 b = a.nextN(100000);
-b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //The values are accumulated in the lower part of the range.
-([ 0 ] ++ b.histo(1000)).plot("Distribution of values", bounds: Rect(10, 10, 520, 380), discrete: true) //Higher probability for lower values.
+b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true);
+b.histo(10000).plot("Distribution of values", bounds: Rect(10, 10, 520, 380), discrete: true)
 )
 
-//Here we can hear the exponential distribution, with a bigger presence of lower tones (applied to freq in Hz, the distribution would result much more uniform):
+//Applied to sound: using both exponential and uniform distribution, and using the arguments atk and rel to change the segments of the envelope:
 (
 p = Pbind(
-	\midinote, Pexprand(24, 108, inf),
-	\dur, Pwhite(1/8, 1.0),
-	\amp, 0.1,
-	\instrument, \simpleSine
-).play
-)
-p.stop
-
-//Applied to the durations, we get more organic phrases:
-(
-p = Pbind(
-	\midinote, Pexprand(24, 108, inf),
-	\dur, Pexprand(1/16, 2.0),
-	\amp, 0.1,
-	\instrument, \simpleSine
-).play
-)
-p.stop
-
-//The first line of the following example gives us the random seed of the evaluation of the code, printed in the postwindow. Then, we can replace its value with that number in order to obtain the same exact random progression of pitches and durations (any random value):
-(
-thisThread.randSeed = Date.seed.postln; //The random seed is named using the date and time, thereby avoiding any repetition of seed numbers.
-p = Pbind(
-	\midinote, Pexprand(24, 108, inf),
-	\dur, Pexprand(1/16, 5.0),
-	\amp, 0.2,
-	\instrument, \simpleSine
-).play
-)
-p.stop
-
-//Replace the number with the value given by the former code and observe how the random values are now the exact same:
-(
-thisThread.randSeed = 78814054; //Replace the number here.
-p = Pbind(
-	\midinote, Pexprand(24, 108, inf),
-	\dur, Pexprand(1/16, 5.0),
-	\amp, 0.2,
-	\instrument, \simpleSine
-).play
-)
-p.stop
-
-//Last example changing the octave and obtaining a short sentence:
-(
-thisThread.randSeed = Date.seed.postln;
-p = Pbind(
-	\scale, [ 0, 3, 4, 5, 6, 9, 10, 11 ],
-	\degree, Pwhite(0, 7, exprand(2, 12)), //It outputs 2 to 12 notes (most likely a smaller number because of the exponential distribution).
-	\octave, Prand([ 5, 6, 7 ], inf), //The difference between Pwhite and Prand is that Prand receives a specific list of values while Pwhite receives a range.
-	\dur, Pexprand(1/16, 2.0),
-	\amp, 0.2,
-	\instrument, \simpleSine
-).play
-)
-p.stop
-
-//Example of mixed uniform and exponential distributions, now changing the attack and release values:
-(
-P = Pbind(
-	//\freq, Pexprand(60, 5000, inf), //Pexrand always outputs floats, even when the inputs are integer.
-	\freq, Pexprand(60, 5000, inf).round(65).trace, //I've seen this method used to stick to a specific overtone series.
+	\freq, Pexprand(60, 5000, inf).round(65).trace, //Pexprand always outputs floats. With round, apart from obtaining all integers, we are keeping the freq values within the overtone series of a fundamental freq of 65 Hz (as it rounds values to the closest multiple of 65). Try out other fundamental frequencies.
 	\dur, Pwhite(0.05, 0.5, inf),
 	\atk, Pwhite(0.5, 3.0, inf),
 	\rel, Pwhite(2.0, 8.0, inf), //Pwhite needs at least on float input to output floats, otherwise it will output integers.
@@ -759,51 +680,43 @@ P = Pbind(
 )
 p.stop
 
-//PKEY: DEPENDABLE KEYS:
-//When we need the values of a specific key to rely on the values of an earlier stated key, we use Pkey. Pkey copies patterns from an earlier key so that we can apply other methods or operations to those values (outside the pattern, though).
-//Let's take the previous example as starting point and make the amplitude dependable on the frequency:
+//The random seed: the first line of this code prints an integer on the post window that can be used as random seed ("random number generator seed"), that is to say, when applying that number to thisThread.randSeed instead of generating one, we will obtain the same combination of random values that we did before.
 (
+thisThread.randSeed = Date.seed.postln; //The random seed is named using the date and time, thereby avoiding any possible repeated seed value.
 p = Pbind(
-	\freq, Pexprand(60, 5000, inf).round(65).trace,
+	\freq, Pexprand(60, 5000, inf).round(65).trace, //Pexprand always outputs floats. With round, apart from obtaining all integers, we are keeping the freq values within the overtone series of a fundamental freq of 65 Hz (as it rounds values to the closest multiple of 65). Try out other fundamental frequencies.
 	\dur, Pwhite(0.05, 0.5, inf),
 	\atk, Pwhite(0.5, 3.0, inf),
-	\rel, Pwhite(2.0, 8.0, inf),
-	\amp, Pkey(\freq).reciprocal * 100, //Remember x.reciprocal = 1/x: lower freqs will be louder than higher freqs. Seems to work.
+	\rel, Pwhite(2.0, 8.0, inf), //Pwhite needs at least on float input to output floats, otherwise it will output integers.
+	\amp, Pexprand(0.01, 0.1, inf),
 	\pan, Pwhite(-0.8, 0.8, inf),
 	\instrument, \simpleSine
 ).play
 )
-p.stop
 
-//NORMAL OR GAUSSIAN DISTRIBUTION: priority given to the central values within a range.
 
-Pgauss(mean, dev, length) //Arguments ("mean" is the center, "dev" is the maximum deviation from that center to left and right (the width of the "gaussian bell", how fast or slow the values grow or decrease), "length" is the number of values, as always.
-
-//Graphical representation:
+//Normal or Gaussian distribution (Pgauss): values closer to the "mean" value are more likely to be chosen. The deviation argument refers to the "width" of the Gaussian bell: the higher the deviation, the more probable extreme values will be. It outputs floats as well:
 (
-a = Pgauss(1.0, 0.25).asStream; //Center = 1, deviation = 0.25(width of the gaussian bell).
+var stream;
+
+stream = Pgauss(50, 10, 10).asStream;
+
+15.do({ stream.next.postln })
+)
+
+//Graphical representation: now we can see an accumulation of values around the center or "mean" point (1, in the first graph), and the shape of the Gaussian bell (greater distribution of values around the mean, that is, central values are more likely than extreme values (second graph):
+(
+a = Pgauss(1.0, 0.25).asStream; //Center (mean) = 1, deviation = 0.25 (width of the Gaussian bell).
 b = a.nextN(100000);
-b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true); //Values are accumulated around the center (= 1) or "mean".
-([ 0 ] ++ b.histo(1000)).plot("Distribution of values", bounds: Rect(10, 10, 520, 380), discrete: true) //Central values are more probable than extreme values.
+b.plot("The values", bounds: Rect(10, 410, 520, 380), discrete: true);
+b.histo(1000).plot("Distribution of values", bounds: Rect(10, 10, 520, 380), discrete: true)
 )
 
-//Here the sonic example: the gaussian distribution is applied to midi notes: the pitch will stay around the mean value (84), deviating according to the veliation value (2), but this doesn't mean that the range of the pitch is 82-86 as the deviation is just a measurement of the width of the gauss bell, affecting the probability of the extreme values. In addition to this, as the resulting values are float numbers, microtones are brough about:
+//Applied to sound: USING A PREVIOUS SYNTHDEF (\newSine, use ctrl-F to search for it in the entire code). Because of the duration of the synths, this example has a granular quality to it:
 (
 p = Pbind(
-	\midinote, Pgauss(84, 2).trace, //Observe that the resulting values are not integers.
-	\dur, 0.1,
-	\amp, 0.2,
-	\instrument, \simpleSine
-).play
-)
-p.stop
-
-//Using the former synthDef \newSine (if too far in the code, you can use ctrl + F in order to search for the name and find it throughout the code). It sounds granular because of the short duration of the synths:
-
-(
-p = Pbind(
-	\freq, Pgauss(5000, 1250), //The few lower values are really highlighted because they are not common.
-	\pan, Pgauss(0, 0.3),
+	\freq, Pgauss(5000, 1250), //The few lower values are really noticeable because they are rare among the flow of values around the mean point.
+	\pan, Pgauss(0, 0.3), //The panning is also maintained around the center. The little deviation makes it sound quite organic.
 	\dur, 0.01,
 	\amp, 0.05,
 	\instrument, \newSine
@@ -811,73 +724,86 @@ p = Pbind(
 )
 p.stop
 
-//Normal distribution applied to rhythms: dev = 0 would bring about a regular pulse. The wider the deviation, the greater the difference between the pulses:
-(
-P = Pbind(
-	\midinote, Pgauss(90, 1),
-	\dur, Pgauss(1, 0.25),
-	\instrument, \simpleSine //Bewere the change of synth.
-).play
-)
-p.stop
-
-//Creating chords: Ptuple separates each freq created by the three Pgauss, then a different octave is added to each of those freqs:
+//Yet another example (coming back to \simpleSine), to show the Guassian distribution applied to durations: a deviation of 0 would bring about a regular pulse, and therefore the higher the deviation, the greater the difference between the pulses. Here using Ptuple to extract three frequencies for each event. Then, each frequency is added a different octave transportation.
 (
 p = Pbind(
-	\midinote, Ptuple({ Pgauss(67, 1) } !3) + [ 0, 14, 24 ], //Three frequencies, three octaves.
+	\midinote, Ptuple({ Pgauss(67, 1) } !3) + [0, 14, 24], //Three frequencies, three different octaves.
 	\dur, Pgauss(0.5, 0.1),
-	\instrument, \simpleSine //Try with other synths or without \instrument (default piano).
+	\instrument, \simpleSine //Try out with \newSine as well, interesting result.
 ).play
 )
 p.stop
 
-//PSEG: the pattern for creating segments --> envelopes: thus, we can draw the behavior of Pbind over time.
 
-Pseg(levels, durs, curves) //Arguments as in a simple envelope.
+//Brownian motion (Pbrown): its arguments are low and high limits, the step and the number of values to be created. The step represents the maximum deviation from one value to the next (either + or -, that is, upwards or downwards). It outputs floats whenever any of its arguments is a float (except for the length argument). If going beyond the low or high limits, the values fold (are added instead of subtracted and vice-versa):
+(
+var stream;
 
-//Example with sound: envelope from 60 to 67 midi, in 5 seconds, and going to back down in 0.2: it actually performs the envelope in loop (as patterns are prepared for iterations), so there is no need for one less value of durations because we need that value for coming back to the first value and close the circle:
+stream = Pbrown(0, 10, 1, 10).asStream;
+
+15.do({ stream.next.postln })
+)
+
+//Brownian motion model (as seen sin some other theory code):
+a = 1 //Initial value.
+a = (a + rrand(-1.0, 1.0)).fold(0.0, 10.0) //If going above 10 or below 0, it folds. The inputs of rrand represent the "step" argument, whereas the inputs of fold represent the low and high limits.
+
+//Graph of the tendency applied to 100000 values: observe that there are not many great jumps between random values:
+(
+a = Pbrown(0.0, 10.0, 0.1, inf).asStream;
+a.nextN(100000).plot
+)
+
+//Sonic example using the chromatic scale: the movement between pitches seems to be pretty organic:
+(
+p = Pbind(
+	\midinote, Pbrown(60, 96, 1),
+	\dur, 0.1,
+	\instrument, \simpleSine
+).play
+)
+p.stop
+
+
+//PSEG: the envelope patter.
+//According to the help file: "Pseg defines a function of time as a breakpoint envelope using the same parameters as Env" (that is, defines a series of segments, bringing about an envelope). It's arguments are a list of levels, a list of durations, a list of curves, and the number of repetitions.
+
+//Simple example: creating an envelope of frequencies: the times of Pseg are independent from the duration key. The main difference between Pseg and Env is the use of as many time values as level values, as the pattern is prepared to be looped by default:
 (
 p = Pbind(
 	\instrument, \simpleSine,
-	\midinote, Pseg(Pseq([ 60, 67 ], inf), Pseq([ 5, 0.2 ], inf)).trace,
+	\midinote, Pseg(Pseq([ 60, 67 ], inf), Pseq([ 5, 0.2 ], inf)).trace, //Five beats to go from 60 to 67, and 0.2 to come back to 60. Here, using the linear curve by default.
 	\dur, 0.1
 ).play
 )
 p.stop
 
-//TENCENDY MASK (well, this term was made up by my professor, so I wouldn't use it over there):
-
-//We choose random values within two limits and these two limits (low and high) change over time. It is difficult to perceive the "drawing" that the limits describe over time, so the paths need to be simple enough (one example of not being perfectly able to perceive the drawings is Xenakis' Pithoprakta alongside its graphical representation). Perceptible examples are a range that opens and closes in a specific direction (upwards or downwards), etc.
-//This is especially useful when applied to granular synthesis, controlling the positions within the buffer, the grain durations, the separation (waiting time) between grains, etc.
-
-//Using a new SynthDef for the sonic examples: a simple sawtooth wave with a sine envelope:
+//Creating a "tendency mask": Pseg can be used for this structural resource, which consists of creating parallel envelopes applied as low and high limits of random choices for a parameter. These lines should be simple enough to perceive their trace. Ranges that open and close in specific directions can be a good example for this. It can be very useful when applied to granular synthesis, controlling the position within the buffer, the grain durations, the waiting time between grains, etc.
+//Let's use a sawtooth SynthDef for this example:
 (
 SynthDef(
 	\saw,
-	{| freq |
+	{ |freq|
+		var signal;
 
-		OffsetOut.ar(0,
-			Saw.ar(freq)
-			*
-			EnvGen.ar(
-				Env.sine(0.3, 0.05),
-				doneAction: 2
-			)
-		)
+		signal = Saw.ar(freq, 0.2) * EnvGen.ar(Env.sine(0.3, 0.05), doneAction: 2);
+
+		OffsetOut.ar(0, signal !2)
+
 }).add
 )
 
-//First of all, defining the lines (range limits), then implementing in the Pbind: notice that the range of freqs is narrower up to 100 midi ("unison") and then it descends reaching the widest range from 10 to 70 midi:
+//In the following example, the frequency will be chosen randomly (using uniform distribution) within a range controlled by two Psegs (two envelopes). The two envelopes are synchronized in this example, but they don't have to be:
 (
 var lineA, lineB;
 
 lineA = Pseg( //Bottom line.
-	Pseq([ 85, 100, 10 ], inf), //MIDI values (from 85 to 100, to 10 and back to 85).
-	Pseq([ 10, 10, 0 ], inf), //Durations of 10 second between each value and 0 to get back to the beginning, thus jumping back).
+	Pseq([85, 100, 10], inf), //Values (the range of freqs gets narrower up to a unison and then opens up again).
+	Pseq([10, 10, 0], inf), //Times (if the last time is 0, then the envelope jumps back to the beginning).
 );
 lineB = Pseg( //Top line.
-	Pseq([ 90, 100, 70 ], inf), //Same number of values as in the previous line.
-	Pseq([ 10, 10, 0 ], inf), //Durations synchronized between both lines.
+	Pseq([90, 100, 70], inf),
+	Pseq([10, 10, 0], inf),
 );
 
 p = Pbind(
@@ -886,64 +812,61 @@ p = Pbind(
 	\dur, 0.015
 ).play
 )
+
 p.stop
 
-//Here trying to represent the lines graphically: same envelopes as in the former code (also, you can see in the help document of the Plotter the function of each letter command. For example, "s" superposes the graphs):
-
-( //Turning each envelope into a stream:
+//My teacher tried to represent this tendency mask graphically, so here is the code for that:
+//Same envelopes as before, but as streams:
+(
 a = Pseg(
-	Pseq([ 85, 100, 10 ], inf),
-	Pseq([ 10, 10, 0 ]/20, inf),
+	Pseq([85, 100, 10], inf),
+	Pseq([10, 10, 0]/20, inf), //Reducing the times so that we can plot right away.
 ).asStream;
 b = Pseg(
-	Pseq([ 90, 100, 70 ], inf),
-	Pseq([ 10, 10, 0 ]/20, inf),
+	Pseq([90, 100, 70], inf),
+	Pseq([10, 10, 0]/20, inf),
 ).asStream;
 )
 
-( //Now we create empty arrays and fill them up with the values from the former Pseg using a Routine to activate the streams:
+//Next step is to create empty arrays to be filled up with the Pseg values. A Routine is used to ask each Pseg for its values and add them to the arrays. Remember that the Pseg times are independent from, for instance, the Routine times, hence if we don't plot fast enough, the envelope will be capture at a different moment of its performance.
+(
 ~arrayA = [];
 ~arrayB = [];
 Routine({
-	1000.do({
+	1000.do({ //Using 1000 for more definition, but actually 4 values are enough to depict this envelope.
 	~arrayA = ~arrayA.add(a.next);
 	~arrayB = ~arrayB.add(b.next);
-		(1/1000).wait
+		(1/1000).wait //Total time is 1.
 	})
 }).play
 )
-p = [ ~arrayA, ~arrayB ].plot //Now it displays both lines with the values and pressing "s" they superpose and create the graphs with the limits between which the frequencies were being chosen before:
 
-//BROWNIAN MOTION: there is a continuous addition or subtraction of a number within a range to the original output:
+p = [ ~arrayA, ~arrayB ].plot //With both lines displayed, we can press "s" to overlap them and therefore visualize the shape of the lo and hi limits and their evolutionn overtime (see other commands for the plotter in the Help file).
 
-a = 1
-a = (a + rrand(-1.0, 1.0)).fold(0.0, 10.0) //"a" is originally = 1, then it is reassigned and with each evaluation, a random number between -1 and 1 is added. Fold is just keeping the range from 0 to 10. This is what brownian motion looks like.
 
-//Pbrown is the pattern for brownian motion:
+/////////////////////////////////////////////////////////////////////
+//EXTENSIONS FOR THIS CHAPTER
+//Other Pbind-related patterns, keys, and examples (beware each SynthDef used in here):
 
-Pbrown(lo, hi, step, length) //Arguments: "low" and "high" boundaries of values (as with fold earlier), "step" (max deviation) and number of values ("length").
 
-//Graph of the tendency applied to 100000 values: observe that there are not many great jumps between random values:
-(
-a = Pbrown(0.0, 10.0, 0.1, inf).asStream;
-a.nextN(100000).plot
-)
-
-//Sonic example using the chromatic scale:
+//PKEY: dependable keys.
+//When we need the values of a specific key to depend on the values of an earlier stated key, we use Pkey. Pkey copies patterns from an earlier key so that we can apply other methods or operations to those values (outside the pattern, though). Let's take a previous example as starting point and make the amplitude depend on the frequency:
 (
 p = Pbind(
-	\midinote, Pbrown(60, 96, 1),
-	\dur, 0.1,
-	\instrument, \simpleSine //Former SynthDef for the distributions.
+	\freq, Pexprand(60, 5000, inf).round(65).trace,
+	\dur, Pwhite(0.05, 0.5, inf),
+	\atk, Pwhite(0.5, 3.0, inf),
+	\rel, Pwhite(2.0, 8.0, inf),
+	\amp, Pkey(\freq).reciprocal * 50, //Remember x.reciprocal = 1/x: lower freqs will be louder than higher freqs. Seems to work.
+	\pan, Pwhite(-0.8, 0.8, inf),
+	\instrument, \simpleSine
 ).play
 )
 p.stop
 
 
-/////////////////////////////////////////////////////////////////////
-//EXTENSIONS FOR THIS CHAPTER:
-
-//Creating a displacement of the phase of two similar melodies (as in Steve Reich's piano phase, for example):
+//PPAR: parallel Pbinds.
+//As a point of departure, let's create this other SynthDef:
 (
 SynthDef(
 	\saw2,
@@ -957,25 +880,28 @@ SynthDef(
 }).add
 )
 
-//Here the two Pbind displaced and here we find out the limitation of Ptuple (though see the new alternative in the next code): we can't apply Ptuple to the durations because two parallel Pbind need to be coordinated in time. Duplicating the Pbind would allow different times using randomness, but we wouldn't be able to set specific patterns for each. Therefore, in order to create events with different duration, we need to set two different Pbind:
+//The objective was to create a gradual displacement of two similar melodic lines (just like in Steve Reich's piano phase, for instance). Because two parallel Pbinds (an expanded Pbind) cannot bear different durations, the first solution was to create two different Pbinds featuring different times (just like when we duplicated the whole Pbind in a previous example, although in that case, we wouldn't be able to apply specific patterns for each but just one in common, perhaps bringing about different randomness).
 (
 p = Pbind(
 	\instrument, \saw2,
-	\midinote, Pseq([48, 46, 44, 42], inf),
+	\scale,Scale.minor,
+	\degree, Pseq([ 0, 4, 5, 7], inf),
+	\octave, 6,
 	\amp, 0.1,
 	\dur, Pseq([0.5, 0.5, 1, 1], inf),
 ).play;
 q = Pbind(
 	\instrument, \saw2,
-	\midinote, Pseq([48, 46, 44, 42], inf),
+	\scale,Scale.minor,
+	\degree, Pseq([ 0, 4, 5, 7], inf),
+	\octave, 6,
 	\amp, 0.1,
 	\dur, Pseq([Pseq([0.5, 0.5, 1, 1], 1), Pseq([0.5, 0.5, 0.75, 1], 3)], inf), //After certain number of iterations, it synchronizes again.
 ).play
 )
-
 p.stop; q.stop
 
-//There is another pattern which could replace the use of Ptuple and improve the efficiency of the previous code: according to the Help file, Ppar "embeds several event streams so that they form a single output stream with all their events in temporal order (in parallel). When one stream ends, the other streams are further embedded until all have ended":
+//Now, for a greater efficiency, we can use Ppar to create parallel patterns. According to the Help file, it "embeds several event streams (Pbinds) so that they form a single output stream with all their events in temporal order" (not much difference in this example, but when creating more complex systems, it might help):
 (
 Ppar( //Arguments are list (array of Pbinds) and repeats.
 	[
@@ -1001,71 +927,51 @@ Ppar( //Arguments are list (array of Pbinds) and repeats.
 )
 p.stop; q.stop
 
-///////////////////////////
-//PDEF: There is the possibility of changing the parameters without stopping the server using Pdef (as in Routines using Tdef):
+
+//PDEF: back to the JITlib.
+//Just like Tdef, Pdef allows us to send new parameters to a Pbind at run time. Try changing any parameter in the following code while running (amp, degrees, octave, durations, etc.):
 (
 f = Pdef(
 	\x, Pbind(
 		\instrument, \saw,
-		\midinote, Pseq([48, 46, 44, 42] + 12, inf),
-		\amp, 0.1,
-		\dur, Pseq([0.5, 0.5, 1, 1], inf),
-	)
-).play //.stop is also used to stop all synths.
-)
-f.stop
-
-///////////////////////////
-//Applying the Fibonacci series to Pbind:
-
-Array.fib(100, 0, 1); //Within a series of 100 numbers from the Fibonacci series, the 32bits of the integers already reach the limit of SC so there are negative values.
-Array.fib(100, 0, 1.0); //Once we add the float value, the 64bits of floats allow us to avoid negative numbers.
-
-x = [0.0] ++ Array.fib(10, 0, 1.0) % 4; //Ten values from the Fibonacci series, limited within the module 4, and adding a 0 at the beginning of the series.
-
-//So in here such series is converted into pitches following the doriand scale (applying the Fibonacci values to the degrees of the scale, turning them into a loop thanks to the infinite Pseq). This could be applied to a library of samples (and the Pbind cound be connected to the SynthDef that would extract the samples), for example, featuring percussion instruments. Also, try to change the module in "x" so you can obtain more values and different series for the loop.
-(
-Pdef(
-	\x, Pbind(
-		\instrument, \default,
-		\scale, Scale.dorian,
-		\degree, Pseq(x, inf),
-		\dur, 0.1,
-		\amp, 0.1
+		\scale,Scale.minor,
+		\degree, Pseq([ 0, 4, 5, 7], inf),
+		\octave, 6,
+		\amp, 1,
+		\dur, Pseq([0.5, 0.5, 1, 1] / 4, inf),
 	)
 ).play
 )
 
-Pdef(\x).stop
+f.stop
+Pdef(\x).stop //Can be also addressed by its name.
 
-///////////////////////////
-//Using a library of samples and loading it into a Pbind:
+
+//Let's use a library of samples to feed the Pbind (remember to replace the paths with your own):
 (
-d = Dictionary.new; //Creating a dictionary.
-//Loading the path of a folder with samples (replace with a path of your own by dragging the folder to PathName's argument). Associating that path with the key \folder1:
-d.add(\folder1 -> PathName("F:/DOCUMENTOS/!SUMMER 23 - PREPARATORY YEAR 23-24/SUPERCOLLIDER/THEORY CODES/ugly_percussion_library/group1").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }) //For each sample of the collection, the full path is read.
-);
-d.add(\folder2 -> PathName("F:/DOCUMENTOS/!SUMMER 23 - PREPARATORY YEAR 23-24/SUPERCOLLIDER/THEORY CODES/ugly_percussion_library/group2").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }) //We can even load more than one folder easily by creating more keys to be added to the dictionary "d".
-);
+d = Dictionary.new; //Creating a new dictionary and loading the path of each folder of samples assigned to a new key (we can add as many folder as we like, creating different keys for each):
+d.add(\folder1 -> PathName("C:/Users/SmallAngel/Desktop/THEORY CODES/ugly_percussion_library/group1").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }));
+d.add(\folder2 -> PathName("C:/Users/SmallAngel/Desktop/THEORY CODES/ugly_percussion_library/group2").entries.collect({ |sample| Buffer.read(s, sample.fullPath) }));
 )
 
-d[\folder1].choose.play //Now we can easily play random samples from the \folder1 key within the dictionary "d".
-d[\folder2].choose.play //Same with the other key.
+//Now we can easily play random samples from each key in "d" (beware the original volume of the samples!):
+d[\folder1].choose.play
+d[\folder2].choose.play
 
-//Let's create a SynthDef to control those samples (though this does not have any envelope, SO CAREFUL WITH THAT):
+//Let's create a SynthDef to play these samples. Notice that, because we are using short sounds, there is no need for an envelope (doneAction 2 is included in PlayBuf), but be careful when using longer samples:
 (
 SynthDef(\library, {
 	|buf = 0, rate = 1, amp = 0.1|
 	var signal;
 
-	signal = PlayBuf.ar(2, buf, BufRateScale.ir(buf) * rate, doneAction: 2); //BufRateScale was used to compensate a possible difference of sampling rate, but it is not needed).
+	signal = PlayBuf.ar(2, buf, BufRateScale.ir(buf) * rate, doneAction: 2); //BufRateScale was used to compensate a possible difference of sampling rate.
 	signal = signal * amp;
 
 	Out.ar(0, signal)
 }).add
 )
 
-Synth(\library, [\buf, d[\folder1].choose.bufnum]) //So, just to check it works, the buf is the bufnum, so we calculate the bufnum of a randomly chosen sample from libray1, for instance.
+Synth(\library, [\buf, d[\folder1].choose.bufnum]) //Just to check it works: choosing a random sample through its bufnum, from folder1, for instance.
 
 //And now we can build the Pbind to play this SynthDef:
 (
@@ -1073,33 +979,24 @@ Pdef(
 	\heyhey,
 	Pbind(
 		\instrument, \library,
-		//\dur, 0.25 * (60/120), //Using 16th notes within a tempo of 120 bpm. The duration here does not cut the sample duration though (they will overlap if longer than this value). Thus, it is good to try with a library of short percussive sounds, for instance.
-		\dur, 1/16, //As an alternative, we can use \dur in combination to \stretch in order to work with "bars" and use quantization later on. Here, for instance, we have 1/16 of the 4/4 bar, which gives us 16th notes (four notes for each of the four beats).
-		\stretch, 60/120 * 4, //Stretch will be multiplied by \dur, so we need the time in seconds corresponding to the whole 4/4, which will be devided by 16 in \dur to obtain the 16th notes of duration. For that, we devided the tempo we want (120 bpm, for instance) by 60, to get beats per second: if we invert this value, 120/60 to 60/120 we get seconds per beat, and we multiply by 4 because there are four beats in a 4/4 time. This last 2 seconds (it would be more efficient to write 2, but I will leave the operation to make it clearer).
-		//\buf, Pxrand(d[\folder1] ++ d[\folder2], inf), //Creating an array with all the samples by concatenating both folders (both keys from the dictionary). Pxrand chooses random samples without repeating the same value twice in a row. We could use here Pwrand, Pshuf, Pn combined with Pshuf, or a specific sequence with Pseq, use nested patterns, etc., in order to create more interested and organized, yet still random, combinations, including also different combinations of the keys of the dictionary. For example:
+
+		//\dur, 0.25 * (60/120), //Using 16th notes within a tempo of 120 bpm. The duration here does not cut the sample duration though (they will overlap if longer than this value).
+		\dur, 1/16, //As an alternative, we can use \dur in combination with \stretch to work with "measures" and use quantization later on. Here, for instance, we have 1/16 of the 4/4 bar, which gives us 16th notes (four notes for each of the four beats).
+		\stretch, 60/120 * 4, //Stretch will be multiplied by \dur, so we need the time in seconds corresponding to the whole 4/4 measure, which will be devided by 16 in \dur to obtain the 16th notes of duration. For that, we devide the tempo we want (120 bpm, for instance) by 60, to get beats per second: if we invert this value, 120/60 to 60/120 we get seconds per beat, and we multiply by 4 because there are four beats in a 4/4 time. This last 2 seconds (it would be more efficient to write 2, but I will leave the operation to make it clearer).
+
+		//\buf, Pxrand(d[\folder1] ++ d[\folder2], inf), //Creating an array with all the samples by concatenating both folders (both keys from the dictionary). Pxrand chooses random samples without repeating the same values twice in a row. We could use here Pwrand, Pshuf, Pn combined with Pshuf, or a specific sequence with Pseq, use nested patterns, etc., in order to create more defined yet still random sequences, including also different combinations of the keys within the dictionary. For example:
 		\buf, Pseq(
 			[
-				Pxrand(d[\folder2], 8),
-				Pxrand(d[\folder1] ++ d[\folder2], 8)
+				Pxrand(d[\folder2], 8), //8 random samples from folder 2.
+				Pxrand(d[\folder1] ++ d[\folder2], 8) //8 random samples from both folders.
 			], inf
-		), //For instance, combining both libraries in this other way.
-		\rate, Pexprand(0.8, 2.0, inf), //The rate could also be randomized.
+		),
+		\rate, Pexprand(0.8, 2.0, inf), //The rate can also be randomized.
 		\amp, 0.2
 	)
-).play(quant: 2) //If we want Pdef to wait until next downbeat to apply any changes made to Pbind, we can use quantization (to schedule those changes according to bar durations). One of the ways to do this is applying the quant argument for the event stream player and we set the duration value of the whole bar (2 seconds in this case). Once it is playing, if we want to evaluate some changes in Pdef, we can replace the .play by .quant_(2). Now, I was confused with that syntax: I looked up the meaning of the underscore in SC and found this: https://doc.sccode.org/Reference/Partial-Application.html. But in this case it just means "set", so it is equal to a = and the number (though perhaps other methods don't accept this shortcut). Anyway, this is very useful when using two or more Pdefs at the same time: if they share durations and stretch, and they are applied the same quantization. We will be able to, for instance, evaluate one and some time later evaluate the other and so on, and getting all of them synchronized (the Pdefs can also be later on located into a same block code to change values at the same time).
+).play(quant: 2) //If we want Pdef to wait until next "downbeat" to apply any changes made in Pbind, we can use quantization (scheduling changes according to measure durations). In here, we are using the quant argument of the event stream player (.play) and setting the duration value of a whole measure in 2 seconds. Once the Pdef is running, if we want to execute it again with new values, we can replace .play by .quant_(2). The changes will be apply from the next downbeat onwards. This is especially useful when using two or more Pdefs at the same time if they share durations and stretch values, and they are applied the same quantization. This allows the evaluation of several blocks of code while getting them still synchronized.
 )
 
 Pdef(\heyhey).stop //We can stop each Pdef (if having several) separately.
 
-//REMEMBER: These two calculations of 8th notes at 180 bpm are equivalent (in case we want to avoid using both \dur and \stretch):
-0.5 * (60/180) //The number of seconds per beat is multiplied by 0.5 so that we get half of that duration and thus the 8th notes (which is 2 notes per beat).
-0.5 / (180/60) //We devided 0.5 (the duration of the note in an ideal 1 beat per second bar) by the number beats per second.
-
-
-//Compare to your old method for loading a library: more or less the same, but loading the libraries into a dictionary instead of an empty array (from theory file 7, "Buffers, waveshape distortion and ring modulation"):
-(
-~folder = [];
-~path = PathName.new("F:/DOCUMENTOS/1 SIBELIUS 2021-22/Media and Sonic Arts/Old definitive work/Factory sounds library"); //Random path (drag your folder of samples here)
-~path.entries.do({arg path, i; ~folder = ~folder.add(Buffer.readChannel(s, path.fullPath, bufnum: i));});
-//~folder.size //Testing the size of the folder (number of samples).
-)
+//Now, regarding this syntax: .quant_(2), I looked up the meaning of the underscore in SC and found this: https://doc.sccode.org/Reference/Partial-Application.html. In this case, it just means "set", so the underscore is equal to "= 2".
