@@ -441,7 +441,7 @@ t.clear  //Tdef can be also directly cleared if assigned to a variable like this
 (
 SynthDef(
 	\sawtooth,
-	{| out, freq, dur, amp |
+	{ |out, freq, dur, amp|
 		var signal, env;
 
 		signal = Pan2.ar(Saw.ar(freq), Rand(-1, 1));
@@ -456,7 +456,7 @@ SynthDef(
 }).add;
 SynthDef(
 	\resonator,
-	{| in |
+	{ |in|
 		var input, signal;
 
 		input = In.ar(in, 2);

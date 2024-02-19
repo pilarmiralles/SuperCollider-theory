@@ -14,6 +14,7 @@ https://doc.sccode.org/Help.html (online SC guide) --> Can be opened from SC wit
 https://scsynth.org/ (new community forum)
 https://github.com/madskjeldgaard/awesome-supercollider (tutorials, plugins, quarks and whatnot)
 http://sccode.org/ (another forum)
+https://github.com/supercollider/supercollider (SuperCollider repo, including links to sources about learning, discussing and contributing)
 https://github.com/supercollider/supercollider/wiki/Code-style-guidelines (code style guidelines)
 //I have included some extra links for general matters at the very end of this document.
 
@@ -316,17 +317,6 @@ string = "hello";
 //UGens only work within a UGen function (for example, a function.play or a SynthDef, which we'll see in theory file 6). The most relevant categories of UGens and the most prominent UGens among them can be found here: https://doc.sccode.org/Guides/Tour_of_UGens.html
 
 //All UGens responding to .ar or kr methods include the arguments "mul" and "add". Mul is a constant or signal by which the output of the UGen is multiplied (thus it often corresponds to scaling the amplitude of the UGen signal). Add is a constant or signal added to the output of the UGen (thus it often corresponds to adding a constant or DC offset to the signal). We'll study our first UGen in theory file 2, the sine wave (SinOsc).
-
-
-
-
-//###########################################
-//"this" --> communication with the interpreter. Use "this.dump" to see what it is asigned to each non-declared variable in the code (the state of the interpreter). For instance, you can see that the Server is assigned to "s" by default.
-//--> Note for myself: reminder of other informative methods:
-s.meter //Inputs and outputs.
-{LFTri.ar(440, mul: 0.1)}.scope //.scope: plays + shows the signal.
-{LFTri.ar(SinOsc.ar(1/3, 0.5pi, 250, 550).poll(5), mul: 0.1)}.scope //.poll: prints the live values of a signal (here is the frequency of the LFTri, which is being modulated by the SinOsc). .poll prints 10 values per second by default. Here I specified in its argument (between parenthesis) that I want 5 values per second. The phase is changed in the modulating signal, because the "carrier" (the LFTri) is reproduced at audio rate (with a freq between 300 and 800 Hz), therefore the phase won't be perceptible.
-//###########################################
 
 
 ///////////////////////////////////////////////////////////////////////
