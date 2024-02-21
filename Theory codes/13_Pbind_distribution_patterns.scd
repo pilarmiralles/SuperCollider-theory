@@ -865,6 +865,47 @@ p = Pbind(
 p.stop
 
 
+//PFUNC: function pattern.
+//Pfunc retunrs a stream that returns values from the "nextFunc", which is the first argument, a stream function (the second one is "resetFunc", called when the stream is reset and which received no arguments). The advantage of this pattern is that allows all kind of functions, including control structures (probably its most useful use), within Pbind, so this pattern creates systems between Pbind and Routine. The Pfunc's function is evaluated every time it is asked for a value.
+//For a littel example, I'll copy the SynthDef used in the Help file of Pfunc:
+(
+SynthDef(\help_sinegrain,
+	{ arg out = 0, freq = 440, sustain = 0.05, gate = 1, amp = 0.1;
+		var env;
+
+		env = EnvGen.kr(Env.perc(0.01, sustain, 0.2), gate, doneAction: Done.freeSelf);
+		Out.ar(out, SinOsc.ar(freq, 0, env).dup(2) * amp)
+
+}).add;
+)
+
+//Now let's use Pfunc within a simple Pbind:
+(
+p = Pbind(
+	\instrument, \help_sinegrain,
+	//\freq, Pseq([1, 2, 3, 4, 5, 6, 7, 8] * 200, inf).trace,
+	\freq, Pfunc({ var ot; ot = [1, 2, 3, 4, 5, 6].choose; if (ot.odd, { ot * 200 + 1000 }, { ot * 200 }) }).trace, //The conditional works perfectly.
+	\dur, 0.2,
+	\sustain, 0.8
+).play
+)
+p.stop
+
+//In the next example, Pfunc uses values from another key (to condition its value according to the other key's values). It seems that Pkey is not a solution for this, but from this blog, https://scsynth.org/t/linking-keys-patterns/1112, I discovered that Pfunc seems to pass an argument called "event", which can point to a key: the key is indicated like this, event[\key], and the argument will then contain the values from that key, which can be used in any way within the Pfunc:
+(
+p = Pbind(
+	\instrument, \help_sinegrain,
+	\freq, Pfunc({ var ot; ot = [1, 2, 3, 4, 5, 6].choose; if (ot.odd, { ot * 200 + 1000 }, { ot * 200 }) }).trace,
+	//\dur, Pkey(\freq) * 0.001,
+	//\dur, Pfunc({ var pitch; pitch = Pkey(\freq); if (pitch > 1200, { 1 }, { 0.2 }) }), //Does not work with Pkey.
+	//\dur, Pfunc({ arg event; event[\freq] * 0.001 }), //Using the event argument.
+	\dur, Pfunc({ arg event; if (event[\freq] > 1200, { 1 }, { 0.2 }) }), //Now trying with the conditional: works perfectly again.
+	\sustain, 0.8
+).play
+)
+p.stop
+
+
 //PPAR: parallel Pbinds.
 //As a point of departure, let's create this other SynthDef:
 (

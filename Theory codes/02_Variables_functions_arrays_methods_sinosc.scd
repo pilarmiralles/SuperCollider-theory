@@ -368,6 +368,7 @@ z = z.scramble.keep(5) //Reassigning a scrambled series and keeping only the fir
 z.sort //Values in upward order.
 z.sort.reverse //Values in downward order.
 z.mirror //Original and retrograded series put together.
+z.pyramid //This one is a new addition (as a curiosity), which retunrs a new array whose elements have been reordered via one of 10 "counting algorithms" (its argument is a number 1-10 specifying the type of algorithm, by default, type 1: see Help file of Array for all types)
 
 z = Array.series(12, 0, 1) //Let's refresh.
 z.drop(1) //Deteles the first element.
