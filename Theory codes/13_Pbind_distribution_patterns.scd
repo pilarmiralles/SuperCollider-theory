@@ -905,6 +905,8 @@ p = Pbind(
 )
 p.stop
 
+//For another pattern mid-way between Pbind and Routines, see the Help file of Pspawner and its examples ("Pspawner allows a routine to dynamically start and stop subpatterns").
+
 
 //PPAR: parallel Pbinds.
 //As a point of departure, let's create this other SynthDef:
@@ -967,6 +969,18 @@ Ppar( //Arguments are list (array of Pbinds) and repeats.
 )
 )
 p.stop; q.stop
+
+
+//PMONO: monophonic event stream.
+//According to this guide chapter: https://depts.washington.edu/dxscdoc/Help/Tutorials/A-Practical-Guide/PG_03_What_Is_Pbind.html, Pmono is a useful variant of Pbind. "Pbind plays separate notes by default. Sometimes, you might need a pattern to act more like a monophonic synthesizer, where it plays just one Synth node and changes its values with each event. If Pbind normally corresponds to Synth.new or /s_new, Pmono corresponds to aSynth.set or /n_set". That is to say, Pbind creates a new instance of a Synth with each event, which is then normally freed in the Server, whereas Pmono seems to create a single instance of a Synth whose values are modified with each event.
+//Compare these patterns from the guide: Pbind produces an attack on every note, while Pmono glides from pitch to pitch.
+p = Pbind(\degree, Pwhite(0, 7, inf), \dur, 0.25, \legato, 1).play;
+p.stop;
+​
+p = Pmono(\default, \degree, Pwhite(0, 7, inf), \dur, 0.25).play;
+p.stop;
+
+//According to the guide, articulating phrases (or single notes) is possible with Pmono by chaining several Pmono patterns together in a row, or by using PmonoArtic (according to its help file, PmonoArtic "allows events to re-articulate and supports staccato in the middle of a monophonic phrase". And this is how it is done: "If an event specifies a 'sustain' value shorter than the event delta, it means the synth should not sustain all the way through to the next event. In that case, the node will be released according to 'sustain' and the next event will start a new synth").
 
 
 //PDEF: back to the JITlib.
