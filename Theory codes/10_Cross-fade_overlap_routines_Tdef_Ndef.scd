@@ -87,6 +87,7 @@ SynthDef(
 			),
 			doneAction: 2
 		);
+
 		Out.ar(0, signal * env)
 }).add
 )

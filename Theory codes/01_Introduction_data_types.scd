@@ -118,7 +118,7 @@ Server.local.options.device_("MADIface USB (24012536)") //Connecting to an outpu
 
 //An integer is any series of digits, optionally preceded by a minus sign. Integers are 32-bit, which sets its representation limit at 2147483647
 2147483647 + 1 //Crossing upper limit (folds into negative range).
--2147483648 - 2 //Crossing the lower limit (folds into the positive range). The representation of certain numbers around the limits depends on each computer (this is why I am writing -2 instead of -1).
+-2147483648 - 2 //Crossing the lower limit (folds into positive range). The representation of certain numbers around the limits depends on each computer (this is why I am writing -2 instead of -1).
 
 //A floating-point number (float) consists of one or more decimal digits followed by a decimal point and one or more decimal digits. In SC, floats are 64-bit (except for FloatArray, in which they are 32-bit). This sets their representation limit much further than that of an integer. However, because the infinite continuity of floats is still discrete in a computer, some float numbers might be represented by a very close approximation instead:
 (-1, -0.8..1) //0.0 does not exist in this list of numbers (at least in my computer). Instead, some number extremely close to it is output (the difference between that number and zero is not significant for our perception).

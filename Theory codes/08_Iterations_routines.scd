@@ -222,7 +222,7 @@ f.stop
 
 //Understanding clocks in SC:
 r.clock //The clock of "r" is "a TempoClock" (the clock by default in SC, measured in beats according to a specific tempo, 60 bpm by default). Other clocks in SuperCollider are SystemClock and AppClock. SystemClock always runs in seconds, so for musical events, it is less flexible than TempoClock. SC resorts to AppClock for lower system priority processes (everything that is not related to sound synthesis, such as graphical interfaces and other non-time-critical tasks, such as anything carried out in the language). TempoClock is the most flexible clock for musical events as its unit can depend on different tempos (not just seconds).
-r.clock.tempo //The tempo of "r" is 1.
+r.clock.tempo //The tempo of "r" is 1 (measured in beats per second instead of beats per minute! Hence, by default, the beat is equivalent to the second, or to 60 bpm).
 r.clock.tempo = 100/60 //We can ask "r" to change it's tempo to 100 bpm.
 r.clock.tempo //Now the tempo of "r" has changed (try out the previous Routine and compare its pace).
 r.clock.tempo = 1 //= 60/60 //Setting the tempo back to 60 bpm (second as a referential time unit).
