@@ -95,7 +95,7 @@ b.free //To free the buffer (can't be played again until it is read again, altho
 (
 { 	var bufnum = 10, freq, trigger;
 
-	freq = [1, 1.1]; //Can also play around with other trigger frequencies and combinations.
+	freq = [1, 1.05]; //Can also play around with other trigger frequencies and combinations. This seems nonetheless to be causing a very small click at certain positions and combinations, which might need a different solution. In addition to that, the stereo image is broken whenever both cycles coincide every certain number of iterations.
 	trigger = Impulse.ar(freq);
 
 	PlayBuf.ar(
@@ -107,7 +107,28 @@ b.free //To free the buffer (can't be played again until it is read again, altho
 		loop: 1,
 		doneAction: 0
 	) * 0.3
-	* EnvGen.ar(Env([0, 1, 1, 0], (1/freq) * [0.02, 0.96, 0.02]), trigger) //This time, this envelope does not seem to suffice to get rid of the clicks, I think it is because of the change of position. Need to think about a solution.
+	* EnvGen.ar(Env([0, 1, 1, 0], (1/freq) * [0.02, 0.96, 0.02]), trigger)
+}.play
+)
+
+//Another option is to play around with different startPos values (a couple of them within an array to create a different stereo image):
+(
+{ 	var bufnum = 10, freq, trigger, posDev;
+
+	freq = 1; //Single frequency value for the trigger this time.
+	trigger = Impulse.ar(freq);
+	posDev = 0.01;
+
+	PlayBuf.ar(
+		1,
+		b.bufnum,
+		BufRateScale.kr(b.bufnum) * MouseY.kr(-1, 1.0), //Controlling the rate with the mouse (vertically).
+		trigger,
+		[BufFrames.kr(b.bufnum) * MouseX.kr(0, 1, 0, 1), BufFrames.kr(b.bufnum) * (MouseX.kr(0, posDev, 0, 1) + posDev)], //Controlling the starting position with the mouse (horizontally). This option does not seem to generate clicks. We need to stablish the range of the delayed position by subtracting the extra time in with are adding, so that it does not exceed the duration of the sample. Remember that the entire duration of the sample is a ratio from 0 to 1, so 0.01 is a big chunk of it (1% of the entire song).
+		loop: 1,
+		doneAction: 0
+	) * 0.3
+	* EnvGen.ar(Env([0, 1, 1, 0], (1/freq) * [0.02, 0.96, 0.02]), trigger)
 }.play
 )
 
