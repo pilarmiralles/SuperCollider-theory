@@ -288,7 +288,7 @@ e = 2.71828 //Defining the constant "e" (exponential).
 
 //Round brackets or parenthesis: they are used for sending arguments to their method and grouping blocks code broken into different lines:
 SinOsc.ar(440) //Sending arguments (this signal does not produce any sound because the sound function hasn't been created).
-//Grouping a block of code. This entire block of code can be selected at once by double-clicking on the first or last parenthesis:
+//Grouping a block of code. This entire block of code can be selected at once by double-clicking on the first or last parenthesis (but an entire block can also be executed just by placing the cursor anywhere inside and pressing Ctrl-enter):
 (
 var string;
 

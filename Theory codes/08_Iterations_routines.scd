@@ -67,6 +67,9 @@ a = 0; //Initial value.
 100.do({ a = a + rrand(-1.0, 1.0); a.postln }) //In each iteration, the value of "a" is reassigned to "a" plus a random number within the range of deviation.
 )
 
+//There is a method called .reverseDo, which goes through the receiver in reverse order
+10.reverseDo({ |i| i.postln }) //Posts from 9 to 0.
+
 
 /////////////////////////////////////////////////////////////////////
 //ROUTINES
