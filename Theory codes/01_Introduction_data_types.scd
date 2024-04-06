@@ -86,7 +86,7 @@ Server.local.stopRecording; //Stop recording.
 //You can find here all the options for the server: https://doc.sccode.org/Classes/ServerOptions.html. Here are some of the most important ones, although many of these things might not be understood yet:
 
 s.options.memSize = 2 ** 16; //Number of kilobytes of real-time memory allocated to the server (for synths and UGens such as delays, which do not use buffers). Default is 2 ** 13 (8192).
-s.options.numWireBufs = 256; //Number of buffers allocated to interconnect UGens (default is 64).
+s.options.numWireBufs = 256; //Number of buffers  allocated to interconnect UGens (default is 64).
 s.options.numBuffers = 1024 * 10; //Number of global sample buffers available (default is 1024).
 
 Server.local.latency = 0.05; //Setting a new latency value (default is 0.2). Setting a very low value can lead to errors such as multiple "late" messages in the post window. More on latency here: https://depts.washington.edu/dxscdoc/Help/Guides/ServerTiming.html, and in here: https://composerprogrammer.com/teaching/supercollider/sctutorial/8.1%20Precise%20Timing%20in%20SC.html
@@ -288,7 +288,7 @@ e = 2.71828 //Defining the constant "e" (exponential).
 
 //Round brackets or parenthesis: they are used for sending arguments to their method and grouping blocks code broken into different lines:
 SinOsc.ar(440) //Sending arguments (this signal does not produce any sound because the sound function hasn't been created).
-//Grouping a block of code. This entire block of code can be selected at once by double-clicking on the first or last parenthesis (but an entire block can also be executed just by placing the cursor anywhere inside and pressing Ctrl-enter):
+//Grouping a block of code. This entire block of code can be selected at once by double-clicking on the first or last parenthesis (but an entire block can also be executed just by placing the cursor anywhere inside and pressing Ctrl-enter - It does not work with shift-enter):
 (
 var string;
 

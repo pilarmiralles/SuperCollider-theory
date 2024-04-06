@@ -476,10 +476,3 @@ s.sendMsg(\n_free, 2) //Synths and groups need to be freed by sending the messag
 //https://doc.sccode.org/Tutorials/Getting-Started/12-Groups.html (about groups - tutorial).
 //https://doc.sccode.org/Classes/Group.html (about groups - help file).
 //https://doc.sccode.org/Reference/Server-Command-Reference.html (all information about message style commands).
-
-
-//##############################################################
-//Additional commands for networking OSC messages between SC and some other software:
-NetAddr.langPort //NetAddr creates a new network address: .langPort gets the port sclang is currently listening on.
-NetAddr.localAddr //.localAddr gets a NetAddr corresponding to the localhost and the port sclang is listening on.
-Server.local.addr //To connect NetAddr with the server.

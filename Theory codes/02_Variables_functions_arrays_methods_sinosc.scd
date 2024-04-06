@@ -9,7 +9,7 @@
 a = 1 //"a" contains an integer when the line is executed.
 a = 2 * 1 //"a" can be reassigned to a new value. Now "a" contains the product 2 * 1.
 
-//Variables "a" to "z" are global (non-declared)variables, which can be called from anywhere in the code. The server is assigned to variable "s" by default, so this letter should be avoided in order not to lose the communication with the server.
+//Variables "a" to "z" are global (non-declared) variables, which can be called from anywhere in the code. The server is assigned to variable "s" by default, so this letter should be avoided in order not to lose the communication with the server.
 a = 1
 a //"a" alone returns 1 in the post window.
 

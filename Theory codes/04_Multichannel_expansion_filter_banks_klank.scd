@@ -4,11 +4,11 @@
 //MULTICHANNEL EXPANSION
 
 //In SuperCollider, multiple channels of audio are represented as Arrays. Each channel of the array of output channels will go out through a different loudspeaker and, therefore, the limit of output channels is limited by what our audio interface supports. A single signal will be played by default through channel 0 (left), whereas an array of two signals will be played through channels 0 and 1 (left and right, stereo). A stereo signal, for instance, is therefore an array of two elements (two signals).
-//Busses (or buses) are the virtual placeholders of signals in SC, similar to the sends of analog mixing desks (we could define them as an abstract representation of channels, which are better understood as physical channels in a sound card, for instance). Their purpose is to rout signals from one place to another. There are control rate busses and audio rate busses. By default, there are 1024 audio rate busses and 16384 control rate busses. Of those audio rate busses, by defualt there are 2 input (indexes 0-1) and 2 output (indexes 2-3) channels reserved for hardware inputs and outputs:
+//Busses (or buses) are the virtual placeholders of signals in SC, similar to the sends of analog mixing desks (we could define them as an abstract representation of channels, which are better understood as physical channels in a sound card, for instance). Their purpose is to route signals from one place to another. There are control rate busses and audio rate busses. By default, there are 1024 audio rate busses and 16384 control rate busses. Of those audio rate busses, by defualt there are 2 input (indexes 0-1) and 2 output (indexes 2-3) channels reserved for hardware inputs and outputs:
 
 s.meter //Visualization of the default in-out hardware channels.
 
-//The rest of the audio rate busses, indexes 4 and onwards, are called "private busses" (or channels) and can be used for internal routing of signals (for instance, for effects send) and will result in no sound. The number of control and audio rate busses available, and the number of default hardware input and output channels, is set at the time the server app is booted. These numbers can be changed by using the following methods and rebooting the server (they can also be implemented as default options if placed in the startup file). After applying these changes, s.meter will show the new number of hardware in-out channels:
+//The rest of the audio rate busses, indexes 4 and onwards, are called "private busses" (or channels) and can be used for internal routing of signals (for instance, for effects sends) and will result in no sound. The number of control and audio rate busses available, and the number of default hardware input and output channels, is set at the time the server app is booted. These numbers can be changed by using the following methods and rebooting the server (they can also be implemented as default options if placed in the startup file). After applying these changes, s.meter will show the new number of hardware in-out channels:
 Server.local.numInputBusChannels_(32); //For 32 input channels, for example.
 Server.local.numOutputBusChannels_(64); //For 64 output channles.
 
@@ -346,7 +346,7 @@ octave - 2
 //##############################################################
 //Quick reminder about conversions between MIDI and Hz values:
 
-//.midicps inside the LFDNoise (converting to Hz before the random distribution is applied) --> Uniform distribution of exponential values, higher frequencies more likely, narrower range:
+//.midicps inside the LFDNoise (converting to Hz before the random distribution is applied) --> Uniform distribution of exponential values, higher frequencies more likely, narrower range (subsequently, any exponential distribution of uniform or linear values would provoke lower frequencies or values to be more likely):
 (
 {
 	Mix(
