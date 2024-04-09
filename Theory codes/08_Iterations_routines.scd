@@ -5,10 +5,10 @@
 
 //There are many methods for iteration. Some of them can be found in the Collection help file --> Iteration paragraph: https://depts.washington.edu/dxscdoc/Help/Classes/Collection.html (we mentioned some of this in the theory file 2). Iteration will eventually allow us to automatize the creation of multiple or successive instances (synths) of a SynthDef and customize their behavior over time.
 
-//The method .do evaluates a function for each element of the collection to which the method is applied (it's receiver). The function passes two arguments: the item of the correction, and the iteration number (from 0 to the last index of the collection):
+//The method .do evaluates a function for each element of the collection to which the method is applied (it's receiver). The function passes two arguments: the item of the collection, and the iteration number (from 0 to the last index of the collection):
 
 //Syntax:
-[element1, element2, ...].do({ |item, iteration| function })
+[item1, item2, ...].do({ |item, iteration| function })
 
 //Example: .do executes the function as many times as items in the receiver collection. This method does not return the results of the function unless we print them though, just like in this example (it only executes the function). What .do always returns at the end is the receiver (the collection):
 [\dog, \cow, \chicken].do({ |animal, index| [animal, index].postln })
