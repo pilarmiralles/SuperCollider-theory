@@ -68,16 +68,17 @@ Due to the client-server architecture in SC, it is crucial to remember that ther
 //Additional recommendations:
 - The Help window on the right side can be detached by choosing that option in the little square on the left of the window. I like detaching it to have a full-sized post window. The Help window can be called from anywhere in the code by pressing Ctrl-D over any object.
 - There is an option called "Autoindent line or region" in the "Edit" menu that comes in handy when the indentation (the empty spaces at the beginning of some lines that indicate that the line is contained within the upper level of indentation) of a block of code gets messy.
-- The semicolon ";" is used in SC to separate instructions. Many syntax errors at the beginning might come from the lack of a semicolon. The last line of a code does not need the semicolon (and it should be stylistically avoided).
+- The semicolon ";" is used in SC to separate instructions. Many syntax errors at the beginning might come from the lack of a semicolon. The last line of a code does not need the semicolon (and it should be stylistically avoided). Here is a tutorial about the most common error messages in SC and how to understand them: https://www.youtube.com/watch?v=ar-A1D16WyA&list=PLPYzvS8A_rTY5fYKmASs9j-g83332BMzr&index=4
 - You can make comments (like this one) in two ways: "//" at the beginning of the line for single lines, and "/*...*/" to open and close an entire block. Comments can be useful to explain or give remarks about a code.
 - In the "View" menu, the option "Split to right" allows you to open two SC files on a split screen.
 - Spaces don't usually matter in SC (although we'll see some examples in which they do), but there are certain conventions to follow for the sake of clarity.
-- It is possible to record the output of the audio server at any moment: click the status bar below and select "Start recording". The recording can be stopped by pressing "Pause recording or with the key combination Ctrl-period. The recordings are saved in AIFF format by default, somewhere in the SuperCollider folder on your computer. The following are some options related to recording:
+- It is possible to record the output of the audio server at any moment: right-click the status bar below and select "Start recording", and then run your code. The recording can be stopped by pressing "Pause recording or with the key combination Ctrl-period. The recordings are saved in AIFF format by default (32 bits, 2 channels), somewhere in the SuperCollider folder on your computer. The path of the file should appear on the post window when the recording starts. The following are some instructions related to recording:
 */
-Server.local.recHeaderFormat_("wav").recChannels_(2).recSampleFormat_("int24"); //Stablishing the type of file, num of channels and bits depth of the recording.
+Server.local.recHeaderFormat_("wav").recChannels_(2).recSampleFormat_("int24"); //Stablishing the type of file, num of channels and bits depth of the recording (can also separate each of these instructions. The syntax _() can be replaced by simply using = and the value).
 s.prepareForRecord("~/Desktop/wave.wav".standardizePath); //Establishing the file path (where it will be located). Example for desktop.
 Server.local.record; //Start recording.
 Server.local.stopRecording; //Stop recording.
+Platform.recordingsDir //Location of the recordings directory (printed on the post window).
 
 
 //########################################################
