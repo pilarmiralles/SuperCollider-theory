@@ -624,7 +624,7 @@ octave - 2
 
 //Easier than that, of course, is to approach the multichannel expansion and duplication in a different way. Let's see then other solutions, sending Mix a single Array of envelopes and applying the duplicator afterwards:
 
-//In this example, we are indeed obtaining five frequencies on each channel, but the frequencies on both channels are the same five. This happens because the Array of envelopes is created before the Mix, so wrapping the Mix with parenthesis or braces brings about the same result:
+//In this example, we are indeed obtaining five frequencies on each channel, but the frequencies on both channels are the same five. This happens because the Array of envelopes is created before the Mix, so enclosing the Mix in parenthesis or braces brings about the same result:
 (
 { var freq, trigger, times, signal;
 

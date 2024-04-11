@@ -307,7 +307,7 @@ FreqScope.new //Compare the different spectrum of the following noise generators
 { BrownNoise.ar(0.1 !2) }.play //Creating two different instances of the function (applying !2 to the mul argument of the UGen): different function on each side of the stereo, meaning different randomness (the difference between mono-duplicated and different instances of the function is obviously perceptible only when a signal involves some kind of randomness).
 { { BrownNoise.ar(0.1) } !2 }.play //Equivalent to the former function (when a function receives a duplicator, the contents of the function are executed as many times as it is duplicated, therefore creating different instances of it): useful when applying the duplicator to signals with no mul (such as Mix, which will be studied in the next theory file).
 { Array.fill(2, { BrownNoise.ar(0.1) }) }.play //Yet another example of the former line using Array.fill to duplicate the function (equivalent of !n).
-{ { BrownNoise.ar(0.1) }.dup(2) }.play //Yet another option using the method .dup(n), as seen in the previous theory file (but only true duplication of the function if the UGen is wrapped by curly brackets).
+{ { BrownNoise.ar(0.1) }.dup(2) }.play //Yet another option using the method .dup(n), as seen in the previous theory file (but only true duplication of the function if the UGen is enclosed in curly brackets).
 
 //Little example to demonstrate how functions respond to duplication:
 rrand(50, 1000) !4 //Same result repeated 4 times.

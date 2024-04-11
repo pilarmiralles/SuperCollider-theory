@@ -146,7 +146,7 @@ b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav") //Let's use t
 { SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5) }.scope //Same example. It is more aggressive than clip2:
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(0.01, 10, \exponential).poll).fold2(0.5) }.scope
 
-//Wrap2: the harshest. What exceds the limit of the distortion is folded and sent to the negative spectrum. The jump is too big a too sudden (careful with the volume!):
+//Wrap2: the harshest. What exceds the limit of the distortion is folded and wrapped into the negative spectrum. The jump is too big a too sudden (careful with the volume!):
 
 { SinOsc.ar(440, 0, MouseX.kr(0.01, 10, \exponential).poll).wrap2(0.5) }.scope
 { (PlayBuf.ar(1, b, loop: 1) * MouseX.kr(0.01, 10, \exponential).poll).wrap2(0.5) }.scope
@@ -156,7 +156,7 @@ b.free
 //We can use these methods applied to numbers (for algorithmic operations, for example). Study the differences between the three:
 1.1.clip2(1.0) //Clip2 simply cuts the number within the limit (1.0)
 1.1.fold2(1.0) //Fold2 cuts the exceding amount and substracts it to the limit (0.9)
-1.1.wrap2(1.0) //Wrap2 cuts the amount beyond the limit, substracts it and turns the result into negative (-0.9)
+1.1.wrap2(1.0) //Wrap2 cuts the amount beyond the limit, substracts it and wraps the result into the negative spectrum (-0.9)
 
 
 //ROUND:

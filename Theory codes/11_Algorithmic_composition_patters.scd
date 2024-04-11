@@ -881,7 +881,7 @@ Pseq([0, Pn(1, Pseries(1).asStream)], inf) //Exception for applying .asStream on
 
 a.next
 
-//PLACE: Place takes one value from each item in the main array in succession (the smaller arrays wrap):
+//PLACE: Place takes one value from each item in the main array in succession (the smaller arrays wraps):
 l = Place([0, [1, 2], [3, 4, 5]], inf).asStream
 l.next
 
