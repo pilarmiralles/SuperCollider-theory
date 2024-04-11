@@ -233,7 +233,7 @@
 { SinOsc.ar(LFDNoise1.ar(10, 500, 1000), 0, 0.3) }.play //Linear interpolation.
 { SinOsc.ar(LFDNoise3.ar(10, 500, 1000), 0, 0.3) }.play //Cubic interpolation.
 
-{ SinOsc.ar(LFDNoise3.ar(10, 12, 60).midicps, 0, LFDNoise3.ar(3, 0.5, 0).max(0)) }.play //Applied to two parameters and using the method .max (usefult to create random gaps, as .max only passes what's above 0, and the amplitude range here is -0.5 to 0.5).
+{ SinOsc.ar(LFDNoise3.ar(10, 12, 60).round(1).midicps, 0, LFDNoise3.ar(3, 0.5, 0).max(0)) }.play //Applied to two parameters and using the method .max (usefult to create random gaps, as .max only passes what's above 0, and the amplitude range here is -0.5 to 0.5). Because LFDNoise generates floats, when using it with MINI numbers, it is advisable to round the results to 1.
 
 //The methods .min and .max are useful to limit ranges of parameters:
 20.max(60) //Passes only whats above the argument (here, 60): so, if lower than the argument, it passes the argument --> FOR LOW LIMIT.

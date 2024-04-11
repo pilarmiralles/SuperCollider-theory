@@ -367,6 +367,13 @@ octave - 2
 			1/20)
 ) !2}.play
 )
+
+//There is also the fact that LFDNoise produces floats. When working with MIDI values, these decimals will represent a certain microtonal deviation. In order to avoid that, we can use the method .round:
+
+{ SinOsc.ar(LFDNoise0.ar(2, 36, 72).round(1).midicps, 0, 0.15) }.play //.round(1) will round up to semitones.
+{ SinOsc.ar(LFDNoise0.ar(2, 36, 72).round(2).midicps, 0, 0.15) }.play //.round(2) will allow us to obtain a whole tone scale.
+{ SinOsc.ar(LFDNoise0.ar(2, 36, 72).round(7).midicps, 0, 0.15) }.play //.round(7) will create a stack of fifths.
+//And so on.
 //##############################################################
 
 
