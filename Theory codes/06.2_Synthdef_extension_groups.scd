@@ -74,7 +74,7 @@ g.free //To turn everything off.
 //Another example using both control and audio rate busses:
 SynthDef(\source, { |freq = 400, amp = 0.1| Out.ar(0, SinOsc.ar(freq, 0, amp) !2) }).add //Source.
 SynthDef(\fadeOut, { |chOut = 11, amp = 0.2, end = 0, dur = 5| Out.kr(chOut, Line.kr(amp, end, dur, doneAction: 2)) }).add //Control rate.
-SynthDef(\lfo, { |chOut = 10, speed = 2, mul = 1, add = 0| Out.ar(chOut, {LFDNoise0.ar(speed, mul, add)}) }).add //Audio rate.
+SynthDef(\lfo, { |chOut = 10, speed = 2, mul = 1, add = 0| Out.ar(chOut, { LFDNoise0.ar(speed, mul, add) }) }).add //Audio rate.
 
 g = Group(1, 1) //Group.
 10.do({ Synth(\source, [\freq, rrand(1000, 2000), \amp, 0.01], g, 1) }) //10 synths sent to the new group.
@@ -88,7 +88,7 @@ y = Synth(\fadeOut, [\chOut, c, \amp, 0.0, \end, 0.01, \dur, 10]) //Turning on (
 
 d = Bus.audio(s, 1) //Creating an audio rate bus for the frequencies.
 z = Synth(\lfo, [\chOut, d, \mul, 1500, \add, 2500]) //Instance of the modulating synth for the frequency.
-g.map(\freq, d) //Mapping the frequency to audio bus "d": the same frequency is applied to all synths at the same time. I guess a buss can only pass single values (if passed several values, they are added!) so that, if wanting to change the frequency of each synth, we would need a bus for each of them, THO: "The truth is that there aren't multichannel busses per se, but Bus objects are able to represent a series of busses with consecutive indices. They encapsulate several adjacent server-side busses into a single Bus object, allowing you to treat them as a group. This turns out to be rather handy" (from the tutorial: https://doc.sccode.org/Tutorials/Getting-Started/11-Busses.html).
+g.map(\freq, d) //Mapping the frequency to audio bus "d": the same frequency is applied to all synths at the same time. I guess a buss can only pass single values (if passed several values by creating 10 instances of the lfo Synth, they are summed up!) so that, if wanting to change the frequency of each synth, we would need a bus for each of them, THO: "The truth is that there aren't multichannel busses per se, but Bus objects are able to represent a series of busses with consecutive indices. They encapsulate several adjacent server-side busses into a single Bus object, allowing you to treat them as a group. This turns out to be rather handy" (from the tutorial: https://doc.sccode.org/Tutorials/Getting-Started/11-Busses.html). But in any case, we are not dealing with a multichannel signal here, but a single output of 10 Synths in a group.
 z.set(\speed, 10) //Changing parameters of the modulation.
 z.free //Freeing the modulating synth (the last random frequency stands still).
 d.set(100) //Cannot set another value as the synth was freed (unlike in control busses): GIVES AN ERROR.
@@ -98,7 +98,7 @@ g.free //Freeing the entire group.
 /////////////////////////////////////////////////////////////////////
 //SIGNAL PROCESSING USING BUSSES AND GROUPS
 //Passing entire synths through a FX SynthDef: the synthesis SynthDef does not go to Out 0, but to a private channel, and the FX SynthDef is the one being output through 0:
-//(Btw, if ever needing to learn how to take audio from a mic and process it in SC, here is a very good tutorial on that: https://www.youtube.com/watch?v=3vu4UbS2NMw&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=21)
+//(Btw, if ever needing to learn how to take audio from a mic and process it in SC, here is a very good tutorial on that: https://www.youtube.com/watch?v=3vu4UbS2NMw&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=21).
 
 //Creating three different source SynthDefs (for a mic input, a sample input or a synth input):
 (
@@ -261,7 +261,7 @@ SynthDef(\freezesmasher, {
 
 
 //PLAYING THROUGH!
-//We are hardcoding here the out through private channels. This could be done, again by creating Bus objects, but in this case, we need to apply the method .index, as the message style will only read numbers and won't take by itself the index out of the Bus object.
+//We are hardcoding here the out through private channels. This could be done, again by creating Bus objects, but in this case, we need to apply the method .index, as the message style will only read numbers and won't take by itself the index out of the Bus object (which is the whole point of using the Bus object).
 //Send different values while running the synth (and never use ctrl-period to stop them):
 
 s.sendMsg(\s_new, \sourceMic, 1000, 0, 1, \inChannel, 0, \amp, 0.1, \outChannel, 4) //Creating an instance of the mic SynthDef at the head of the default group. Goes out through a private channel. Mic input should be 0 (= first hardware input bus) to catcht the laptop's mic.
@@ -277,7 +277,7 @@ s.sendMsg(\n_free, 2000) //Freeing both synths.
 s.sendMsg(\n_free, 1000)
 
 //Let's try with the sampler (remember to change the path):
-Buffer.readChannel(s, "C:/Users/SmallAngel/Desktop/THEORY CODES/Audio-for-granular-examples-2.wav", 0, -1, 0, { |b| b.normalize }, 10)
+Buffer.readChannel(s, "C:/Users/SmallAngel/Desktop/THEORY CODES/Audio-for-granular-examples-2.wav", 0, -1, 0, { |b| b.normalize }, 10) //Normalizing the buffer as an action (the peak absolute value will be 1 by default).
 
 s.sendMsg(\s_new, \sourceSample, 1000, 0, 1, \bufnum, 10, \amp, 1, \outChannel, 4)
 s.sendMsg(\s_new, \timesmasher, 2001, 1, 1, \inChannel, 4, \amp, 0.1, \outChannel, 0) //Using the delay SynthDef (can try to pass it through more than one processing synth).
@@ -288,6 +288,7 @@ s.sendMsg(\n_set, 2001, \speedChorus, 0.145)
 s.sendMsg(\n_set, 2001, \depthChorus, 0.58)
 s.sendMsg(\n_set, 2001, \predelayChorus, 0.01)
 s.sendMsg(\n_free, 1000) //I can free the source and take the other one (the mic one).
+s.sendMsg(\n_free, 2001) //And then free also the timesmasher Synth.
 
 //Let's try with the pitch shifter (needs to be reading from the 1000, mic or sampler):
 s.sendMsg(\s_new, \pitchsmasher, 2002, 1, 1, \inChannel, 4, \amp, 0.1, \outChannel, 0)
