@@ -125,7 +125,7 @@ SynthDef(\sourceSample, {
 	arg bufnum = 0, outChannel = 0, rate = 1, gain = 1, amp = 1, startPos = 0.0, loop = 1, atck = 0.01, rel = 0.01;
 	var input, imp;
 
-	input = PlayBuf.ar(1, bufnum, BufRateScale.kr(bufnum) * rate, 1, BufFrames.kr(bufnum) * startPos, loop) * gain; //startPos in seconds.
+	input = PlayBuf.ar(1, bufnum, BufRateScale.kr(bufnum) * rate, 1, BufFrames.kr(bufnum) * startPos, loop) * gain; //Start position as 0-1 ratio.
 
 	imp = Impulse.kr(5);
 
