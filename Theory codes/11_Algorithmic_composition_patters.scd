@@ -12,7 +12,7 @@
 //Boolean expressions return the literals "true" or "false". Therefore, they are useful for making an operation or process depend on something (such as a "condition"):
 //Some of them are:
 4 == 5 //Equal to
-4 != 5 //Different from
+4 != 5 //Different from (or not equal)
 4 > 5 //Higher than
 4 <= 5 //Lower or equal to
 4.odd //Is an odd number
@@ -20,7 +20,9 @@
 x.isNil //Is empty (nil)
 0.6.coin //Returns true or false depending on the given probability (from 0 to 1, 0 to 100%)
 (2 > 1).and(2.odd) //Both conditions need to be met to return true
+(2 > 1)&&(2.odd) //This can also be used for .and
 (2 > 1).or(2.odd) //At least one of the conditions needs to be met to return true
+(2 > 1)||(2.odd) //This can also be used for .or
 
 
 //Control structures: control structures are normally based on boolean expressions (in order to express conditions, for example). Control structures are tools that determine the direction or path chosen based on given parameters and conditions. Some of these control structures are explained here: https://doc.sccode.org/Reference/Control-Structures.html. Let us introduce some of them:

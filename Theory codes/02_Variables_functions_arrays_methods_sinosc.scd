@@ -455,6 +455,11 @@ f = {
 
 f.value([1, 2, 3, 4, 5, 6])
 
+//Keep exploring methods of the Array class by browsing in its documentation or by using these commands:
+Array.dumpInterface //Prints all methods of the Array class.
+Array.dumpFullInterface //Prints all methods including as well the methods of all Array's superclasses that Array inherits.
+Array.openHelpFile //You can also open the documentation like this instead of using Ctrl-D over the class.
+
 
 //###############################################################################
 //EXERCISES WITH ARRAYS AND METHODS (AND SOLUTIONS):
@@ -689,7 +694,17 @@ Dictionary -> IdentityDictionary -> Environment (name space for functions) -> Ev
 Set //A Set is s collection of objects, no two of which are equal. The elements in Set are unordered.
 
 //LIST
-//List uses an array in its implementation and is in many cases interchangeable with one.
+//List uses an array in its implementation and is in many cases interchangeable with one. One of the few differences is that "List has no size limitation and thus is more flexible [than Array], but has slightly more overhead" (meaning that it is more computationally expensive). From the List documentation: "Arrays have a fixed maximum size. If you add beyond that size a new Array is created and returned, but you must use an assignment statement or the new array will be lost". Let's look at the example to understand this (I changed it a bit as it was unclear to me):
+(
+x = Array.new(0);
+y = List.new(0);
+
+20.do({ arg i;  x = x.add(i); y.add(i); });
+
+x.postln; y.postln; //While the Array needs to be reassigned in order for it to grow with each iteration, the List does not need to be reassigned to keep adding elements to it.
+""
+)
+
 
 //Some more instance methods:
 List[1, 2, 3, 4].size; //Answers the number of objects contained in the Collection.
