@@ -13,6 +13,15 @@ a = 2 * 1 //"a" can be reassigned to a new value. Now "a" contains the product 2
 a = 1
 a //"a" alone returns 1 in the post window.
 
+//########################################################
+//The server variable "s":
+s.postln //"s" contains the localhost synth (meaning the server on the same computer)
+s.serverRunning //We can ask if the server is running
+s.avgCPU //Or the current average CPU consumption
+s.addr //The server's IP address and Port, which allows OSC communication
+
+//########################################################
+
 this.dump //Prints (shows in the post window) the "instance of the interpreter": "this" is the keyword normally used for the current instance of something (in instance methods, it refers to the instance itself, in class methods, it refers to the class itself, and here -out of context- it refers to the current instance of the interpreter); the method .dump "prints a detailed low-level representation of the receiver to the post window". What is important from this is that the current instance of the interpreter includes all global variables and the values currently assigned to them (if nothing else, up to this moment it will show that "a" contains integer 1 and "s" contains an instance of the server).
 
 //Declared variables or local variables can only be called within the portion of code they are declared in. They are preceded by the keyword "var", and named with any combination of characters and underscores (beginning with a lower-case letter). Get used to write descriptive names for declared variables, so that your code is understandable for someone else.
@@ -227,6 +236,12 @@ Sandwich.prepare //The message "prepare" is sent to the class "Sandwich".
 //Example of a real class:
 s.boot //Remember to boot the server before performing any audio synthesis.
 { SinOsc.ar(440, 0, 0.1, 0) }.play //The class SinOsc receives the message .ar, whose corresponding method asks it to create an audio rate sinewave oscillator signal (class method). It also receives a list of arguments specifying the frequency, phase, and amplitude of the oscillator. The signal is then placed into a function to which the message .play is sent. The method .play, when sent to a function, plays a synth from UGens returned by the function (instance method). When executing the line, we can see in the post window that a synth, an instance of a synth definition, which is a single sound producing unit that runs in the audio server, has been created.
+
+//##############################################################
+//Take a look at how {}.play is turned into a synth definition (SynthDef):
+Function:play //Highlight this line and execute ctrl-I (implementation). Double click on the only sc file on the list, and take a look at the last block, related to Function and the method play.
+
+//##############################################################
 
 //Now let's see how our imaginary objects would be written in SC's implementation:
 
@@ -805,23 +820,30 @@ a.as(Set).as(Array); // and convert back (order matters again).
 //Account of methods for printing values:
 /*
 .postln: prints a string representation of the receiver followed by a new line. It is most useful when applied to operations that are not running in the server (if applied to a signal, it will just acknowledge the object).
-.plot: shows a graph (GUI, graphical user interface) when sent to a Ugen or Array of UGens function. The plot is calculated in real time, and the duration represented by the plot can be specified in its first argument.
+.plot: shows a graph (GUI, graphical user interface), and can be sent to arrays, functions, etc. When sent to a signal, it will show a graph of its sound wave (time and amplitude). The time displayed can be specified as its first argument. A signal can only be plotted if the server is running.
 .poll: polls the output of a UGen (signals running in the server) every interval seconds and posts the result. Its first argument is the number of results printed per second, which is 10 by default. The second argument is a label, a string that can help identifying values if printing several different values at the same time.
 .histo: applied to a collection, shows a graph of probabilities (histogram) by counting the number of values that fall into each of the steps subdivisions, being the default 100, between min and max values (those values can be specified or left by default as the smallest and largest values in the collection). It needs to be plotted for visualization.
-.trace: prints out the results of a stream while returning the original values, especially useful when working with patterns.
+.trace: prints out the results of a stream while returning the original values, especially useful when working with patterns (more in upcoming theory files).
+.scope: it's applied to signals just like .play would. It shows ampitude over time (like plot) but in real time. It will also play the signal.
+.freqscope: provides a visualization of the frequency domain instead of the amplitude one. It does play the signal as well.
 */
 //Examples:
 //.postln:
 "hello".postln; "hello".postln; "" //The double quotes at the end avoid the repetition of the receiver, which is always returned at the end.
 //.plot:
-{ {|i| SinOsc.ar(1 + i) }.dup(7) }.plot(1) //Seven instances of a sine wave, using the iteration argument to add it to its frequency successively. Plotting 1 sec of the signal (it takes 1 sec for SC to generate the graph).
+{ {|i| SinOsc.ar(1 + i) }.dup(7) }.plot(1) //Seven instances of a sine wave, using the iteration argument to add it to its frequency successively. Plotting 1 sec of the signal (it takes 1 sec for SC to generate the graph). If the server is not running when executing this line, the plot will trigger it to boot up.
 //.poll:
 { LFNoise1.kr.poll(3, "a value"); LFNoise1.kr.poll(5, "another value") }.play; //Polling at different intervals of time and with different labels.
 //.histo (+ .plot):
 { 1.0.linrand }.dup(10000).histo(1000).plot(discrete: true) //10000 random values between 0 and 1 according to linear distribution. The histogram needs to be plotted.
 //.trace:
 p = Pseq([1, 2, 3], inf).asStream.trace; { inf.do({ p.next; 1.wait }) }.fork //The result in the function of .do is not being printed. It is the values from the stream that .trace is returning what the post window shows (a .postln in p.next would print the same values).
+//.scope:
+{ LFTri.ar(440 * XLine.ar(1, 10, 25), mul: 0.1 !2) }.scope //An exponential Line going from 440 to 4400 in 25 seconds.
+//.freqscope:
+{ LFTri.ar(440 * XLine.ar(1, 10, 25), mul: 0.1 !2) }.freqscope //We can already hear (and see) when moving towards the upper register that some higher overtones going beyond the audible spectrum -or, more accurately said, the Nyquist frequency- are being folded into the audible spectrum (as the LFTri is not a filtered oscillator), resulting in aliasing artifacts.
 
+//Something extra about the Nyquist theorem in this link: https://www.techtarget.com/whatis/definition/Nyquist-Theorem
 
 //##############################################################
 //Some extra remarks on style guidelines and issues with arguments syntax:

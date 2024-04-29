@@ -4,6 +4,7 @@
 
 //MIDI stands for Musical Instrument Digital Interface. It is a communication protocol that allows many devices and software to exchange musical data.
 //Some guides in the SC Help: https://doc.sccode.org/Guides/UsingMIDI.html and https://doc.sccode.org/Guides/MIDI.html
+//Some introductory tutorials in here as well: https://thormagnusson.gitbooks.io/scoring/content/PartI/chapter_4.html (in the section "Free MIDI Synthesizers" there are some examples of free virtual synths that can be used in case of not using any hardware).
 //Nice introduction and more in these YT tutorials: https://www.youtube.com/watch?v=Oz4KYZ9KLc0&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=11 (part I) and https://www.youtube.com/watch?v=ih2uqOaqb4c&list=PLPYzvS8A_rTaNDweXe6PX4CXSGq4iEWYC&index=19 (part II).
 
 //This is a very basic introduction as I have barely used SC for MIDI communication myself, although it allows many functions:
