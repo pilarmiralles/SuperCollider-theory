@@ -9,7 +9,7 @@
 //Triangle wave:
 { LFTri.ar(440, 0, 0.5) }.plot(1/440) //Graph of cycle (will boot the server if it wasn't running).
 { LFTri.ar(440, 0, 0.1) }.scope //Oscilloscope and sound.
-//The arguments of LFTri are the same as in SinOsc. The phase aregument is called iphase in here referring to the "initial" phase. This argument is present in LFTri, LFPulse and LFSaw, but not in their band-limited versions, as there is no point in changing the phase value (when used for sound). For some reason, in this case the phase values go from 0 to 4 (0 = 0 radians, 1 = 0.5pi, 2 = 1pi, 3 = 1.5pi, 4 = 2pi = 0, and everything in between). In LFSaw and LFPulse the phase is measured in a different way, see the respective help file!
+//The arguments of LFTri are the same as in SinOsc. The phase aregument is called iphase in here referring to the "initial" phase. This argument is present in LFTri, LFPulse and LFSaw, but not in their band-limited versions, as there is no point in changing the phase value (when used for sound). Because this waveshape is no longer based on a circumference, its phase values go from 0 to 4 (0 = 0 radians in a SinOsc, 1 = 0.5pi, 2 = 1pi, 3 = 1.5pi, 4 = 2pi = 0, and everything in between). In LFSaw and LFPulse the phase is measured in different ways, see the respective help file!
 
 //Building a triangle wave out of a sum of sine waves in order to understand how the spectrum is built:
 (

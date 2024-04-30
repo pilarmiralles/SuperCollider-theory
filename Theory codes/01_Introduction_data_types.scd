@@ -304,20 +304,20 @@ string = "hello";
 //Curly brackets: they are used for functions:
 { SinOsc.ar(440, 0, 0.1) }.play; //Now we can hear the previous signal thanks to the function.play syntax.
 
-//Stylistic remarks: Avoid spaces before or after [] or (), but allow spaces after { and before } as recommended in the guideline.
+//Stylistic remarks: Avoid spaces before or after [] or (), but allow spaces after { and before } as recommended in the style guidelines.
 
 
 ///////////////////////////////////////////////////////////////////////
 //INTRODUCTION TO UNIT GENERATORS
 
 //Unit Generators (UGens) represent calculations with signals, that is to say, they are classes that create or process signals. All UGens branch from the UGen class. All UGens respond to one or more of the following class methods:
-.ar //Creates audio rate signals (by default, 44100 samples (momentary value of an analogue signal that is taken several times a second to convert the signal to digital form) per second. Audio rate signals are normally meant to be heard).
-.kr //Creates control rate signals (by default, 1 sample value for every 64 sample values of an audio rate signal. Control rate signals are less computationally expensive than audio rate signals, but they are not usually meant to be heard. They are used as modulators, for instance, instead).
+.ar //Creates audio rate signals (by default, 44100 samples (momentary value of an analogue signal that is taken several times a second to convert the signal to digital form) per second. Audio rate signals are normally meant to be heard.
+.kr //Creates control rate signals (by default, 1 sample value for every 64 sample values of an audio rate signal). Control rate signals are less computationally expensive than audio rate signals, but they are not usually meant to be heard. They are used as modulators, for instance, instead.
 .ir //Creates initial rate signals (they calculate their output at the moment of creation or "initialization". That is to say, they output a single value when executed. These signals cannot be modulated).
 //Then, they return a new instance of the UGen class that calculates the signal at audio or control rate, or only once at initialization. Some UGens respond to the .new method instead.
 //UGens only work within a UGen function (for example, a function.play or a SynthDef, which we'll see in theory file 6). The most relevant categories of UGens and the most prominent UGens among them can be found here: https://doc.sccode.org/Guides/Tour_of_UGens.html
 
-//All UGens responding to .ar or kr methods include the arguments "mul" and "add". Mul is a constant or signal by which the output of the UGen is multiplied (thus it often corresponds to scaling the amplitude of the UGen signal). Add is a constant or signal added to the output of the UGen (thus it often corresponds to adding a constant or DC offset to the signal). We'll study our first UGen in theory file 2, the sine wave (SinOsc).
+//All UGens responding to .ar or .kr methods include the arguments "mul" and "add". Mul is a constant or signal by which the output of the UGen is multiplied (thus it often corresponds to scaling the amplitude of the UGen signal). Add is a constant or signal added to the output of the UGen (thus it often corresponds to adding a constant or DC offset to the signal). We'll study our first UGen in theory file 2, the sine wave (SinOsc).
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -329,7 +329,7 @@ string = "hello";
 - Vibration source: something that vibrates.
 - Sound: vibration produced by a vibration source, propagated through a medium (such as the air) and transferred to a surface, which vibrates sympathetically (keeping the same vibration pattern).
 - Waveshape: representation of the vibratory pattern of a sound in the time and amplitude (sound pressure) domains.
-- Periodic / aperiodic sound wave: A periodic sound wave repeats the exact same vibratory pattern.  An aperiodic sound wave present a chaotic pattern (noise).
+- Periodic / aperiodic sound wave: A periodic sound wave repeats the exact same vibratory pattern. An aperiodic sound wave present a chaotic pattern (noise).
 - Cycle: Each repetition of the pattern of a periodic wave.
 - Period: Time occupied by a cycle of a periodic wave (time per cycle). This time determines the frequency. The frequency is equal to 1 / period (to the inversion of the period) and vice-versa.
 - Frequency (Hz): Cycles per second (inversion of the period).
