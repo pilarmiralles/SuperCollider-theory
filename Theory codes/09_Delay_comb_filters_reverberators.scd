@@ -342,7 +342,7 @@ Signal in --> Comb filter (comb filters in parallel) --> allpass filter - allpas
 
 	wet = LeakDC.ar(wet); //Essential to avoid the DC offset.
 
-	4.do({wet = AllpassN.ar(wet, 0.05, { rrand(0.005, 0.05)} !2, time) }); //As mentioned before, we can try a different number of allpass filters.
+	4.do({wet = AllpassN.ar(wet, 0.05, { rrand(0.005, 0.05) } !2, time) }); //As mentioned before, we can try a different number of allpass filters.
 
 	dry + LPF.ar(wet, 3000) //This is the conventional mix in a Schroeder filter: dry + wet with a LPF of 3000 Hz. Both signals can be otherwise balanced in different ways: for instance, (dry * -6.dbamp) + LPF.ar(wet, 3000) for a weaker presence of the original signal, or not including the dry signal at all (dry * -inf.dbamp or 0.dbamp, for reverb alone).
 
