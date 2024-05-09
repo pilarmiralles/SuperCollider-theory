@@ -180,7 +180,7 @@ p = Pbind(
 )
 p.stop
 
-//We can combine "freq" with the sub-key "detune", which is also measured in Hz. In this example, each tone is detuned by -50 Hz (remember that freq in Hz behaves exponentially = smaller distances between pitches in the upper register):
+//We can combine "freq" with the sub-key "detune", which is also measured in Hz. In this example, each tone is detuned by -50 Hz (remember that freq in Hz behaves (is perceived) exponentially = smaller distances between pitches in the upper register):
 (
 p = Pbind(
 	\freq, Pseq([100, 200, 300, 400, 500, 600, 700], inf),
