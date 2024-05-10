@@ -60,18 +60,18 @@ a + b + c
 
 { Mix(SinOsc.ar({ exprand(30, 8000) } !100, 0, 1/500)) }.scope //Equivalent function using the duplicator.
 
-//Array do not cause Mix to create copies of itself. If Mix receives an array of arrays, it will only reduce one layer of arrays (for instance, if receiving an array containing an array of sine waves and an array of sawtooth waves, it will mix the sine waves in one channel and the sawtooth waves in another channel: in each array, signals will mix in each available output channel). This is the layering limit, as Mix cannot be used on arrays of arrays of arrays. In conclusion, Mix only clears one level of arrays (see an important detail about this in the second case study at the end of this document):
+//Array do not cause Mix to create copies of itself. If Mix receives an array of arrays, it will only reduce one layer of arrays (for instance, if receiving an array containing an array of sine waves and an array of sawtooth waves, it will mix the first sine wave with the first sawtooth wave on the left channel, and the second sine wave with the second sawtooth wave on the right channel, and if there are more than two on each array, those won't be output if taking into consideration a stereo system). This is the layering limit, as Mix cannot be used on arrays of arrays of arrays. In conclusion, Mix only clears one level of arrays (see an important detail about this in the second case study at the end of this document).
+//In the following example, the left channel will contain the BrownNoise and Dust, the right channel will contain the SinOsc and the modulated Saw. The Ringz filter in the first array would occupy a third channel, which cannot be output in a stereo system, and therefore is not heard:
 (
 {
 	Mix(
 		[
-			[BrownNoise.ar(0.05), SinOsc.ar(880, 0, 0.05)],
+			[BrownNoise.ar(0.05), SinOsc.ar(880, 0, 0.05), Ringz.ar(Impulse.ar(1), 1500, 0.2, 0.1)],
 			[Dust.ar(50, 0.1), Saw.ar(LFDNoise3.ar(1, 3000, 4000), 0.05)],
 		]
 	) //Take care of the sum of amplitudes. Otherwise, you can also control the general amplitude by multiplying Mix by a master volume factor.
 }.scope
 )
-
 
 //Deconstructing multichannel expansion (useful practice to understand how signals are expanded and distributed among channels). Let's see how we would "deconstruct" the following line:
 { RLPF.ar(Saw.ar([100, 250], 0.05), LFDNoise3.ar(1, 1000, 1030), 0.005) }.play //A resonant low-pass filter is filtering a Saw oscillator and its cutoff frequency is being modulated by a LFDNoise3.
