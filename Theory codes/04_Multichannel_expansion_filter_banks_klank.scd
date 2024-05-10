@@ -135,7 +135,7 @@ a + b + c
 
 //Using Splay:
 //Splay allows the distribution of a mono signal in the stereo field (instead of 100 different freqs on each side, as with !2, the 100 freqs will be distributed among both sides of the stereo):
-{ Splay.ar(SinOsc.ar({ exprand(30, 8000) } !100, 0, 1/500), 1, 2.5) }.play //The second argument is "spread" (when = 0, all signals go to the center, when = 1, they distribute among the -1 to 1 stereo field, and everything in between); and the third argument is "level" (for amplitude compensation).
+{ Splay.ar(SinOsc.ar({ exprand(30, 8000) } !100, 0, 1/500), 1, 2.5, 0) }.play //The second argument is "spread" (when = 0, all signals go to the center, when = 1, they distribute among the -1 to 1 stereo field, and everything in between); and the third argument is "level" (for amplitude compensation).
 
 
 //Other examples of multichannel expansion:
@@ -346,7 +346,7 @@ octave - 2
 //##############################################################
 //Quick reminder about conversions between MIDI and Hz values:
 
-//.midicps inside the LFDNoise (converting to Hz before the random distribution is applied) --> Uniform distribution of exponential values, higher frequencies more likely, narrower range (subsequently, any exponential distribution of uniform or linear values would provoke lower frequencies or values to be more likely):
+//.midicps inside the LFDNoise (converting to Hz before the random distribution is applied) --> Uniform distribution of exponential values, higher frequencies more likely, narrower range (subsequently, any exponential distribution of linear values would provoke lower frequencies or values to be more likely):
 (
 {
 	Mix(
@@ -387,13 +387,13 @@ octave - 2
 	Array of amps,
 	Array of decay times
 ]
-//As always, if one of the arrays features less elements than the others, its values will loop to cover the additional ones in the longest array. Writing a single value in any of the arrays will lead to the application of that value to all values in the other arrays.
+//As always, if one of the arrays features less elements than the others, its values will wrap to cover the additional ones in the longest array. Writing a single value in any of the arrays will lead to the application of that value to all values in the other arrays.
 //input: it can be any kind of signal, but it is usually some kind of signal you would filter with a Ringz (such as an Impulse, Dust, or any noise generator).
 //freqscale: scale factor to be multiplied by all frequencies (as they are fixed (cannot be modulated), they can be "transposed" using this argument).
 //The rest of the arguments are rarely used (see help file of Klank).
 
 //Just for reference, this is a single Ringz filter applied to an Impulse (compare to the second and third upcoming examples):
-{Ringz.ar(Impulse.ar(0.5), 1000, 1, 0.1)}.play //1000 Hz of frequency and 1 second of decay time.
+{ Ringz.ar(Impulse.ar(0.5), 1000, 1, 0.1) }.play //1000 Hz of frequency and 1 second of decay time.
 
 //Examples of Klank:
 (
@@ -436,7 +436,7 @@ octave - 2
 }.play
 )
 
-//Additional example of applying the duplicator in Klank (this example involves ring modulation, which will be studied in theory file 7.1). Applying the duplicator to the whole LPF does not bring about different randomness on each channel, nor does duplicating the whole Klank, applying the duplicator to Dust's mul directly, or to the PinkNoise or the final signal after the ring modulation. Only applying it to the Dust as function brings about different randomness on each side (not even with .dup(2) applied to Dust!):
+//Additional example of applying the duplicator in Klank (this example involves ring modulation, which will be studied in theory file 7.1). Applying the duplicator to the whole LPF does not bring about different randomness on each channel, nor does duplicating the whole Klank, applying the duplicator to Dust's mul directly, or to the PinkNoise or the final signal after the ring modulation. Only applying it to the Dust as function brings about different randomness on each side:
 (
 { var dust, signal1, signal2, modulation;
 
@@ -614,7 +614,7 @@ octave - 2
 	//We had an array of two arrays of five elements each. We need an array of five arrays of two elements each:
 	freq = ({ Array.fill(5, {
 		EnvGen.ar(Env(Array.fill(5, { exprand(52, 94).midicps }), times, \step), trigger)
-	}) } !2).flat.clump(2); //There you go, now it works:
+	}) } !2).flat.clump(2); //There you go, now it works (though, take a look at the issue presented in the extra section below this code):
 
 	signal = Mix(
 		SinOsc.ar(
@@ -627,6 +627,27 @@ octave - 2
 
 }.play
 )
+
+//################### Resolving the problem posed by Mix and .clump for the distribution of the elements among the two channels:
+//I have two arrays of 5 each. I want each one to be output through each channel (elements expressed as integers here):
+[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]
+//Mix will do this:
+[1, 1] on the left [2, 2] on the right //The rest won't be heard.
+//So my solution was:
+[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]].flat.clump(2)
+//Which gives:
+[ [ 1, 2 ], [ 3, 4 ], [ 5, 1 ], [ 2, 3 ], [ 4, 5 ] ]
+//Mix will now do this:
+[1, 3, 5, 2, 4]
+[2, 4, 1, 3, 5]
+//So, eventually, I get one of each on each side (just a coincidence), but:
+[ [ sin, sin ], [ sin, sin ], [ sin, saw ], [ saw, saw ], [ saw, saw ] ] //If the first array were all sine waves and the second all saw waves, they would not split on each side.
+//Then, how to do it so that I get all the sine waves and all the saws on each side?
+[ [ sin, saw ], [ sin, saw ], [ sin, saw ], [ sin, saw ], [ sin, saw ] ] //I would need this.
+//Equivalent to putting the numbers like this: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5], and then clump:
+[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]].flat.sort.clump(2) //That is the solution:
+[ [ 1, 1 ], [ 2, 2 ], [ 3, 3 ], [ 4, 4 ], [ 5, 5 ] ] //This will put the 1, 2, 3, 4, 5 of each array on each channel.
+//###################
 
 
 //Easier than that, of course, is to approach the multichannel expansion and duplication in a different way. Let's see then other solutions, sending Mix a single Array of envelopes and applying the duplicator afterwards:

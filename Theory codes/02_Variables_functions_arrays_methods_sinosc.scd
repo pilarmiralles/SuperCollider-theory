@@ -34,8 +34,8 @@ power = value1 ** value2 //When executing the entire block, only the result of t
 )
 
 //As mentioned before, the interpreter in SC offers variables a-z as global variables. These variables are, nonetheless, very easy to overwrite accidentally, although they are useful for simple codes and examples. There is another option for global variables that can receive a descriptive name. These variables are not stored in the interpreter but in an environment called "currentEnvironment", a place where global data can be stored. Without getting into detail just now, an environment is a special type of collection containing pairs of keys (tags) and their value (key -> value).
-//We can create global variables in the currentEnvironment with the symbol ~ and the variable name we wish to assign:
-~variable1 = 1 //(alt gr-4-space in my keyboard for ~).
+//We can create global variables in the currentEnvironment with the symbol ~ (tilde) and the variable name we wish to assign:
+~variable1 = 1
 ~variable1 //Contains 1 now.
 //(The symbol ~ is indeed a shortcut of this:)
 currentEnvironment.put(\variable1, 1);
@@ -55,7 +55,7 @@ currentEnvironment.clear //With this command, we can clear all the variables cre
 
 //Useless example of a function (because of fixed result):
 a = {1 + 1} //When running this line, the function is compiled and assigned to the variable "a". The post window says this is "a Function".
-a. value //Now, when applying the method .value to "a", we obtain the result of the function.
+a.value //Now, when applying the method .value to "a", we obtain the result of the function.
 
 //Let's write a less useless example including some arguments. Arguments can be declared within the function by using the keyword "arg" followed by a list of names and values, or by surrounding the list with vertical bars | | (newer syntax). Arguments are always declared before local variables:
 ( //An entire block of code can be selected at one by double-clicking next to the first / last parenthesis.
@@ -136,12 +136,13 @@ d.value(500, 1000) //For instance, a modulation between 500 and 1000 Hz for a si
 	//The former function is applied to a real modulation within the same code:
 	freqs = Array.fill(2, { rrand(30, 16000) }).sort; //Two random frequencies are created.
 	mulAdd = function.value(freqs[0], freqs[1]); //The bottom and top frequencies are applied to the previous function as arguments. The variable mulAdd contains the function's evaluation.
+
 	SinOsc.ar(SinOsc.ar(10, 0, mulAdd[0], mulAdd[1]), 0, 0.1) //The mul and add values are taken from the resulting array of "function" using the index of each one, and applied to a SinOsc whose frequency is being modulated by another SinOsc.
 
 }.play
 )
 
-(//This function receives the an overtone number within the overtone series (n) and output the frequency of that overtone in Hz and MIDI based on a fundamental frequency input value (in MIDI). MIDI values are normally based on A = 440 in equal intonation. This is why the results of this function are approximate:
+(//This function receives an overtone number within the overtone series (n) and output the frequency of that overtone in Hz and MIDI based on a fundamental frequency input value (in MIDI). MIDI values are normally based on A = 440 in equal intonation. This is why the results of this function are approximate:
 { arg n, fundFrecMidi = 24; //Fundamental frequency by default = C1 (24 MIDI).
 	var hz, midi;
 
@@ -222,8 +223,7 @@ Ham
 //And let's imagine we can apply the following methods to them:
 Sandwich
 * prepare //Class method (creates the sandwich), indicated with an asterisk.
-heat
-Up //Instance methods (modify the sandwich):
+heatUp //Instance methods (modify the sandwich):
 cut
 
 Ham
@@ -441,7 +441,7 @@ m = [0, [1, [3, 4], 2, 3], 4, [5, 6]]
 m.flatten(1) //Unifies nested arrays by levels (from outer to inner).
 m = m.flatten(2) //All levels cleared. Reassigning the variable.
 m.clump(3) //Opposite of .flat: groupes elements of an array into smaller inner arrays (the argument indicates the number of elements per array).
-m.stutter(2) //Repeats each element of the array as many times as indicated in its argument.
+m.dupEach(2) //Repeats each element of the array as many times as indicated in its argument (earlier version is .stutter, and .dup would duplicate the entire array n times).
 
 //Shortcuts for arrays and operations:
 (0..20) //Array from 0 to 20 (step of 1).
@@ -736,7 +736,7 @@ a.remove(3);
 a;
 ) //Removes an Object from the receiver. Returns the new collection.
 
-List[1, 2, 3, 4].removeAll(List[2, 3]); //Removes all items in a Collection from the receiver. Returns the new collection.s
+List[1, 2, 3, 4].removeAll(List[2, 3]); //Removes all items in a Collection from the receiver (only one of each if multiple copies). Returns the new collection.
 
 List[1, 2, 3, 2, 3, 2, 3, 4].removeEvery(List[2, 3]); //Removes all occurrences of the items in a Collection from the receiver. Returns the new collection.
 

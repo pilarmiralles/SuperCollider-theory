@@ -278,7 +278,7 @@ r.stop
 
 
 //PITCH-SHIFTING
-//On the other hand, changing the pitch (the rate) of the audio without speeding it up or slowering it down: because the position depends on the waitTime and the stretch, the rate of the grains can feature a different rate without affecting the pace at which the grains happen (which is set by the position). Nonetheless, there are a lot of sonic artifacts: try different deviations or none (as shown before), I am still trying to understand and polish this.
+//On the other hand, changing the pitch (the rate) of the audio without speeding it up or slowering it down: because the position depends on the waitTime and the stretch, the rate of the grains can feature a different rate without affecting the pace at which the grains happen (which is set by the position - they will be slightly shorter or longer tho, but I don't think we can perceive this deviation at such a small scale). Nonetheless, there are a lot of sonic artifacts: try different deviations or none (as shown before), I am still trying to understand and polish this.
 //Now you can combine both processes (for example, slowing down the audio, but raising the pitch at the same time):
 (
 r = Routine({

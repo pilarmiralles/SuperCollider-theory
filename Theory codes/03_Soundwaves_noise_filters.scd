@@ -148,7 +148,7 @@
 { Saw.ar(440, 0.1, 0) }.scope
 
 //Raw version (normally, for LFO):
-{ LFSaw.ar(440, 0, 0.1, 0) }.plot(2/440) //The shape of the non-
+{ LFSaw.ar(440, 0, 0.1, 0) }.plot(2/440)
 { LFSaw.ar(440, 0, 0.1, 0) }.scope
 
 {[LFSaw.ar(1000), Saw.ar(1000)]}.plot(0.02) //Comparing both versions, the filtered one has its shape inverted and reaches only half of the amplitude.
@@ -344,7 +344,7 @@ s.meter //See how each channel moves independently or together. The method .mete
 
 //There is another UGen related to impulse generators, called Blip, which is a "band limited impulse generator" (it includes a filter). There is a warning in the help file: "This waveform in its raw form could be damaging to your ears at high amplitudes or for long periods", therefore, BEWARE THE AMPLITUDE!
 
-{ Blip.ar(1, 500, 0.1) }.play //The first argument is the frequency of the impulses and the second argument is the number of harmonics (from 0 = sine wave, to as many harmonics as we want = the higher, the more "squared" the timbre), which gives the frequency (pitch) of each impulse. Last, but not least, the mul.
+{ Blip.ar(1, 500, 0.2) }.play //The first argument is the frequency of the impulses and the second argument is the number of harmonics (from 0 = sine wave, to as many harmonics as we want = the higher, the more "squared" the timbre), which gives the frequency (pitch) of each impulse. Last, but not least, the mul.
 
 
 //##############################################################
@@ -380,7 +380,7 @@ Synth(\blip)
 /////////////////////////////////////////////////////////////////////
 //BUTTERWORTH FILTERS
 
-//A filter is used to emphasize or eliminate some frequencies from a signal, that is to say, filters affect the frequency spectrum of a sound. The main filters used in SC include the high pass filter (HPF), low pass filter (LPF), band pass filter (BPF), band reject filter (BRF), and resonating filters (such as RHPF, RLPF, Resonz, Ringz, etc.). The basic filters LP, HP, BP and BR are 2nd order Butterworth filters: Butterworth filters are designed to have a frequency response that is as flat as possible, and its order refers to the slope of the filter (how fast the frequencies are cut off: 2nd order = 12dB per octave). These filters receive a signal and a cutoff frequency from which the spectrum will fall gradually. Noises are good input signals for filters as they contain all the frequency spectrum.
+//A filter is used to emphasize or eliminate some frequencies from a signal, that is to say, filters affect the frequency spectrum of a sound. The main filters used in SC include the high pass filter (HPF), low pass filter (LPF), band pass filter (BPF), band reject filter (BRF), and resonating filters (such as RHPF, RLPF, Resonz, Ringz, etc.). The basic filters LP, HP, BP and BR are 2nd order Butterworth filters: Butterworth filters are designed to have a frequency response that is as flat as possible, and its order refers to the slope of the filter (how fast the frequencies are cut off: 2nd order = 12dB per octave). These filters receive a signal and a cutoff frequency from which the spectrum will fall gradually. Noises are good input signals for filters as they contain all (or a very big chunk of) the frequency spectrum.
 //https://en.wikipedia.org/wiki/Butterworth_filter (about Butterworth filters).
 //https://depts.washington.edu/dxscdoc/Help/Tutorials/Mark_Polishook_tutorial/14_Subtractive_synthesis.html (some info about filters in this link about subtractive synthesis).
 

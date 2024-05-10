@@ -169,7 +169,7 @@ e.duration = 15 //Sets a new total duration of the times array by stretching the
 
 a = Env.adsr; //We will study this kind of envelope later (sustained envelope creation methods), but used here as an example.
 a.levels; //Shows the current levels of the Env in "a".
-a.range(42, 45).levels; //Returns a copy of the Env whose levels have been mapped onto the given linear, exponential or curve range.
+a.range(42, 45).levels; //Returns a copy of the Env whose levels have been mapped onto the given linear, exponential or curve range:
 a.exprange(42, 45).levels;
 a.curverange(42, 45, -4).levels;
 

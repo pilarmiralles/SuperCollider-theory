@@ -398,7 +398,7 @@ b.free
 //Some "retro" example (and retro syntax) from SC2: "analog bubbles":
 (
 {
-	f = LFSaw.kr(0.4, 0, 24, LFSaw.kr([8, 7.23], 0, 3, 80)).midicps; //Glissando function: the second LFSaw modulates the range of freq modulation later on in the SinOsc. The first LFSaw brings about th overall shape of going up and suddenly coming back down. The values are MIDI, then converted.
+	f = LFSaw.kr(0.4, 0, 24, LFSaw.kr([8, 7.23], 0, 3, 80)).poll.midicps; //Glissando function: the second LFSaw modulates the range of freq modulation later on in the SinOsc. The first LFSaw brings about the overall shape of going up and suddenly coming back down. The values are MIDI, then converted.
 	//f = LFSaw.kr(0.4, 0, 24, 80).midicps; //Compare with this signal instead of the previous.
 
 	CombN.ar(SinOsc.ar(f, 0, 0.04), 0.2, 0.2, 4) //Echoing sine wave (thanks to the use of a comb filter).

@@ -275,7 +275,7 @@ SynthDef(
 
 a = Synth(\sine, [\in, 0, \amp, 0.1]) //This runs the sine wave, and listens to the control channel 0, but there is nothing there yet.
 
-b = Synth(\controlSine, [\out, 0, \freq, 1]) //Now we hear the sine wave being controlled by the control sine wave (the sine wave listens to control 0 (in), and control sine wave goes out through control 0, thus we don't hear the static sine way, but its modulation. Now, if we stop the modulation and evaluate "a" again, the last value where we stopped the modulation will be still there, as it is stored in the control channel.
+b = Synth(\controlSine, [\out, 0, \freq, 1]) //Now we hear the sine wave being controlled by the control sine wave (the sine wave listens to control 0 (in), and control sine wave goes out through control 0, thus we don't hear the static sine wave, but its modulation. Now, if we stop the modulation and evaluate "a" again, the last value where we stopped the modulation will be still there, as it is stored in the control channel.
 b.free //When freeing "b", the control channel (in = 0) holds the static sine wave.
 a.free //When freeing "a", the sine wave is silenced, but the information about the last value is still in the control channel 0, so "a" will recover it anyway if evaluated again listening to that channel.
 
