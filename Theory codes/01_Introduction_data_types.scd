@@ -29,9 +29,14 @@ https://scsynth.org/t/some-notes-on-writing-supercollider-code-for-non-programme
 //There is an overwhelming amount of tools and resources, and different ways of doing the same thing (shortcuts, alternative syntaxes, etc.): stick to the basics, keep consistency, and, after acquiring a solid ground, experiment, seek your own way to attain your objectives, etc.
 //The learning curve can be quite exponential (slow at the beginning, faster later on). The order in which things are learnt can be really different from one course to another, from a series of tutorials to another, and this affects how things are understood as many things are intertwined and intermingled.
 
+//Why text-based coding? Some reasons are: the literality of text (direct meaning through textual expression rather than graphical) and the precision of number control (writing a number is always much more precise than moving a fader: in many situations, a slight change in the e.g. fourth decimal might make a difference). Having said this, SuperCollider is just one more tool whose use can be complemented by many others.
+//SuperCollider, just like any other software related to music technology, has a solid historical base of tecnnological research. That is to say, we don't start from scratch: it is no longer interesting to program e.g. a sine wave from scratch because it has been studied deeply for a very long time and the algorithms and implementations work very well and are virtually the same in all software, and which represent a historical record of achievements.
+//Another good-to-know feature of SuperCollider is the fact that, unlike in other software (such as MaxMSP), there is no barrier between you and the DAC (digital to audio converter). This means that SC has "in theory" access to infinite power and therefore, it requires a responsible use. There are extensions, such as Safety (see the section below about the Start up File), which can be used to ensure that no accident happens, especially when performing risky experiments (and even more if in front of an audience directly exposed to an audio system).
+//The default settings of SC allow the software to run in the rustiest oldest computer that could be dusted off from your wardrobe. A 10-year old computer or a micro-computer such as a raspberry-pi can run SC. Having said this, SC default settings can be customized to turn the software into a much more efficient and powerful tool (that of course will require a bit more processing power). Another feature of SC is that its core library is quite small (open source normally means small team). On the other hand, there are many quarks (extensions), plugins, and whatnot made by individuals contributing to the community. This also leads to lack of documentation of many things, bugs, and the like, and this has been normalized and it is in constant development and improvement.
+
 //OOP
 //SC is an OOP (object-oriented programming language), a programming paradigm (specific style or way of programming) based on the concept of "object". All entities in the language are objects. An object contains data about its state and the set of operations that can be performed with the object.
-//--> To execute code (that is to say, to compile and run the code. The compiling is done automatically by the interpreter): shift-enter
+//--> To execute code (that is to say, to compile and run the code. The compiling is done automatically by the interpreter): shift-enter.
 
 //Classes:
 //A class is an object containing the description of the object's data and operations (like a blueprint). Objects are always instances (versions, realizations) of a class. The name of a class always starts with a capital letter. Classes are themselves objects: they are organized according to a hierarchy in which they inherit implementations (share properties) from the upper class, and which can be seen in the class tree: https://doc.sccode.org/Overviews/ClassTree.html. Observe how all classes branch from a single class called "Object".
@@ -58,8 +63,8 @@ SC application is three programs: a text editor, also called IDE (Integrated Dev
 
 - The client is in charge of sending OSC messages (Open Sound Control, the communication protocol used between client and server) to the server. The client is both the "paper sheet" and the "mailer" to send these messages to the server. The client also features the interpreter, which allow us to write the code in the language of SC and execute it. As OSC messages are low-level language (difficult to write and understand by a human), the object-oriented language (higher level) of the SC client allows much more expressive power than OSC messages (although it is possible to write raw OSC messages in the syntax). The interpreter translates the SC language into OSC messages for the server.
 
-- The server doesn’t know anything about the SC language, doesn’t know what’s an object or what the code means: the server only understands OSC messages. The server can receive OSC messages from other apps different from SC client (for example Max/MSP), but keep in mind that sclang is specifically designed to obtain all the expressive power of the SC language and to fit the server’s needs. The default server is the local server (assigned to global variable “s”). We'll look into this later on.
-The server can be booted by pressing Ctrl-B or by executing s.boot.
+- The server doesn’t know anything about the SC language, doesn’t know what’s an object or what the code means: the server only understands OSC messages. The server can receive OSC messages from other apps different from SC client (for example Max/MSP), but keep in mind that sclang is specifically designed to obtain all the expressive power of the SC language and to fit the server’s needs. The default server is the local server (assigned to global variable “s”; s = Server.local). We'll look into this later on.
+The server can be booted by pressing Ctrl-B or by executing s.boot (and quitted by executing s.quit).
 
 Due to the client-server architecture in SC, it is crucial to remember that there is a distinction between the actual things like nodes, busses, buffers or servers, and the objects that represent them in the language app (in the form of instances of the classes Node, Bus, Buffer, Server, etc.). For example, a Buffer object is a client-side abstraction of a server-side buffer: it is a representation of the buffer in the server containing its common tasks, OSC messages, capabilities, etc. The abstraction objects are used to control from the language the actual objects in the server.
 */
@@ -72,6 +77,7 @@ Due to the client-server architecture in SC, it is crucial to remember that ther
 - You can make comments (like this one) in two ways: "//" at the beginning of the line for single lines, and "/*...*/" to open and close an entire block. Comments can be useful to explain or give remarks about a code.
 - In the "View" menu, the option "Split to right" allows you to open two SC files on a split screen.
 - Spaces don't usually matter in SC (although we'll see some examples in which they do), but there are certain conventions to follow for the sake of clarity.
+- SuperCollider can be commanded to stop from the computer's terminal: "kill all sclang" quits the interpreter (language) and "kill all scsynth" quits the server. These can be useful when the program crashes for some reason.
 - It is possible to record the output of the audio server at any moment: right-click the status bar below and select "Start recording", and then run your code. The recording can be stopped by pressing "Pause recording or with the key combination Ctrl-period. The recordings are saved in AIFF format by default (32 bits, 2 channels), somewhere in the SuperCollider folder on your computer. The path of the file should appear on the post window when the recording starts. The following are some instructions related to recording:
 */
 Server.local.recHeaderFormat_("wav").recChannels_(2).recSampleFormat_("int24"); //Stablishing the type of file, num of channels and bits depth of the recording (can also separate each of these instructions. The syntax _() can be replaced by simply using = and the value).
@@ -108,6 +114,8 @@ Server.local.zeroConf_(false); //True by default. Setting it to false might help
 Server.local.maxNodes_(5120); //Maximum number of nodes. Default is 1024.
 
 Server.local.options.device_("MADIface USB (24012536)") //Connecting to an output device other than the default (example: MADIface in Erkki studio).
+
+//When opening SC, before booting up the server, we can see that the postwindow shows some information about processes that take place by default and automatically. The main one is the pre-compilation of several directories (mainly the class library and possible extensions), whose files are executables.
 //########################################################
 
 
@@ -235,6 +243,7 @@ mod(16, 7) //Functional notation message.
 //In SC, all operations are calculated from left to right no matter the kind of operations involved:
 2 + 3 * 3 //15
 2 + (3 * 3) //11 (prioritizing the product by using parenthesis).
+//This lack of operations hierarchy might come from the fact of making the language closer to what the computer understands: no hierarchy = lower level of abstraction (this hierarchy might be considered an abstraction created by humans while the computer is okay with less layers of assumptions).
 
 //Other calculations:
 13.nextPowerOfTwo //Next power of 2 from that number onwards.
@@ -242,9 +251,13 @@ mod(16, 7) //Functional notation message.
 4.nthPrime //The fourth prime number in the series of prime numbers.
 34.61946.round(0.01) //Rounding to two decimals (rounding up from 5, down from 4). The argument defines the number of decimals.
 72.round(30) //Keeps number within the multiples of the .round argument value (useful for overtones).
+2.17.floor //Rounds to the lower whole number (2.0).
+2.17.ceil //Rounds to the higher whole number (3.0).
 69.midicps //MIDI (Musical Instrument Digital Interface) to Hz (cycles per second) converter. MIDI is a communication protocol originally designed for digital synthesizers. Some tips: piano ranges in MIDI pitch values are 21 (A0) to 108 (C8). Decimals in MIDI pitch values indicate cents (microintervals, 1 cent = 0.01 semitones, 100 parts each half step).
 440.cpsmidi //Hz to MIDI converter.
 1.57.asInteger //Turns a float into an integer by rounding down (also shortcut .asInt).
+645.asTimeString //Converts number of seconds into hours:minutes:seconds.millisecs.
+"00:10:45.000".asSecs //Opposite method (has to be applied to a string and in this format), turns time string into number of seconds.
 
 //Bipolar and unipolar:
 .bipolar //To convert unipolar to bipolar signals (UNIPOLAR = Signal moving from 0 o 1 regarding the amplitude --> (So with the method, the amplitude is expanded up to -1 to 1).
@@ -253,12 +266,13 @@ mod(16, 7) //Functional notation message.
 //Randomness with numbers (examples of methods):
 10.rand //From 0 to 9.
 333.rand + 100 //From 100 to 432.
-5.xrand //Excludes 0 (from 1 to 5).
-5.xrand(1) //Excludes 1.
-5.xrand2 //Includes negative values (no 0 by default).
+5.xrand //Excludes 0 by default (from 1 to 4).
+5.xrand(1) //Excludes 1 (from 0 to 4 excluding 1).
+5.xrand2 //Includes negative values (no 0 by default, but includes 5 for some reason now. Can exclude numbers different from 0).
 10.rand2 //Includes negative values (including 0).
 rrand(0.1, 4) //Random numbers within a range with uniform distribution (both integers --> integers only; at least one of them float --> all float results): This is one example of polymorphism as explained before in this document.
 exprand(1, 4)//Random numbers within a range with exponential distribution (results will always be float regardless of the input value). The lo/hi limit cannot be zero and the range cannot cross zero.
+//Many more randomness methods in here: https://doc.sccode.org/Guides/Randomness.html
 
 
 //########################################################
@@ -273,14 +287,15 @@ exprand(1, 4)//Random numbers within a range with exponential distribution (resu
 ({ ({ rrand(0.0, 1.0) } !2).minItem } !100000).histo.plot(minval: 0) //Try out .maxItem instead to change the direction of the distribution (priority to high values).
 
 //And this line creates a distribution close to .exprand, but using rrand: we need the constant "e". From the previous lower choice, "e" to the power of the resulting value will create the exponential distribution. We need, though, a bigger scope (more "time" in the "x" axis) in order to visualize the curve (0.001 to 5 for the random choice instead of 0.001 to 1).
-e = 2.71828 //Defining the constant "e" (exponential).
-({ var min; ({ min = rrand(0.001, 5.0) } !2).minItem; e ** min } !100000).histo.plot(minval: 0) //We need a variable "min" to move around and use the value chosen by rrand.
-({ var min; ({ min = rrand(0.001, 5.0) } !2).minItem; log2(min) } !100000).histo.plot(minval: 0) //Inverted graph (y axis), applying the log2.
-//For the inverted graph on the x axis (logarithmic shape), we need the log base "e" of "min" (I haven't sorted this out yet :D).
+e = 2.71828 //Defining the constant "e" (exponential), as this is not a literal float by default.
+({ var min; ({ min = rrand(0.001, 5.0) } !2).minItem; e ** min } !100000).histo.plot(minval: 0) //We need a variable "min" to move around and use the value chosen by rrand (.maxItem and .minItem here reach the same result).
+({ var min; ({ min = rrand(0.001, 5.0) } !2).minItem; min.log } !100000).histo.plot(minval: 0) //Inverted graph (y axis), applying the natural logarithm (log base "e"). Remember "min.log" is the same as "log(min)".
+({ var min; ({ min = rrand(0.001, 5.0) } !2).minItem; min.log.neg } !100000).histo.plot(minval: 0) //This one is similar to the first one (I didn't figure out yet how to invert the graph in the x axis, that is, how to obtein the "conventional" logarithmic shape).
+
 
 //This one creates the Gaussian distribution when calculating the "mean" value every three values:
 ({ ({ rrand(0.0, 1.0) } !3).mean } !100000).histo.plot(minval: 0) //Gauss "bell" shape in the distribution (priority to central values).
-({ gauss(0.0, 1.0) } !100000).histo.plot(minval: 0) //Same result using method "gauss".
+({ gauss(0.0, 1.0) } !100000).histo.plot(minval: 0) //Same result (I mean, close enough for this example) using method "gauss".
 //########################################################
 
 
@@ -313,7 +328,7 @@ string = "hello";
 //Unit Generators (UGens) represent calculations with signals, that is to say, they are classes that create or process signals. All UGens branch from the UGen class. All UGens respond to one or more of the following class methods:
 .ar //Creates audio rate signals (by default, 44100 samples (momentary value of an analogue signal that is taken several times a second to convert the signal to digital form) per second. Audio rate signals are normally meant to be heard.
 .kr //Creates control rate signals (by default, 1 sample value for every 64 sample values of an audio rate signal). Control rate signals are less computationally expensive than audio rate signals, but they are not usually meant to be heard. They are used as modulators, for instance, instead.
-.ir //Creates initial rate signals (they calculate their output at the moment of creation or "initialization". That is to say, they output a single value when executed. These signals cannot be modulated).
+.ir //Creates initial rate signals (they calculate their output at the moment of creation or "initialization". That is to say, they output a single value when executed. These signals cannot be modulated as those values are not "running" in time, but were just calculated once).
 //Then, they return a new instance of the UGen class that calculates the signal at audio or control rate, or only once at initialization. Some UGens respond to the .new method instead.
 //UGens only work within a UGen function (for example, a function.play or a SynthDef, which we'll see in theory file 6). The most relevant categories of UGens and the most prominent UGens among them can be found here: https://doc.sccode.org/Guides/Tour_of_UGens.html
 
@@ -353,7 +368,7 @@ string = "hello";
 	osc1 + osc2
 }.play
 )
-//From 20 Hz of separation onwards, we start perceiving two different frequencies:
+//From 20 Hz of separation onwards, we start perceiving two different frequencies (too fast for us to tell apart the difference between rhythm and freq):
 (
 {
 	var osc1, osc2;
