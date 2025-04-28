@@ -24,7 +24,7 @@ s.scope //Applied to the server, it shows running signals at the active channels
 //In SC, all UGens have only a single output to facilitate the array operations when manipulating multi-channel structures. We can trick this by sending an array of values as an input to a UGen, causing an array of multiple copies of that UGen holding the different values from the input array (for instance, sending an array of frequencies to the frequency argument of an SinOsc). This phenomenon is called multichannel expansion. According to the help file: “when a UGen is called with an array of inputs, it returns an array of instances”.
 
 //Let's see how this works in practice:
-//Array of two signals with different frequency (the are summed up in a single channel):
+//Array of two signals with different frequency (there will be one on each channel):
 (
 {
 	[
@@ -35,6 +35,8 @@ s.scope //Applied to the server, it shows running signals at the active channels
 )
 
 { SinOsc.ar([440, 441], 0, 0.1) }.play //Equivalent code: an array of two elements as input of a signal creates as many instances of that signal as elements present in the array. The rest of the arguments are shared by all signals.
+
+{ SinOsc.ar([440, 441, 880], 0, 0.1) }.play //If adding a third frequency, we cannot hear it (but if the Stethoscope is set to 3 channels instead of 2, we will see that the signal is indeed running in the server).
 
 //Multichannel expansion can be multilayered: if the generated array is the input of another UGen, another array is created. For instance, if a sawtooth wave receives an array of two frequencies, and array of two sawtooth waves will be created and, if this array of sawtooth waves is placed as input of a lowpass filter, and array of two lowpass filters will be created. Both filters will share a single instance of any other UGen (or value) received as input that is not expanded. If a UGen receives more than one array as input, the longest array will determine the number of instances of the UGen that are created.
 
