@@ -103,15 +103,15 @@ a + b + c
 )
 
 //Another example: as mentioned before, when more than one argument receives an array of values, the longest array indicates the number of instances. The values of shorter arrays will loop:
-{ Pulse.ar([400, 500, 600], [0.5, 0.1], 0.1) }.play
+{ Pulse.ar([400, 500, 600], 0.5, [0.02, 0.08]) }.play
 
 //Equivalent to the previous line:
 (
 {
 	[
-		Pulse.ar(400, 0.5, 0.1),
-		Pulse.ar(500, 0.1, 0.1),
-		Pulse.ar(600, 0.5, 0.1)
+		Pulse.ar(400, 0.5, 0.02),
+		Pulse.ar(500, 0.5, 0.08),
+		Pulse.ar(600, 0.5, 0.02)
 	]
 }.play
 )
@@ -171,7 +171,7 @@ a + b + c
 		BPF.ar(
 			BrownNoise.ar,
 			f = Array.geom(5, 440, 3/2) * freqDeviation, //Array of five frequencies (with a fifth of separation between each) multiplied by the freq deviation.
-			0.05/f, //The higher the frequency, the smaller the RQ value (the "cleaner" the sound.
+			0.05/f, //The higher the frequency, the smaller the RQ value (the "cleaner" the sound).
 			[24, 30].dbamp //Array of two amplitude values in db.
 		)
 	)
