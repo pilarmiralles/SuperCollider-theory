@@ -122,6 +122,7 @@ SynthDef(
 
 e = Synth(\sineGate, [\out, 0, \freq, 500, \amp, 0.3, \gate, 1]) //Open the gate.
 e.set(\gate, 0) //Close the gate, killing the Synth due to doneAction = 2 (no need to apply the method .free to the Synth). The method .set can be sent to the Synth to change an argument while the synth is running.
+e.free //As you can see, the node cannot be found anymore.
 
 
 /////////////////////////////////////////////////////////////////////
@@ -217,7 +218,7 @@ SynthDef(\filter,
 		Out.ar(out, signal)
 }).add;
 
-~firstBus = Bus.audio(s, 1) //The object Bus handles the allocation of buses for us. Its arguments are the server and the number of channels. We can use current environment variables for a more precise interconnection. The Bus object will always choose the lowest available bus that does not conflict with hardware buses (therefore, it will only choose private channels). When creating multichannel signals (stereo onwards), Bus will reserver as many adjacent bus indexes as needed (there is no such thing as "multichannel bus" in SC).
+~firstBus = Bus.audio(s, 1) //The object Bus handles the allocation of buses for us. Its arguments are the server and the number of channels. We can use current environment variables for a more precise interconnection. The Bus object will always choose the lowest available bus that does not conflict with hardware buses (therefore, it will only choose private channels). When creating multichannel signals (stereo onwards), Bus will reserve as many adjacent bus indexes as needed (there is no such thing as "multichannel bus" in SC).
 )
 ~firstBus.index //Returns the bus index, although this is also indicated in the post window when the Bus is created.
 
@@ -225,7 +226,8 @@ SynthDef(\filter,
 f = Synth(\noise, [\out, ~firstBus], s, \addToHead); //Now, instead of refering to a hard-coded index, we can let the object Bus create the virtual channel for us.
 g = Synth(\filter, [\out, 0, \in, ~firstBus, \freq, 600], s, \addToTail)
 )
-f.free; g.free; h.free //The Bus object needs to be freed as well.
+f.free; g.free;
+~firstBus.free; //The Bus object needs to be freed as well, when we are done using these SynthDefs (so, if I compile again the SynthDef and create a new Bus, the previous index can be used again).
 
 //You can come back to this link: https://doc.sccode.org/Tutorials/Getting-Started/11-Busses.html, from "Creating a Bus Object" to continue detailing this.
 
@@ -392,12 +394,12 @@ SynthDef(\chance, { [1, 2, 3, 4].choose.poll; Out.ar(0, DC.ar) }).add //Silent S
 Synth(\chance) //All instances feature the same value unless the SynthDef is compiled again.
 
 //(Here is an example of the use of DC for testing porpuses, this time with a simpler signal):
-{ LFDNoise3.ar.scope; DC.ar }.play
+{ LFDNoise3.ar.scope; DC.ar }.play //NOTE that it produces silence because it is the last line of the function!
 
 //The solution in the previous case is to carry out the random choice in the language (through an argument):
 SynthDef(\chance, { arg chance; chance.poll(5); Out.ar(0, DC.ar) }).add
 x = Synth(\chance, [\chance, 2]) //Get the synth running.
-x.set(\chance, [1, 2, 3, 4].choose) //Set a different value for the created SynthDef instance "x" (execute several times while running).
+x.set(\chance, [1, 2, 3, 4].choose) //Set a different value for the created SynthDef instance "x" (execute several times while running. Take care of using the method .set and not directly create different overlapped instances of Synth in "x": we would then lose the control over the Synth in that variable).
 
 y = Synth(\chance, [\chance, 1]) //Other instances can be created (in different variables).
 y.set(\chance, [5, 6, 7, 8].choose)
@@ -456,9 +458,9 @@ f = Synth(\noise, [\out, ~firstBus], ~source); //The group of each synth is spec
 g = Synth(\filter, [\out, 0, \in, ~firstBus, \freq, 600], ~fx) //With an addAction, we could further specify the position of the Synth within its particular group, but in this case, there is only one.
 )
 
-~source.free; ~fx.free; h.free //Freeing the groups is enough to free the synths within them (check the node tree again).
+~source.free; ~fx.free; ~firstBus.free //Freeing the groups is enough to free the synths within them (check the node tree again).
 
-//With the Group object, we can also indicate the target and addAction, just like in a Synth:
+//With the Group object, we can also indicate the target and addAction, just like in a Synth (and just like with Synth, as we did before, we can assign the action as a method).
 Group.new(s, 'addToTail') //For instance. The number obtained in the post window would replace the 1 in the message style, if using it. NodeIDs over 1000 are sort of a historical convention for naming nodes in SuperCollider.
 
 //Groups can also be used to address all nodes within them at the same time:
@@ -467,7 +469,7 @@ Group.new(s, 'addToTail') //For instance. The number obtained in the post window
 
 //New groups can be also created in message style:
 s.sendMsg(\g_new, 2, 1, 1) //Creating a new group in message style (message (create new group), nodeID (don't overwrite 0 or 1), position (1 = tail), location (1 = default group): "create a new group with nodeID of 2, at the tail of the group 1". All new groups should be inside group 1 (or inside a group that in inside group 1 eventually) so that all primitive functions in group 0 can apply to them).
-s.queryAllNodes //This method allow us to print the node tree in the post-window (also with ctrl + T). See the new architecture of the server after creating the previous group.
+s.queryAllNodes //This method allows us to print the node tree in the post-window (also with ctrl + T). See the new architecture of the server after creating the previous group.
 s.plotTree //The node tree has a graphical representation too (just like using the option in the Server menu).
 s.sendMsg(\n_set, 2, \amp, 0.01) //Messages can be set to the whole group so that all nodes and inner groups receive a new value, for example, here an amplitude value. It is also advisable, for this reason, to keep a certain cosistency regarding the name of certain common arguments (freq, amp, masterVolume, pan, etc.), so that all Synths within a group are addressed at the same time.
 s.sendMsg(\n_free, 2) //Synths and groups need to be freed by sending the message \n_free (remember that ctrl-period will erase all the architecture created in the server).
